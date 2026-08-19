@@ -1,35 +1,27 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { BarChart3, BookOpen, CalendarDays, User } from 'lucide-react-native';
-import { colors } from '../constants/theme';
+import { useTheme } from '../context/ThemeContext';
 import { HistoryScreen } from '../screens/history/HistoryScreen';
-import {
-  JourneyDetailScreen,
-  JourneyScreen,
-} from '../screens/journey/JourneyScreens';
-import {
-  FeedbackScreen,
-  GeneralSettingsScreen,
-  LanguageSettingsScreen,
-  MeScreen,
-  NotificationSettingsScreen,
-  PremiumScreen,
-} from '../screens/me/MeScreens';
-import {
-  BedTimeScreen,
-  FirstHabitScreen,
-  GoalsScreen,
-  PlanGeneratorScreen,
-  ValuePropositionScreen,
-  WakeTimeScreen,
-} from '../screens/onboarding/OnboardingScreens';
-import {
-  CreateHabitScreen,
-  HabitDetailScreen,
-  TodayScreen,
-} from '../screens/today/TodayScreens';
+import { JourneyDetailScreen } from '../screens/journey/JourneyDetailScreen';
+import { JourneyScreen } from '../screens/journey/JourneyScreen';
+import { FeedbackScreen } from '../screens/me/FeedbackScreen';
+import { GeneralSettingsScreen } from '../screens/me/GeneralSettingsScreen';
+import { LanguageSettingsScreen } from '../screens/me/LanguageSettingsScreen';
+import { MeScreen } from '../screens/me/MeScreen';
+import { NotificationSettingsScreen } from '../screens/me/NotificationSettingsScreen';
+import { PremiumScreen } from '../screens/me/PremiumScreen';
+import { BedTimeScreen } from '../screens/onboarding/BedTimeScreen';
+import { FirstHabitScreen } from '../screens/onboarding/FirstHabitScreen';
+import { GoalsScreen } from '../screens/onboarding/GoalsScreen';
+import { PlanGeneratorScreen } from '../screens/onboarding/PlanGeneratorScreen';
+import { ValuePropositionScreen } from '../screens/onboarding/ValuePropositionScreen';
+import { WakeTimeScreen } from '../screens/onboarding/WakeTimeScreen';
+import { CreateHabitScreen } from '../screens/today/CreateHabitScreen';
+import { HabitDetailScreen } from '../screens/today/HabitDetailScreen';
+import { TodayScreen } from '../screens/today/TodayScreen';
 import { useAppStore } from '../store/useAppStore';
 import type {
   JourneyStackParamList,
@@ -38,7 +30,7 @@ import type {
   RootStackParamList,
   TodayStackParamList,
 } from '../types/models';
-import styles from './RootNavigatorStyle';
+import useStyles from './RootNavigatorStyle';
 
 const RootStack = createNativeStackNavigator<RootStackParamList>();
 const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
@@ -46,13 +38,20 @@ const TodayStack = createNativeStackNavigator<TodayStackParamList>();
 const JourneyStack = createNativeStackNavigator<JourneyStackParamList>();
 const MeStack = createNativeStackNavigator<MeStackParamList>();
 const Tabs = createBottomTabNavigator();
-const stackOptions = {
-  headerShown: false,
-  contentStyle: { backgroundColor: colors.background },
-  animation: 'slide_from_right' as const,
-};
+function useStackOptions() {
+  const { colors } = useTheme();
+  return useMemo(
+    () => ({
+      headerShown: false,
+      contentStyle: { backgroundColor: colors.background },
+      animation: 'slide_from_right' as const,
+    }),
+    [colors.background],
+  );
+}
 
 function OnboardingNavigator() {
+  const stackOptions = useStackOptions();
   return (
     <OnboardingStack.Navigator screenOptions={stackOptions}>
       <OnboardingStack.Screen name="WakeTime" component={WakeTimeScreen} />
@@ -73,6 +72,7 @@ function OnboardingNavigator() {
   );
 }
 function TodayNavigator() {
+  const stackOptions = useStackOptions();
   return (
     <TodayStack.Navigator screenOptions={stackOptions}>
       <TodayStack.Screen name="TodayHome" component={TodayScreen} />
@@ -86,6 +86,7 @@ function TodayNavigator() {
   );
 }
 function JourneyNavigator() {
+  const stackOptions = useStackOptions();
   return (
     <JourneyStack.Navigator screenOptions={stackOptions}>
       <JourneyStack.Screen name="JourneyHome" component={JourneyScreen} />
@@ -100,6 +101,7 @@ function HistoryNavigator() {
   return <HistoryScreen />;
 }
 function MeNavigator() {
+  const stackOptions = useStackOptions();
   return (
     <MeStack.Navigator screenOptions={stackOptions}>
       <MeStack.Screen name="MeHome" component={MeScreen} />
@@ -125,17 +127,6 @@ const tabConfig = {
   Me: { icon: User, component: MeNavigator },
 };
 
-const renderTabLabel = ({
-  children,
-  color,
-}: {
-  children: string;
-  color: string;
-}) => (
-  <Text style={[styles.tabLabel, { color }]}>
-    {String(children).toUpperCase()}
-  </Text>
-);
 const renderTabIcon =
   (Icon: typeof CalendarDays) =>
   ({ color, focused }: { color: string; focused: boolean }) =>
@@ -152,7 +143,18 @@ const tabScreens = Object.entries(tabConfig).map(([name, config]) => ({
   icon: renderTabIcon(config.icon),
 }));
 
+function TabLabel({ children, color }: { children: string; color: string }) {
+  const styles = useStyles();
+  return (
+    <Text style={[styles.tabLabel, { color }]}>
+      {String(children).toUpperCase()}
+    </Text>
+  );
+}
+
 function MainTabNavigator() {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Tabs.Navigator
       screenOptions={{
@@ -160,7 +162,7 @@ function MainTabNavigator() {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabMuted,
-        tabBarLabel: renderTabLabel,
+        tabBarLabel: TabLabel,
       }}
     >
       {tabScreens.map(config => (
@@ -176,6 +178,7 @@ function MainTabNavigator() {
 }
 
 export function RootNavigator() {
+  const { colors } = useTheme();
   const complete = useAppStore(s => s.onboardingComplete);
   return (
     <RootStack.Navigator

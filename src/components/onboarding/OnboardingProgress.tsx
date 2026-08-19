@@ -1,8 +1,9 @@
 import React from 'react';
 import { View } from 'react-native';
-import styles from './OnboardingProgressStyle';
+import useStyles from './OnboardingProgressStyle';
 
 export function OnboardingProgress({ step }: { step: number }) {
+  const styles = useStyles();
   return (
     <View accessibilityLabel={`Step ${step} of 4`} style={styles.row}>
       <ProgressSegment active={step >= 1} />
@@ -14,5 +15,6 @@ export function OnboardingProgress({ step }: { step: number }) {
 }
 
 function ProgressSegment({ active }: { active: boolean }) {
+  const styles = useStyles();
   return <View style={[styles.segment, active && styles.active]} />;
 }

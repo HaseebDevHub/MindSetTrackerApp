@@ -6,7 +6,7 @@ import {
   View,
 } from 'react-native';
 import { FlashList, type FlashListRef } from '@shopify/flash-list';
-import styles, { ITEM_HEIGHT } from './TimeWheelPickerStyle';
+import useStyles, { ITEM_HEIGHT } from './TimeWheelPickerStyle';
 
 const hours = Array.from({ length: 24 }, (_, index) =>
   String(index).padStart(2, '0'),
@@ -24,6 +24,7 @@ function Wheel({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const styles = useStyles();
   const ref = useRef<FlashListRef<string>>(null);
   const index = Math.max(0, items.indexOf(value));
   const renderItem = ({ item }: { item: string }) => (
@@ -67,6 +68,7 @@ export function TimeWheelPicker({
   value: string;
   onChange: (value: string) => void;
 }) {
+  const styles = useStyles();
   const [hour, minute] = useMemo(() => value.split(':'), [value]);
   return (
     <View style={styles.container}>

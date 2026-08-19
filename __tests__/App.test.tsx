@@ -1,7 +1,12 @@
-import {useAppStore} from '../src/store/useAppStore';
-import type {HabitItem, TodayFilter} from '../src/types/models';
-import {addDays, fromDateKey, getCalendarDays, toDateKey} from '../src/utils/dates';
-import {isHabitVisibleForTodayFilter} from '../src/utils/habits';
+import { useAppStore } from '../src/store/useAppStore';
+import type { HabitItem, TodayFilter } from '../src/types/models';
+import {
+  addDays,
+  fromDateKey,
+  getCalendarDays,
+  toDateKey,
+} from '../src/utils/dates';
+import { isHabitVisibleForTodayFilter } from '../src/utils/habits';
 
 describe('local application behavior', () => {
   test('date keys round-trip without timezone drift', () => {
@@ -28,11 +33,47 @@ describe('local application behavior', () => {
     ['EVENING', ['evening', 'anytime']],
   ])('%s filters the Today habits correctly', (filter, expectedIds) => {
     const habits: HabitItem[] = [
-      {id: 'morning', title: 'Morning', timeOfDay: 'MORNING', completedDates: ['2026-08-19'], streakCount: 0, iconName: 'Sun'},
-      {id: 'afternoon', title: 'Afternoon', timeOfDay: 'AFTERNOON', completedDates: [], streakCount: 0, iconName: 'Sun'},
-      {id: 'evening', title: 'Evening', timeOfDay: 'EVENING', completedDates: ['2026-08-19'], streakCount: 0, iconName: 'Moon'},
-      {id: 'anytime', title: 'Anytime', timeOfDay: 'ANYTIME', completedDates: ['2026-08-19'], streakCount: 0, iconName: 'Check'},
-      {id: 'archived', title: 'Archived', timeOfDay: 'MORNING', completedDates: ['2026-08-19'], streakCount: 0, iconName: 'Sun', archived: true},
+      {
+        id: 'morning',
+        title: 'Morning',
+        timeOfDay: 'MORNING',
+        completedDates: ['2026-08-19'],
+        streakCount: 0,
+        iconName: 'Sun',
+      },
+      {
+        id: 'afternoon',
+        title: 'Afternoon',
+        timeOfDay: 'AFTERNOON',
+        completedDates: [],
+        streakCount: 0,
+        iconName: 'Sun',
+      },
+      {
+        id: 'evening',
+        title: 'Evening',
+        timeOfDay: 'EVENING',
+        completedDates: ['2026-08-19'],
+        streakCount: 0,
+        iconName: 'Moon',
+      },
+      {
+        id: 'anytime',
+        title: 'Anytime',
+        timeOfDay: 'ANYTIME',
+        completedDates: ['2026-08-19'],
+        streakCount: 0,
+        iconName: 'Check',
+      },
+      {
+        id: 'archived',
+        title: 'Archived',
+        timeOfDay: 'MORNING',
+        completedDates: ['2026-08-19'],
+        streakCount: 0,
+        iconName: 'Sun',
+        archived: true,
+      },
     ];
 
     const visible = habits.filter(habit =>
@@ -40,9 +81,9 @@ describe('local application behavior', () => {
     );
 
     expect(visible.map(habit => habit.id)).toEqual(expectedIds);
-    expect(visible.filter(habit => habit.completedDates.includes('2026-08-19'))).toHaveLength(
-      filter === 'ALL' ? 3 : filter === 'AFTERNOON' ? 1 : 2,
-    );
+    expect(
+      visible.filter(habit => habit.completedDates.includes('2026-08-19')),
+    ).toHaveLength(filter === 'ALL' ? 3 : filter === 'AFTERNOON' ? 1 : 2);
     expect(habits.map(habit => habit.timeOfDay)).toEqual([
       'MORNING',
       'AFTERNOON',

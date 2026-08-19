@@ -1,10 +1,14 @@
 import { StyleSheet } from 'react-native';
-import { colors, spacing } from '../../constants/theme';
+import { spacing, type ThemeColors } from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
-const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: colors.background },
-  grow: { flexGrow: 1 },
-  padded: { paddingHorizontal: spacing.screen },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    safe: { flex: 1, backgroundColor: colors.background },
+    grow: { flexGrow: 1 },
+    padded: { paddingHorizontal: spacing.screen },
+  });
 
-export default styles;
+export default function useStyles() {
+  return useThemedStyles(createStyles);
+}

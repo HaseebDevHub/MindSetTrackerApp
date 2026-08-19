@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import styles from './ScreenContainerStyle';
+import useStyles from './ScreenContainerStyle';
 
 interface Props {
   children: React.ReactNode;
@@ -24,6 +24,7 @@ export function ScreenContainer({
   style,
   keyboard = false,
 }: Props) {
+  const styles = useStyles();
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"

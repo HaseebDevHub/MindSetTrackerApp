@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ArrowLeft } from 'lucide-react-native';
-import { colors } from '../../constants/theme';
-import styles from './AppHeaderStyle';
+import { useTheme } from '../../context/ThemeContext';
+import useStyles from './AppHeaderStyle';
 
 export function AppHeader({
   title,
@@ -13,6 +13,8 @@ export function AppHeader({
   onBack?: () => void;
   right?: React.ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <View style={styles.row}>
       {onBack ? (

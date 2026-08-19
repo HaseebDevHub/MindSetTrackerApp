@@ -1,7 +1,8 @@
 import React from 'react';
 import { FlatList, StyleSheet } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
-import { TodayScreen } from '../src/screens/today/TodayScreens';
+import { TodayScreen } from '../src/screens/today/TodayScreen';
+import { ThemeProvider } from '../src/context/ThemeContext';
 import { colors } from '../src/constants/theme';
 import { useAppStore } from '../src/store/useAppStore';
 import { addDays, fromDateKey, toDateKey } from '../src/utils/dates';
@@ -33,10 +34,12 @@ describe('Today date strip', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     act(() => {
       renderer = TestRenderer.create(
-        <TodayScreen
-          navigation={{ navigate: jest.fn() } as never}
-          route={{ key: 'TodayHome', name: 'TodayHome' }}
-        />,
+        <ThemeProvider initialMode="dark">
+          <TodayScreen
+            navigation={{ navigate: jest.fn() } as never}
+            route={{ key: 'TodayHome', name: 'TodayHome' }}
+          />
+        </ThemeProvider>,
       );
     });
 
@@ -92,10 +95,12 @@ describe('Today date strip', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     act(() => {
       renderer = TestRenderer.create(
-        <TodayScreen
-          navigation={{ navigate: jest.fn() } as never}
-          route={{ key: 'TodayHome', name: 'TodayHome' }}
-        />,
+        <ThemeProvider initialMode="dark">
+          <TodayScreen
+            navigation={{ navigate: jest.fn() } as never}
+            route={{ key: 'TodayHome', name: 'TodayHome' }}
+          />
+        </ThemeProvider>,
       );
     });
 
@@ -103,9 +108,9 @@ describe('Today date strip', () => {
       .findAllByType(FlatList)
       .find(list => list.props.horizontal && list.props.data[0]?.key === 'ALL');
 
-    expect(filterList!.props.data.map(({ key }: { key: string }) => key)).toEqual(
-      ['ALL', 'MORNING', 'AFTERNOON', 'EVENING'],
-    );
+    expect(
+      filterList!.props.data.map(({ key }: { key: string }) => key),
+    ).toEqual(['ALL', 'MORNING', 'AFTERNOON', 'EVENING']);
 
     const allFilter = filterList!.props.renderItem({
       item: filterList!.props.data[0],

@@ -1,8 +1,8 @@
 import React from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ChevronRight, type LucideIcon } from 'lucide-react-native';
-import { colors } from '../../constants/theme';
-import styles from './SettingRowStyle';
+import { useTheme } from '../../context/ThemeContext';
+import useStyles from './SettingRowStyle';
 
 export function SettingRow({
   icon: Icon,
@@ -17,6 +17,8 @@ export function SettingRow({
   onPress?: () => void;
   right?: React.ReactNode;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"

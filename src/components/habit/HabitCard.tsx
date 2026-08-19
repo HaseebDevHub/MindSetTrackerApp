@@ -16,9 +16,9 @@ import {
   Moon,
   Sparkles,
 } from 'lucide-react-native';
-import { colors } from '../../constants/theme';
+import { useTheme } from '../../context/ThemeContext';
 import type { HabitItem } from '../../types/models';
-import styles from './HabitCardStyle';
+import useStyles from './HabitCardStyle';
 
 const iconMap = { Droplets, Footprints, BookOpen, Brain, Moon, Sparkles };
 
@@ -35,6 +35,8 @@ export function HabitCard({
   onMenu: () => void;
   onPress?: () => void;
 }) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   const progress = useSharedValue(completed ? 1 : 0);
   useEffect(() => {
     progress.value = withSpring(completed ? 1 : 0, {
@@ -75,7 +77,7 @@ export function HabitCard({
       </Pressable>
       <Pressable onPress={onPress} style={styles.copy}>
         <View style={styles.titleRow}>
-          <Icon color={colors.text} size={19} />
+          <Icon color={colors.onPrimary} size={19} />
           <Text
             numberOfLines={2}
             style={[styles.title, completed && styles.completedTitle]}
@@ -85,7 +87,7 @@ export function HabitCard({
         </View>
         {completed ? (
           <View style={styles.finished}>
-            <Check color="#BFDBFE" size={13} />
+            <Check color={colors.onPrimaryFaint} size={13} />
             <Text style={styles.finishedText}>Finished</Text>
           </View>
         ) : (
@@ -98,7 +100,7 @@ export function HabitCard({
         onPress={onMenu}
         style={styles.menu}
       >
-        <MoreHorizontal color={colors.text} size={24} />
+        <MoreHorizontal color={colors.onPrimary} size={24} />
       </Pressable>
     </Animated.View>
   );

@@ -5,8 +5,8 @@ import {
   Text,
   type ViewStyle,
 } from 'react-native';
-import { colors } from '../../constants/theme';
-import styles from './AppButtonStyle';
+import { useTheme } from '../../context/ThemeContext';
+import useStyles from './AppButtonStyle';
 
 interface Props {
   title: string;
@@ -25,6 +25,8 @@ export function AppButton({
   loading,
   style,
 }: Props) {
+  const { colors } = useTheme();
+  const styles = useStyles();
   return (
     <Pressable
       accessibilityRole="button"
@@ -40,9 +42,17 @@ export function AppButton({
       ]}
     >
       {loading ? (
-        <ActivityIndicator color={colors.text} />
+        <ActivityIndicator
+          color={variant === 'primary' ? colors.onPrimary : colors.text}
+        />
       ) : (
-        <Text style={[styles.label, variant === 'ghost' && styles.ghostLabel]}>
+        <Text
+          style={[
+            styles.label,
+            variant === 'primary' && styles.primaryLabel,
+            variant === 'ghost' && styles.ghostLabel,
+          ]}
+        >
           {title}
         </Text>
       )}

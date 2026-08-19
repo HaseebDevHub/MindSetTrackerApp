@@ -1,21 +1,25 @@
 import { StyleSheet } from 'react-native';
-import { colors, typography } from '../constants/theme';
+import { typography, type ThemeColors } from '../constants/theme';
+import { useThemedStyles } from '../hooks/useThemedStyles';
 
-const styles = StyleSheet.create({
-  tabBar: {
-    height: 66,
-    paddingTop: 7,
-    paddingBottom: 7,
-    backgroundColor: '#1A1D24',
-    borderTopColor: colors.divider,
-  },
-  tabLabel: {
-    ...typography.caption,
-    fontSize: 10,
-    lineHeight: 13,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    tabBar: {
+      height: 66,
+      paddingTop: 7,
+      paddingBottom: 7,
+      backgroundColor: colors.tabBar,
+      borderTopColor: colors.divider,
+    },
+    tabLabel: {
+      ...typography.caption,
+      fontSize: 10,
+      lineHeight: 13,
+      fontWeight: '700',
+      letterSpacing: 0.5,
+    },
+  });
 
-export default styles;
+export default function useStyles() {
+  return useThemedStyles(createStyles);
+}

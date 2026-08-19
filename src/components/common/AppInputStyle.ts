@@ -1,27 +1,36 @@
 import { StyleSheet } from 'react-native';
-import { colors, radii, spacing, typography } from '../../constants/theme';
+import {
+  radii,
+  spacing,
+  typography,
+  type ThemeColors,
+} from '../../constants/theme';
+import { useThemedStyles } from '../../hooks/useThemedStyles';
 
-const styles = StyleSheet.create({
-  wrap: { gap: spacing.small },
-  label: {
-    ...typography.caption,
-    color: colors.textSecondary,
-    textTransform: 'uppercase',
-    letterSpacing: 0.8,
-  },
-  input: {
-    ...typography.bodyLarge,
-    minHeight: 52,
-    borderRadius: radii.button,
-    backgroundColor: colors.surfaceSecondary,
-    color: colors.text,
-    paddingHorizontal: spacing.large,
-  },
-  multiline: {
-    height: 132,
-    paddingTop: spacing.large,
-    textAlignVertical: 'top',
-  },
-});
+const createStyles = (colors: ThemeColors) =>
+  StyleSheet.create({
+    wrap: { gap: spacing.small },
+    label: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textTransform: 'uppercase',
+      letterSpacing: 0.8,
+    },
+    input: {
+      ...typography.bodyLarge,
+      minHeight: 52,
+      borderRadius: radii.button,
+      backgroundColor: colors.surfaceSecondary,
+      color: colors.text,
+      paddingHorizontal: spacing.large,
+    },
+    multiline: {
+      height: 132,
+      paddingTop: spacing.large,
+      textAlignVertical: 'top',
+    },
+  });
 
-export default styles;
+export default function useStyles() {
+  return useThemedStyles(createStyles);
+}
