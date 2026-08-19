@@ -1,25 +1,17 @@
 import React, {
   createContext,
   useCallback,
-  useEffect,
   useMemo,
-  useRef,
   useState,
 } from 'react';
-import { StyleSheet, View } from 'react-native';
-import { createAsyncStorage } from '@react-native-async-storage/async-storage';
 import {
   darkTheme,
   lightTheme,
   type AppTheme,
   type ThemeMode,
 } from '../constants/theme';
-
-const THEME_STORAGE_KEY = 'themeMode';
-const themeStorage = createAsyncStorage('mindset-tracker-preferences');
-const styles = StyleSheet.create({
-  loading: { flex: 1, backgroundColor: darkTheme.colors.background },
-});
+import { storage } from '../storage/storage';
+import { STORAGE_KEYS } from '../storage/storageKeys';
 
 type ThemeContextValue = {
   mode: ThemeMode;
@@ -34,9 +26,9 @@ export function isThemeMode(value: unknown): value is ThemeMode {
   return value === 'dark' || value === 'light';
 }
 
-export async function readStoredThemeMode(): Promise<ThemeMode> {
+export function readStoredThemeMode(): ThemeMode {
   try {
-    const savedMode = await themeStorage.getItem(THEME_STORAGE_KEY);
+    const savedMode = storage.getString(STORAGE_KEYS.THEME_MODE);
     return isThemeMode(savedMode) ? savedMode : 'dark';
   } catch {
     return 'dark';
@@ -50,29 +42,13 @@ export function ThemeProvider({
   children: React.ReactNode;
   initialMode?: ThemeMode;
 }) {
-  const [mode, setMode] = useState<ThemeMode>(initialMode ?? 'dark');
-  const [ready, setReady] = useState(Boolean(initialMode));
-  const writeQueue = useRef(Promise.resolve());
-
-  useEffect(() => {
-    if (initialMode) return;
-    let active = true;
-    readStoredThemeMode().then(savedMode => {
-      if (active) {
-        setMode(savedMode);
-        setReady(true);
-      }
-    });
-    return () => {
-      active = false;
-    };
-  }, [initialMode]);
+  const [mode, setMode] = useState<ThemeMode>(() =>
+    initialMode ?? readStoredThemeMode(),
+  );
 
   const setThemeMode = useCallback((nextMode: ThemeMode) => {
     setMode(nextMode);
-    writeQueue.current = writeQueue.current
-      .then(() => themeStorage.setItem(THEME_STORAGE_KEY, nextMode))
-      .catch(() => undefined);
+    storage.setString(STORAGE_KEYS.THEME_MODE, nextMode);
   }, []);
   const selectedTheme: AppTheme = mode === 'light' ? lightTheme : darkTheme;
   const value = useMemo<ThemeContextValue>(
@@ -84,10 +60,6 @@ export function ThemeProvider({
     }),
     [mode, selectedTheme, setThemeMode],
   );
-
-  if (!ready) {
-    return <View style={styles.loading} />;
-  }
 
   return (
     <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>

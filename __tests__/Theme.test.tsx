@@ -8,15 +8,8 @@ import {
   useTheme,
 } from '../src/context/ThemeContext';
 import { darkColors, lightColors } from '../src/constants/theme';
-
-const storageMock = (
-  jest.requireMock('@react-native-async-storage/async-storage') as {
-    __storageMock: {
-      getItem: jest.Mock;
-      setItem: jest.Mock;
-    };
-  }
-).__storageMock;
+import { storage } from '../src/storage/storage';
+import { STORAGE_KEYS } from '../src/storage/storageKeys';
 
 function ThemeProbe() {
   const { colors, mode, setThemeMode } = useTheme();
@@ -33,8 +26,8 @@ function ThemeProbe() {
 
 describe('global theme', () => {
   beforeEach(() => {
-    storageMock.getItem.mockReset().mockResolvedValue(null);
-    storageMock.setItem.mockReset().mockResolvedValue(undefined);
+    jest.restoreAllMocks();
+    storage.remove(STORAGE_KEYS.THEME_MODE);
   });
 
   test('validates stored theme modes', () => {
@@ -43,25 +36,28 @@ describe('global theme', () => {
     expect(isThemeMode('something-invalid')).toBe(false);
   });
 
-  test('invalid or failed storage reads safely use dark mode', async () => {
-    storageMock.getItem.mockResolvedValueOnce('something-invalid');
-    await expect(readStoredThemeMode()).resolves.toBe('dark');
+  test('missing, invalid, or failed storage reads safely use dark mode', () => {
+    expect(readStoredThemeMode()).toBe('dark');
 
-    storageMock.getItem.mockRejectedValueOnce(new Error('storage failed'));
-    await expect(readStoredThemeMode()).resolves.toBe('dark');
+    jest.spyOn(storage, 'getString').mockReturnValueOnce('something-invalid');
+    expect(readStoredThemeMode()).toBe('dark');
+
+    jest.spyOn(storage, 'getString').mockImplementationOnce(() => {
+      throw new Error('storage failed');
+    });
+    expect(readStoredThemeMode()).toBe('dark');
   });
 
-  test('restores a saved light theme before rendering app content', async () => {
-    storageMock.getItem.mockResolvedValueOnce('light');
+  test('restores a saved light theme before rendering app content', () => {
+    storage.setString(STORAGE_KEYS.THEME_MODE, 'light');
     let renderer: TestRenderer.ReactTestRenderer;
 
-    await act(async () => {
+    act(() => {
       renderer = TestRenderer.create(
         <ThemeProvider>
           <ThemeProbe />
         </ThemeProvider>,
       );
-      await Promise.resolve();
     });
 
     expect(
@@ -70,7 +66,8 @@ describe('global theme', () => {
     act(() => renderer!.unmount());
   });
 
-  test('switches the active palette immediately and persists the choice', async () => {
+  test('switches the active palette immediately and persists the choice', () => {
+    const setString = jest.spyOn(storage, 'setString');
     let renderer: TestRenderer.ReactTestRenderer;
     act(() => {
       renderer = TestRenderer.create(
@@ -87,9 +84,8 @@ describe('global theme', () => {
       backgroundColor: darkColors.background,
     });
 
-    await act(async () => {
+    act(() => {
       probe.props.onPress();
-      await Promise.resolve();
     });
 
     probe = renderer!.root.findByProps({ testID: 'theme-probe' });
@@ -98,7 +94,46 @@ describe('global theme', () => {
       color: lightColors.text,
       backgroundColor: lightColors.background,
     });
-    expect(storageMock.setItem).toHaveBeenLastCalledWith('themeMode', 'light');
+    expect(setString).toHaveBeenLastCalledWith(
+      STORAGE_KEYS.THEME_MODE,
+      'light',
+    );
+    expect(storage.getString(STORAGE_KEYS.THEME_MODE)).toBe('light');
+
+    act(() => renderer!.unmount());
+  });
+
+  test('persists dark mode and restores it on the next provider mount', () => {
+    storage.setString(STORAGE_KEYS.THEME_MODE, 'light');
+    let renderer: TestRenderer.ReactTestRenderer;
+
+    act(() => {
+      renderer = TestRenderer.create(
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>,
+      );
+    });
+
+    let probe = renderer!.root.findByProps({ testID: 'theme-probe' });
+    expect(probe.props.children).toBe('light');
+
+    act(() => probe.props.onPress());
+    probe = renderer!.root.findByProps({ testID: 'theme-probe' });
+    expect(probe.props.children).toBe('dark');
+    expect(storage.getString(STORAGE_KEYS.THEME_MODE)).toBe('dark');
+
+    act(() => renderer!.unmount());
+    act(() => {
+      renderer = TestRenderer.create(
+        <ThemeProvider>
+          <ThemeProbe />
+        </ThemeProvider>,
+      );
+    });
+    expect(
+      renderer!.root.findByProps({ testID: 'theme-probe' }).props.children,
+    ).toBe('dark');
 
     act(() => renderer!.unmount());
   });
