@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import {
   Alert,
   Pressable,
@@ -9,6 +9,7 @@ import {
   View,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
 import {
   Bell,
   Check,
@@ -27,15 +28,21 @@ import {
   Star,
   Volume2,
   Zap,
+  type LucideIcon,
 } from 'lucide-react-native';
 import { AppButton } from '../../components/common/AppButton';
 import { AppHeader } from '../../components/common/AppHeader';
 import { AppInput } from '../../components/common/AppInput';
+import {
+  SmallVerticalListSeparator,
+  VerticalListSeparator,
+} from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { SettingRow } from '../../components/common/SettingRow';
 import { colors } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
 import type { MeStackParamList } from '../../types/models';
+import { keyByValue } from '../../utils/lists';
 import styles from './MeScreenStyle';
 
 type Props<T extends keyof MeStackParamList> = NativeStackScreenProps<
@@ -45,7 +52,7 @@ type Props<T extends keyof MeStackParamList> = NativeStackScreenProps<
 
 export function MeScreen({ navigation }: Props<'MeHome'>) {
   const premium = useAppStore(s => s.isPremium);
-  const share = async () => {
+  const share = useCallback(async () => {
     try {
       await Share.share({
         message: 'Build better routines with Mindset Tracker.',
@@ -53,93 +60,118 @@ export function MeScreen({ navigation }: Props<'MeHome'>) {
     } catch {
       Alert.alert('Sharing unavailable', 'Please try again later.');
     }
-  };
+  }, []);
+  const settingsRows = useMemo<
+    { id: string; icon: LucideIcon; title: string; onPress: () => void }[]
+  >(
+    () => [
+      {
+        id: 'notifications',
+        icon: Bell,
+        title: 'Notification',
+        onPress: () => navigation.navigate('Notifications'),
+      },
+      {
+        id: 'general',
+        icon: Settings,
+        title: 'General settings',
+        onPress: () => navigation.navigate('GeneralSettings'),
+      },
+      {
+        id: 'language',
+        icon: Languages,
+        title: 'Language Options',
+        onPress: () => navigation.navigate('Language'),
+      },
+      {
+        id: 'share',
+        icon: Share2,
+        title: 'Share with friends',
+        onPress: share,
+      },
+      {
+        id: 'rate',
+        icon: Star,
+        title: 'Rate us',
+        onPress: () =>
+          Alert.alert(
+            'Thank you!',
+            'Store ratings are not connected in this UI preview.',
+          ),
+      },
+      {
+        id: 'feedback',
+        icon: MessageSquare,
+        title: 'Feedback',
+        onPress: () => navigation.navigate('Feedback'),
+      },
+    ],
+    [navigation, share],
+  );
   return (
     <ScreenContainer padded={false}>
       <View style={styles.header}>
         <Text style={styles.pageTitle}>ME</Text>
       </View>
-      <ScrollView
+      <FlashList
+        data={settingsRows}
+        keyExtractor={item => item.id}
+        renderItem={({ item }) => (
+          <SettingRow
+            icon={item.icon}
+            title={item.title}
+            onPress={item.onPress}
+          />
+        )}
+        ItemSeparatorComponent={SmallVerticalListSeparator}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.page}
-      >
-        <Pressable
-          accessibilityRole="button"
-          onPress={() =>
-            Alert.alert(
-              'Backup & Restore',
-              'Cloud synchronization will be available in a future update.',
-            )
-          }
-          style={styles.backup}
-        >
-          <View style={styles.backupIcon}>
-            <RefreshCw color={colors.primary} size={25} />
-          </View>
-          <View style={styles.copy}>
-            <Text style={styles.backupTitle}>Backup & Restore</Text>
-            <Text style={styles.subtitle}>
-              Sign in and synchronize your data
-            </Text>
-          </View>
-        </Pressable>
-        <Pressable
-          accessibilityRole="button"
-          onPress={() => navigation.navigate('Premium')}
-          style={styles.premium}
-        >
-          <Crown color={colors.yellow} size={30} />
-          <View style={styles.copy}>
-            <Text style={styles.premiumTitle}>
-              {premium ? 'PREMIUM ACTIVE' : 'GO PREMIUM'}
-            </Text>
-            <Text style={styles.premiumSubtitle}>
-              {premium
-                ? 'All mock premium features unlocked'
-                : 'Unlock your best routines'}
-            </Text>
-          </View>
-        </Pressable>
-        <Text style={styles.section}>SETTINGS</Text>
-        <View style={styles.rows}>
-          <SettingRow
-            icon={Bell}
-            title="Notification"
-            onPress={() => navigation.navigate('Notifications')}
-          />
-          <SettingRow
-            icon={Settings}
-            title="General settings"
-            onPress={() => navigation.navigate('GeneralSettings')}
-          />
-          <SettingRow
-            icon={Languages}
-            title="Language Options"
-            onPress={() => navigation.navigate('Language')}
-          />
-          <SettingRow
-            icon={Share2}
-            title="Share with friends"
-            onPress={share}
-          />
-          <SettingRow
-            icon={Star}
-            title="Rate us"
-            onPress={() =>
-              Alert.alert(
-                'Thank you!',
-                'Store ratings are not connected in this UI preview.',
-              )
-            }
-          />
-          <SettingRow
-            icon={MessageSquare}
-            title="Feedback"
-            onPress={() => navigation.navigate('Feedback')}
-          />
-        </View>
-        <Text style={styles.version}>Mindset Tracker • Version 1.0.0</Text>
-      </ScrollView>
+        ListHeaderComponent={
+          <>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() =>
+                Alert.alert(
+                  'Backup & Restore',
+                  'Cloud synchronization will be available in a future update.',
+                )
+              }
+              style={styles.backup}
+            >
+              <View style={styles.backupIcon}>
+                <RefreshCw color={colors.primary} size={25} />
+              </View>
+              <View style={styles.copy}>
+                <Text style={styles.backupTitle}>Backup & Restore</Text>
+                <Text style={styles.subtitle}>
+                  Sign in and synchronize your data
+                </Text>
+              </View>
+            </Pressable>
+            <Pressable
+              accessibilityRole="button"
+              onPress={() => navigation.navigate('Premium')}
+              style={styles.premium}
+            >
+              <Crown color={colors.yellow} size={30} />
+              <View style={styles.copy}>
+                <Text style={styles.premiumTitle}>
+                  {premium ? 'PREMIUM ACTIVE' : 'GO PREMIUM'}
+                </Text>
+                <Text style={styles.premiumSubtitle}>
+                  {premium
+                    ? 'All mock premium features unlocked'
+                    : 'Unlock your best routines'}
+                </Text>
+              </View>
+            </Pressable>
+            <Text style={styles.section}>SETTINGS</Text>
+          </>
+        }
+        ListFooterComponent={
+          <Text style={styles.version}>Mindset Tracker • Version 1.0.0</Text>
+        }
+      />
     </ScreenContainer>
   );
 }
@@ -238,24 +270,31 @@ export function GeneralSettingsScreen({
       <Text style={styles.sectionNoMargin}>APPEARANCE</Text>
       <SettingRow icon={Moon} title="Appearance" subtitle="Dark" />
       <Text style={styles.section}>WEEK & INTERACTION</Text>
-      <View style={styles.choiceRow}>
-        {(['Sunday', 'Monday'] as const).map(day => (
-          <Pressable
-            key={day}
-            onPress={() => setWeek(day)}
-            style={[styles.choice, week === day && styles.choiceActive]}
-          >
-            <Text
-              style={[
-                styles.choiceText,
-                week === day && styles.choiceTextActive,
-              ]}
+      <FlashList
+        data={['Sunday', 'Monday'] as const}
+        numColumns={2}
+        keyExtractor={keyByValue}
+        extraData={week}
+        renderItem={({ item: day }) => (
+          <View style={styles.choiceCell}>
+            <Pressable
+              onPress={() => setWeek(day)}
+              style={[styles.choice, week === day && styles.choiceActive]}
             >
-              {day} start
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+              <Text
+                style={[
+                  styles.choiceText,
+                  week === day && styles.choiceTextActive,
+                ]}
+              >
+                {day} start
+              </Text>
+            </Pressable>
+          </View>
+        )}
+        scrollEnabled={false}
+        style={styles.choiceRow}
+      />
       <SettingRow
         icon={Volume2}
         title="Sound"
@@ -303,29 +342,36 @@ export function LanguageSettingsScreen({ navigation }: Props<'Language'>) {
         Choose the language shown in a future localized version of Mindset
         Tracker.
       </Text>
-      {languages.map(language => (
-        <Pressable
-          accessibilityRole="radio"
-          accessibilityState={{ selected: selected === language }}
-          key={language}
-          onPress={() => setSelected(language)}
-          style={[
-            styles.language,
-            selected === language && styles.languageActive,
-          ]}
-        >
-          <Globe
-            color={selected === language ? colors.text : colors.textSecondary}
-            size={21}
-          />
-          <Text style={styles.languageText}>{language}</Text>
-          {selected === language ? (
-            <View style={styles.languageCheck}>
-              <Check color={colors.selectedBlue} size={15} strokeWidth={3} />
-            </View>
-          ) : null}
-        </Pressable>
-      ))}
+      <FlashList
+        data={languages}
+        keyExtractor={keyByValue}
+        extraData={selected}
+        renderItem={({ item: language }) => (
+          <Pressable
+            accessibilityRole="radio"
+            accessibilityState={{ selected: selected === language }}
+            onPress={() => setSelected(language)}
+            style={[
+              styles.language,
+              selected === language && styles.languageActive,
+            ]}
+          >
+            <Globe
+              color={selected === language ? colors.text : colors.textSecondary}
+              size={21}
+            />
+            <Text style={styles.languageText}>{language}</Text>
+            {selected === language ? (
+              <View style={styles.languageCheck}>
+                <Check color={colors.selectedBlue} size={15} strokeWidth={3} />
+              </View>
+            ) : null}
+          </Pressable>
+        )}
+        ItemSeparatorComponent={SmallVerticalListSeparator}
+        scrollEnabled={false}
+        style={styles.languageList}
+      />
     </SettingsShell>
   );
 }
@@ -400,16 +446,21 @@ export function PremiumScreen({ navigation }: Props<'Premium'>) {
           Explore the full Mindset Tracker experience.
         </Text>
       </View>
-      <View style={styles.benefits}>
-        {premiumBenefits.map(item => (
-          <View key={item} style={styles.benefit}>
+      <FlashList
+        data={premiumBenefits}
+        keyExtractor={keyByValue}
+        renderItem={({ item }) => (
+          <View style={styles.benefit}>
             <View style={styles.benefitCheck}>
               <Check color={colors.text} size={15} strokeWidth={3} />
             </View>
             <Text style={styles.benefitText}>{item}</Text>
           </View>
-        ))}
-      </View>
+        )}
+        ItemSeparatorComponent={VerticalListSeparator}
+        scrollEnabled={false}
+        style={styles.benefits}
+      />
       <View style={styles.priceNotice}>
         <Text style={styles.priceNoticeTitle}>UI preview</Text>
         <Text style={styles.priceNoticeText}>

@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
+import { FlashList } from '@shopify/flash-list';
 import Animated, {
   Easing,
   FadeIn,
@@ -35,12 +36,17 @@ import {
   Waves,
 } from 'lucide-react-native';
 import { AppButton } from '../../components/common/AppButton';
+import {
+  SmallVerticalListSeparator,
+  VerticalListSeparator,
+} from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { OnboardingProgress } from '../../components/onboarding/OnboardingProgress';
 import { TimeWheelPicker } from '../../components/onboarding/TimeWheelPicker';
 import { colors } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingStackParamList } from '../../types/models';
+import { keyByTitle } from '../../utils/lists';
 import styles from './OnboardingScreenStyle';
 
 type Props<T extends keyof OnboardingStackParamList> = NativeStackScreenProps<
@@ -180,17 +186,25 @@ export function GoalsScreen({ navigation }: Props<'Goals'>) {
         title="What's your target?"
         subtitle="Help us understand your needs better"
       />
-      <View style={styles.goalGrid}>
-        {goals.map(({ title, icon }) => (
-          <GoalCard
-            key={title}
-            title={title}
-            Icon={icon}
-            selected={selected.includes(title)}
-            onPress={() => toggle(title)}
-          />
-        ))}
-      </View>
+      <FlashList
+        data={goals}
+        numColumns={2}
+        keyExtractor={keyByTitle}
+        extraData={selected}
+        renderItem={({ item: { title, icon } }) => (
+          <View style={styles.goalCell}>
+            <GoalCard
+              title={title}
+              Icon={icon}
+              selected={selected.includes(title)}
+              onPress={() => toggle(title)}
+            />
+          </View>
+        )}
+        ItemSeparatorComponent={VerticalListSeparator}
+        scrollEnabled={false}
+        style={styles.goalGrid}
+      />
       <View style={styles.spacer} />
       <AppButton
         title="NEXT"
@@ -228,12 +242,14 @@ export function FirstHabitScreen({ navigation }: Props<'FirstHabit'>) {
         title="Choose the first habit that you'd like to build"
         subtitle="Start small. You can always add more later."
       />
-      <View style={styles.presetList}>
-        {presets.map(({ title, icon: Icon }) => {
+      <FlashList
+        data={presets}
+        keyExtractor={keyByTitle}
+        extraData={stored}
+        renderItem={({ item: { title, icon: Icon } }) => {
           const active = stored === title;
           return (
             <Pressable
-              key={title}
               accessibilityRole="radio"
               accessibilityState={{ selected: active }}
               onPress={() => {
@@ -247,8 +263,11 @@ export function FirstHabitScreen({ navigation }: Props<'FirstHabit'>) {
               {active ? <Check color={colors.text} size={20} /> : null}
             </Pressable>
           );
-        })}
-      </View>
+        }}
+        ItemSeparatorComponent={SmallVerticalListSeparator}
+        scrollEnabled={false}
+        style={styles.presetList}
+      />
       <Text style={styles.or}>Or type your own</Text>
       <View style={styles.customRow}>
         <TextInput
@@ -318,14 +337,17 @@ export function PlanGeneratorScreen({ navigation }: Props<'PlanGenerator'>) {
       duration: 3200,
       easing: Easing.inOut(Easing.cubic),
     });
-    const timers = progressSteps.map(step =>
-      setTimeout(() => {
-        setProgress(step.value);
-        if (step.text) {
-          setMessage(step.text);
-        }
-      }, step.at),
-    );
+    const timers: ReturnType<typeof setTimeout>[] = [];
+    progressSteps.forEach(step => {
+      timers.push(
+        setTimeout(() => {
+          setProgress(step.value);
+          if (step.text) {
+            setMessage(step.text);
+          }
+        }, step.at),
+      );
+    });
     timers.push(setTimeout(() => navigation.replace('ValueProposition'), 3800));
     return () => timers.forEach(clearTimeout);
   }, [animated, navigation]);
@@ -403,16 +425,21 @@ export function ValuePropositionScreen({
       <Text style={[styles.subtitle, styles.center]}>
         Enjoy your journey of becoming a better you
       </Text>
-      <View style={styles.benefits}>
-        {benefits.map(({ icon: Icon, text }) => (
-          <View style={styles.benefit} key={text}>
+      <FlashList
+        data={benefits}
+        keyExtractor={item => item.text}
+        renderItem={({ item: { icon: Icon, text } }) => (
+          <View style={styles.benefit}>
             <View style={styles.benefitIcon}>
               <Icon color={colors.primary} size={20} />
             </View>
             <Text style={styles.benefitText}>{text}</Text>
           </View>
-        ))}
-      </View>
+        )}
+        ItemSeparatorComponent={VerticalListSeparator}
+        scrollEnabled={false}
+        style={styles.benefits}
+      />
       <AppButton
         title="START NOW!"
         onPress={() => {

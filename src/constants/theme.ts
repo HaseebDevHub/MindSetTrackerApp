@@ -28,16 +28,16 @@ export const spacing = {
   xxl: 32,
 } as const;
 
-export const radii = {card: 16, button: 12, pill: 27, small: 10} as const;
+export const radii = { card: 16, button: 12, pill: 27, small: 10 } as const;
 
 export const typography = {
-  headingXL: {fontSize: 28, lineHeight: 34, fontWeight: '700' as const},
-  headingL: {fontSize: 24, lineHeight: 30, fontWeight: '700' as const},
-  headingM: {fontSize: 20, lineHeight: 26, fontWeight: '600' as const},
-  bodyLarge: {fontSize: 16, lineHeight: 22, fontWeight: '600' as const},
-  body: {fontSize: 14, lineHeight: 20, fontWeight: '400' as const},
-  caption: {fontSize: 12, lineHeight: 16, fontWeight: '400' as const},
-  metric: {fontSize: 36, lineHeight: 42, fontWeight: '800' as const},
+  headingXL: { fontSize: 28, lineHeight: 34, fontWeight: '700' as const },
+  headingL: { fontSize: 24, lineHeight: 30, fontWeight: '700' as const },
+  headingM: { fontSize: 20, lineHeight: 26, fontWeight: '600' as const },
+  bodyLarge: { fontSize: 16, lineHeight: 22, fontWeight: '600' as const },
+  body: { fontSize: 14, lineHeight: 20, fontWeight: '400' as const },
+  caption: { fontSize: 12, lineHeight: 16, fontWeight: '400' as const },
+  metric: { fontSize: 36, lineHeight: 42, fontWeight: '800' as const },
 } as const;
 
-export const theme = {colors, spacing, radii, typography} as const;
+export const theme = { colors, spacing, radii, typography } as const;

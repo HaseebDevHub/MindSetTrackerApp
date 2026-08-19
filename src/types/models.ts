@@ -1,4 +1,5 @@
 export type TimeOfDay = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'ANYTIME';
+export type TodayFilter = 'ALL' | Exclude<TimeOfDay, 'ANYTIME'>;
 
 export interface HabitItem {
   id: string;
@@ -37,13 +38,13 @@ export type OnboardingStackParamList = {
 
 export type TodayStackParamList = {
   TodayHome: undefined;
-  CreateHabit: {habitId?: string} | undefined;
-  HabitDetail: {habitId: string};
+  CreateHabit: { habitId?: string } | undefined;
+  HabitDetail: { habitId: string };
 };
 
 export type JourneyStackParamList = {
   JourneyHome: undefined;
-  JourneyDetail: {journeyId: string};
+  JourneyDetail: { journeyId: string };
 };
 
 export type MeStackParamList = {

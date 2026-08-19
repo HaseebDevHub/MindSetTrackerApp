@@ -15,16 +15,19 @@ export const addDays = (date: Date, amount: number) => {
 };
 
 export const formatShortDate = (date: Date) =>
-  date.toLocaleDateString('en-US', {month: 'short', day: 'numeric'});
+  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 export const monthTitle = (date: Date) =>
-  date.toLocaleDateString('en-US', {month: 'long', year: 'numeric'});
+  date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
 export const getCalendarDays = (month: Date) => {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   return [
-    ...Array.from({length: first.getDay()}, () => null),
-    ...Array.from({length: days}, (_, index) => new Date(month.getFullYear(), month.getMonth(), index + 1)),
+    ...Array.from({ length: first.getDay() }, () => null),
+    ...Array.from(
+      { length: days },
+      (_, index) => new Date(month.getFullYear(), month.getMonth(), index + 1),
+    ),
   ];
 };

@@ -29,15 +29,13 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.large,
   },
   goalGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: spacing.medium,
+    height: 360,
+    marginHorizontal: -6,
     marginTop: spacing.xl,
   },
+  goalCell: { flex: 1, paddingHorizontal: 6 },
   goalCard: {
-    width: '48.2%',
-    minHeight: 112,
+    width: '100%',
     borderRadius: radii.button,
     backgroundColor: colors.surfaceSecondary,
     overflow: 'hidden',
@@ -61,7 +59,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  presetList: { gap: spacing.small, marginTop: spacing.large },
+  presetList: { height: 292, marginTop: spacing.large },
   preset: {
     height: 52,
     paddingHorizontal: spacing.large,
@@ -167,7 +165,7 @@ const styles = StyleSheet.create({
   heroLineShort: { width: 55, marginTop: 10 },
   sparkle: { position: 'absolute', right: 34, top: 35 },
   center: { textAlign: 'center' },
-  benefits: { gap: spacing.medium, marginVertical: spacing.xl },
+  benefits: { height: 188, marginVertical: spacing.xl },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
   benefitIcon: {
     width: 38,

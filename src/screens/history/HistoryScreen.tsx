@@ -1,5 +1,12 @@
-import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useState } from 'react';
+import {
+  Modal,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { FlashList } from '@shopify/flash-list';
 import {
   Award,
   Check,
@@ -12,37 +19,58 @@ import {
   X,
 } from 'lucide-react-native';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
+import {
+  HorizontalListSeparator,
+  SmallVerticalListSeparator,
+} from '../../components/common/ListSeparator';
 import { colors } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
 import type { HabitItem } from '../../types/models';
 import { getCalendarDays, monthTitle, toDateKey } from '../../utils/dates';
+import { keyByName, keyByTitle, keyByValue } from '../../utils/lists';
 import styles from './HistoryScreenStyle';
 
 type Tab = 'Calendar' | 'All Habits' | 'Achievements';
 const tabs: Tab[] = ['Calendar', 'All Habits', 'Achievements'];
+const weekLabels = [
+  { id: 'sun', name: 'S' },
+  { id: 'mon', name: 'M' },
+  { id: 'tue', name: 'T' },
+  { id: 'wed', name: 'W' },
+  { id: 'thu', name: 'T' },
+  { id: 'fri', name: 'F' },
+  { id: 'sat', name: 'S' },
+];
 
 export function HistoryScreen() {
   const [tab, setTab] = useState<Tab>('Calendar');
+  const renderTab = useCallback(
+    ({ item }: { item: Tab }) => (
+      <Pressable
+        onPress={() => setTab(item)}
+        style={[styles.tab, tab === item && styles.activeTab]}
+      >
+        <Text style={[styles.tabText, tab === item && styles.activeTabText]}>
+          {item}
+        </Text>
+      </Pressable>
+    ),
+    [tab],
+  );
   return (
     <ScreenContainer padded={false}>
       <View style={styles.header}>
         <Text style={styles.pageTitle}>HISTORY</Text>
       </View>
-      <View style={styles.tabs}>
-        {tabs.map(item => (
-          <Pressable
-            key={item}
-            onPress={() => setTab(item)}
-            style={[styles.tab, tab === item && styles.activeTab]}
-          >
-            <Text
-              style={[styles.tabText, tab === item && styles.activeTabText]}
-            >
-              {item}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <FlashList
+        data={tabs}
+        numColumns={3}
+        renderItem={renderTab}
+        keyExtractor={keyByValue}
+        extraData={tab}
+        scrollEnabled={false}
+        style={styles.tabs}
+      />
       {tab === 'Calendar' ? (
         <CalendarHistory />
       ) : tab === 'All Habits' ? (
@@ -55,6 +83,7 @@ export function HistoryScreen() {
 }
 
 function CalendarHistory() {
+  const { width } = useWindowDimensions();
   const habits = useAppStore(s => s.habits);
   const selectedDate = useAppStore(s => s.selectedDate);
   const setSelectedDate = useAppStore(s => s.setSelectedDate);
@@ -73,7 +102,12 @@ function CalendarHistory() {
   const metrics = [
     {
       title: 'CURRENT STREAK',
-      value: String(Math.max(...habits.map(h => h.streakCount), 0)),
+      value: String(
+        habits.reduce(
+          (highest, habit) => Math.max(highest, habit.streakCount),
+          0,
+        ),
+      ),
       caption: 'Best Streak: 2',
       color: colors.selectedBlue,
     },
@@ -97,132 +131,172 @@ function CalendarHistory() {
     },
   ];
   const days = getCalendarDays(month);
+  const calendarCellSize = (width - 72) / 7;
+  const renderMetric = ({
+    item: metric,
+  }: {
+    item: (typeof metrics)[number];
+  }) => (
+    <View style={[styles.metric, { backgroundColor: metric.color }]}>
+      <Text style={styles.metricTitle}>{metric.title}</Text>
+      <Text style={styles.metricValue}>{metric.value}</Text>
+      <Text style={styles.metricCaption}>{metric.caption}</Text>
+    </View>
+  );
+  const renderDay = ({ item: date }: { item: Date | null }) => {
+    if (!date)
+      return <View style={[styles.day, { width: calendarCellSize }]} />;
+    const key = toDateKey(date);
+    const selected = selectedDate === key;
+    const didComplete = uniqueDays.has(key);
+    return (
+      <Pressable
+        accessibilityLabel={date.toDateString()}
+        onPress={() => setSelectedDate(key)}
+        style={[
+          styles.day,
+          { width: calendarCellSize },
+          selected && styles.selectedDay,
+        ]}
+      >
+        <Text style={[styles.dayText, selected && styles.selectedDayText]}>
+          {date.getDate()}
+        </Text>
+        {didComplete ? (
+          <View style={[styles.dot, selected && styles.dotSelected]} />
+        ) : null}
+      </Pressable>
+    );
+  };
   return (
-    <ScrollView
+    <FlashList
+      data={[monthTitle(month)]}
+      keyExtractor={keyByValue}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scroll}
-    >
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.metricRow}
-      >
-        {metrics.map(metric => (
-          <View
-            key={metric.title}
-            style={[styles.metric, { backgroundColor: metric.color }]}
-          >
-            <Text style={styles.metricTitle}>{metric.title}</Text>
-            <Text style={styles.metricValue}>{metric.value}</Text>
-            <Text style={styles.metricCaption}>{metric.caption}</Text>
+      ListHeaderComponent={
+        <FlashList
+          horizontal
+          data={metrics}
+          renderItem={renderMetric}
+          keyExtractor={keyByTitle}
+          ItemSeparatorComponent={HorizontalListSeparator}
+          showsHorizontalScrollIndicator={false}
+          contentContainerStyle={styles.metricRow}
+          style={styles.metricList}
+        />
+      }
+      renderItem={() => (
+        <View style={styles.calendar}>
+          <View style={styles.calendarTop}>
+            <Pressable
+              accessibilityLabel="Previous month"
+              onPress={() =>
+                setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
+              }
+            >
+              <ChevronLeft color={colors.text} />
+            </Pressable>
+            <Text style={styles.month}>{monthTitle(month)}</Text>
+            <Pressable
+              accessibilityLabel="Next month"
+              onPress={() =>
+                setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
+              }
+            >
+              <ChevronRight color={colors.text} />
+            </Pressable>
           </View>
-        ))}
-      </ScrollView>
-      <View style={styles.calendar}>
-        <View style={styles.calendarTop}>
-          <Pressable
-            accessibilityLabel="Previous month"
-            onPress={() =>
-              setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
+          <FlashList
+            horizontal
+            data={weekLabels}
+            keyExtractor={item => item.id}
+            renderItem={({ item }) => (
+              <Text style={[styles.weekLabel, { width: calendarCellSize }]}>
+                {item.name}
+              </Text>
+            )}
+            scrollEnabled={false}
+            style={styles.week}
+          />
+          <FlashList
+            data={days}
+            numColumns={7}
+            keyExtractor={(date, index) =>
+              date ? toDateKey(date) : `blank-${index}`
             }
-          >
-            <ChevronLeft color={colors.text} />
-          </Pressable>
-          <Text style={styles.month}>{monthTitle(month)}</Text>
-          <Pressable
-            accessibilityLabel="Next month"
-            onPress={() =>
-              setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
-            }
-          >
-            <ChevronRight color={colors.text} />
-          </Pressable>
+            renderItem={renderDay}
+            scrollEnabled={false}
+            style={{ height: Math.ceil(days.length / 7) * calendarCellSize }}
+          />
         </View>
-        <View style={styles.week}>
-          {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((name, i) => (
-            <Text key={`${name}-${i}`} style={styles.weekLabel}>
-              {name}
-            </Text>
-          ))}
-        </View>
-        <View style={styles.days}>
-          {days.map((date, index) => {
-            if (!date)
-              return <View key={`blank-${index}`} style={styles.day} />;
-            const key = toDateKey(date);
-            const selected = selectedDate === key;
-            const didComplete = uniqueDays.has(key);
-            return (
-              <Pressable
-                accessibilityLabel={date.toDateString()}
-                key={key}
-                onPress={() => setSelectedDate(key)}
-                style={[styles.day, selected && styles.selectedDay]}
-              >
-                <Text
-                  style={[styles.dayText, selected && styles.selectedDayText]}
-                >
-                  {date.getDate()}
-                </Text>
-                {didComplete ? (
-                  <View style={[styles.dot, selected && styles.dotSelected]} />
-                ) : null}
-              </Pressable>
-            );
-          })}
-        </View>
-      </View>
-      <Text style={styles.legend}>
-        A dot marks days with at least one completed habit.
-      </Text>
-    </ScrollView>
+      )}
+      ListFooterComponent={
+        <Text style={styles.legend}>
+          A dot marks days with at least one completed habit.
+        </Text>
+      }
+    />
   );
 }
+
+type HabitHistoryRow =
+  | { id: string; type: 'section'; title: string }
+  | { id: string; type: 'habit'; habit: HabitItem };
 
 function AllHabits() {
   const habits = useAppStore(s => s.habits);
   const [selected, setSelected] = useState<HabitItem>();
-  const grouped = useMemo(
-    () =>
-      ['ANYTIME', 'MORNING', 'AFTERNOON', 'EVENING']
-        .map(time => ({
-          time,
-          habits: habits.filter(h => h.timeOfDay === time && !h.archived),
-        }))
-        .filter(group => group.habits.length),
-    [habits],
-  );
+  const rows = useMemo<HabitHistoryRow[]>(() => {
+    const result: HabitHistoryRow[] = [];
+    for (const time of ['ANYTIME', 'MORNING', 'AFTERNOON', 'EVENING']) {
+      const matches = habits.filter(
+        habit => habit.timeOfDay === time && !habit.archived,
+      );
+      if (!matches.length) continue;
+      result.push({ id: `section-${time}`, type: 'section', title: time });
+      for (const habit of matches) {
+        result.push({ id: habit.id, type: 'habit', habit });
+      }
+    }
+    return result;
+  }, [habits]);
   return (
     <>
-      <ScrollView contentContainerStyle={styles.allHabits}>
-        <Text style={styles.activeLabel}>
-          ACTIVE ({habits.filter(h => !h.archived).length})
-        </Text>
-        {grouped.map(group => (
-          <View key={group.time} style={styles.habitGroup}>
-            <Text style={styles.groupTitle}>{group.time}</Text>
-            {group.habits.map(habit => (
-              <Pressable
-                key={habit.id}
-                onPress={() => setSelected(habit)}
-                style={styles.historyHabit}
-              >
-                <View style={styles.historyCheck}>
-                  <Check color={colors.primary} size={16} />
-                </View>
-                <View style={styles.historyCopy}>
-                  <Text style={styles.historyTitle}>{habit.title}</Text>
-                  <Text style={styles.historyMeta}>
-                    {habit.completedDates.length} completions •{' '}
-                    {habit.streakCount} day streak
-                  </Text>
-                </View>
-                <ChevronRight color={colors.muted} size={20} />
-              </Pressable>
-            ))}
-          </View>
-        ))}
-      </ScrollView>
+      <FlashList
+        data={rows}
+        keyExtractor={item => item.id}
+        getItemType={item => item.type}
+        contentContainerStyle={styles.allHabits}
+        ListHeaderComponent={
+          <Text style={styles.activeLabel}>
+            ACTIVE ({habits.filter(h => !h.archived).length})
+          </Text>
+        }
+        ItemSeparatorComponent={SmallVerticalListSeparator}
+        renderItem={({ item }) =>
+          item.type === 'section' ? (
+            <Text style={styles.groupTitle}>{item.title}</Text>
+          ) : (
+            <Pressable
+              onPress={() => setSelected(item.habit)}
+              style={styles.historyHabit}
+            >
+              <View style={styles.historyCheck}>
+                <Check color={colors.primary} size={16} />
+              </View>
+              <View style={styles.historyCopy}>
+                <Text style={styles.historyTitle}>{item.habit.title}</Text>
+                <Text style={styles.historyMeta}>
+                  {item.habit.completedDates.length} completions •{' '}
+                  {item.habit.streakCount} day streak
+                </Text>
+              </View>
+              <ChevronRight color={colors.muted} size={20} />
+            </Pressable>
+          )
+        }
+      />
       <Modal
         transparent
         visible={Boolean(selected)}
@@ -274,24 +348,32 @@ function Achievements() {
     (sum, habit) => sum + habit.completedDates.length,
     0,
   );
-  const bestStreak = Math.max(...habits.map(h => h.streakCount), 0);
+  const bestStreak = habits.reduce(
+    (highest, habit) => Math.max(highest, habit.streakCount),
+    0,
+  );
   return (
-    <ScrollView contentContainerStyle={styles.achievements}>
-      <Text style={styles.achievementTitle}>My achievements</Text>
-      {completions === 0 ? (
-        <Text style={styles.noAchievements}>
-          You haven't got any achievements yet.
-        </Text>
-      ) : (
-        <Text style={styles.noAchievements}>
-          Keep going — every check builds momentum.
-        </Text>
-      )}
-      <View style={styles.badgeGrid}>
-        {badgeData.map(({ name, goal, icon: Icon }, index) => {
-          const unlocked = index < 3 ? completions >= goal : bestStreak >= goal;
-          return (
-            <View key={name} style={styles.badgeCard}>
+    <FlashList
+      data={badgeData}
+      numColumns={2}
+      keyExtractor={keyByName}
+      contentContainerStyle={styles.achievements}
+      ListHeaderComponent={
+        <View style={styles.achievementHeader}>
+          <Text style={styles.achievementTitle}>My achievements</Text>
+          <Text style={styles.noAchievements}>
+            {completions === 0
+              ? "You haven't got any achievements yet."
+              : 'Keep going — every check builds momentum.'}
+          </Text>
+        </View>
+      }
+      ItemSeparatorComponent={SmallVerticalListSeparator}
+      renderItem={({ item: { name, goal, icon: Icon }, index }) => {
+        const unlocked = index < 3 ? completions >= goal : bestStreak >= goal;
+        return (
+          <View style={styles.badgeCell}>
+            <View style={styles.badgeCard}>
               <View
                 style={[styles.badgeCircle, unlocked && styles.badgeUnlocked]}
               >
@@ -308,9 +390,9 @@ function Achievements() {
                 {unlocked ? 'UNLOCKED' : 'LOCKED'}
               </Text>
             </View>
-          );
-        })}
-      </View>
-    </ScrollView>
+          </View>
+        );
+      }}
+    />
   );
 }

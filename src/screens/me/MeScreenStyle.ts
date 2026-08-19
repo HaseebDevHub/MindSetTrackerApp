@@ -82,10 +82,11 @@ const styles = StyleSheet.create({
   },
   noticeText: { ...typography.caption, color: colors.textSecondary, flex: 1 },
   choiceRow: {
-    flexDirection: 'row',
-    gap: spacing.small,
+    height: 46,
+    marginHorizontal: -4,
     marginBottom: spacing.small,
   },
+  choiceCell: { flex: 1, paddingHorizontal: 4 },
   choice: {
     flex: 1,
     height: 46,
@@ -112,6 +113,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   languageActive: { backgroundColor: colors.selectedBlue },
+  languageList: { height: 322 },
   languageText: { ...typography.bodyLarge, color: colors.text, flex: 1 },
   languageCheck: {
     width: 24,
@@ -178,7 +180,7 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: spacing.small,
   },
-  benefits: { gap: spacing.large, marginBottom: spacing.xl },
+  benefits: { height: 172, marginBottom: spacing.xl },
   benefit: { flexDirection: 'row', alignItems: 'center', gap: spacing.medium },
   benefitCheck: {
     width: 28,

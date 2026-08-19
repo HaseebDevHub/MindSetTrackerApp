@@ -1,6 +1,15 @@
-import React, { useMemo, useState } from 'react';
-import { Modal, Pressable, ScrollView, Switch, Text, View } from 'react-native';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
+import {
+  FlatList,
+  Modal,
+  Pressable,
+  Switch,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { FlashList } from '@shopify/flash-list';
 import {
   Bell,
   BookOpen,
@@ -9,6 +18,7 @@ import {
   CloudSun,
   Droplets,
   Footprints,
+  ListChecks,
   Moon,
   Pencil,
   Plus,
@@ -19,13 +29,19 @@ import {
 import { AppButton } from '../../components/common/AppButton';
 import { AppHeader } from '../../components/common/AppHeader';
 import { AppInput } from '../../components/common/AppInput';
+import {
+  HorizontalListSeparator,
+  SmallVerticalListSeparator,
+  VerticalListSeparator,
+} from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { HabitCard } from '../../components/habit/HabitCard';
-import { colors } from '../../constants/theme';
+import { colors, spacing } from '../../constants/theme';
 import { useAppStore } from '../../store/useAppStore';
 import type {
   HabitItem,
   TimeOfDay,
+  TodayFilter,
   TodayStackParamList,
 } from '../../types/models';
 import {
@@ -34,19 +50,24 @@ import {
   fromDateKey,
   toDateKey,
 } from '../../utils/dates';
+import { isHabitVisibleForTodayFilter } from '../../utils/habits';
+import { keyById, keyByName, keyByValue } from '../../utils/lists';
 import styles from './TodayScreenStyle';
 
 type Props<T extends keyof TodayStackParamList> = NativeStackScreenProps<
   TodayStackParamList,
   T
 >;
-const filters: { key: TimeOfDay; icon: typeof Sun }[] = [
+const filters: { key: TodayFilter; icon: typeof Sun }[] = [
+  { key: 'ALL', icon: ListChecks },
   { key: 'MORNING', icon: Sun },
   { key: 'AFTERNOON', icon: CloudSun },
   { key: 'EVENING', icon: Moon },
 ];
+const DATE_RANGE_DAYS = 365 * 10;
 
 export function TodayScreen({ navigation }: Props<'TodayHome'>) {
+  const { width } = useWindowDimensions();
   const selectedDate = useAppStore(s => s.selectedDate);
   const setDate = useAppStore(s => s.setSelectedDate);
   const filter = useAppStore(s => s.selectedFilter);
@@ -58,18 +79,102 @@ export function TodayScreen({ navigation }: Props<'TodayHome'>) {
   const [noteHabit, setNoteHabit] = useState<HabitItem>();
   const [note, setNote] = useState('');
   const selected = fromDateKey(selectedDate);
+  const dateRangeCenter = useRef(selectedDate).current;
+  const dateCellWidth = (width - spacing.small * 2) / 7;
   const dates = useMemo(() => {
-    const center = fromDateKey(selectedDate);
-    return Array.from({ length: 7 }, (_, i) => addDays(center, i - 3));
-  }, [selectedDate]);
-  const visible = habits.filter(
-    h => !h.archived && (h.timeOfDay === filter || h.timeOfDay === 'ANYTIME'),
+    const center = fromDateKey(dateRangeCenter);
+    return Array.from({ length: DATE_RANGE_DAYS * 2 + 1 }, (_, index) =>
+      addDays(center, index - DATE_RANGE_DAYS),
+    );
+  }, [dateRangeCenter]);
+  const visible = habits.filter(h =>
+    isHabitVisibleForTodayFilter(h, filter),
   );
   const openNote = (habit: HabitItem) => {
     setMenuHabit(undefined);
     setNoteHabit(habit);
     setNote(habit.note ?? '');
   };
+  const renderDate = useCallback(
+    ({ item: date }: { item: Date }) => {
+      const key = toDateKey(date);
+      const active = key === selectedDate;
+      return (
+        <Pressable
+          accessibilityLabel={date.toDateString()}
+          onPress={() => setDate(key)}
+          style={[
+            styles.dateCell,
+            styles.dateListCell,
+            { width: dateCellWidth },
+            active && styles.dateActive,
+          ]}
+        >
+          <Text style={[styles.dayName, active && styles.activeText]}>
+            {date
+              .toLocaleDateString('en-US', { weekday: 'short' })
+              .toUpperCase()}
+          </Text>
+          <Text style={[styles.dayNumber, active && styles.activeText]}>
+            {date.getDate()}
+          </Text>
+        </Pressable>
+      );
+    },
+    [dateCellWidth, selectedDate, setDate],
+  );
+  const renderFilter = useCallback(
+    ({ item: { key, icon: Icon } }: { item: (typeof filters)[number] }) => {
+      const active = filter === key;
+      return (
+        <Pressable
+          onPress={() => setFilter(key)}
+          style={[styles.filter, active && styles.filterActive]}
+        >
+          <Icon color={active ? colors.text : colors.textSecondary} size={17} />
+          <Text style={[styles.filterText, active && styles.activeText]}>
+            {key}
+          </Text>
+        </Pressable>
+      );
+    },
+    [filter, setFilter],
+  );
+  const renderHabit = useCallback(
+    ({ item: habit }: { item: HabitItem }) => (
+      <HabitCard
+        habit={habit}
+        completed={habit.completedDates.includes(selectedDate)}
+        onToggle={() => toggle(habit.id, selectedDate)}
+        onMenu={() => setMenuHabit(habit)}
+        onPress={() =>
+          navigation.navigate('HabitDetail', { habitId: habit.id })
+        }
+      />
+    ),
+    [navigation, selectedDate, toggle],
+  );
+  const listHeader = (
+    <>
+      <FlashList
+        horizontal
+        data={filters}
+        renderItem={renderFilter}
+        keyExtractor={item => item.key}
+        ItemSeparatorComponent={HorizontalListSeparator}
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterList}
+        contentContainerStyle={styles.filters}
+      />
+      <View style={styles.sectionRow}>
+        <Text style={styles.sectionTitle}>{filter}</Text>
+        <Text style={styles.count}>
+          {visible.filter(h => h.completedDates.includes(selectedDate)).length}/
+          {visible.length} finished
+        </Text>
+      </View>
+    </>
+  );
   return (
     <ScreenContainer padded={false}>
       <View style={styles.headerPad}>
@@ -87,82 +192,29 @@ export function TodayScreen({ navigation }: Props<'TodayHome'>) {
           </Pressable>
         </View>
       </View>
-      <View style={styles.dateStrip}>
-        {dates.map(date => {
-          const key = toDateKey(date);
-          const active = key === selectedDate;
-          return (
-            <Pressable
-              key={key}
-              accessibilityLabel={date.toDateString()}
-              onPress={() => setDate(key)}
-              style={[styles.dateCell, active && styles.dateActive]}
-            >
-              <Text style={[styles.dayName, active && styles.activeText]}>
-                {date
-                  .toLocaleDateString('en-US', { weekday: 'short' })
-                  .toUpperCase()}
-              </Text>
-              <Text style={[styles.dayNumber, active && styles.activeText]}>
-                {date.getDate()}
-              </Text>
-            </Pressable>
-          );
+      <FlatList
+        horizontal
+        data={dates}
+        renderItem={renderDate}
+        keyExtractor={date => toDateKey(date)}
+        extraData={selectedDate}
+        initialScrollIndex={DATE_RANGE_DAYS - 3}
+        getItemLayout={(_, index) => ({
+          length: dateCellWidth,
+          offset: dateCellWidth * index,
+          index,
         })}
-      </View>
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={styles.content}
-      >
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
-        >
-          {filters.map(({ key, icon: Icon }) => {
-            const active = filter === key;
-            return (
-              <Pressable
-                key={key}
-                onPress={() => setFilter(key)}
-                style={[styles.filter, active && styles.filterActive]}
-              >
-                <Icon
-                  color={active ? colors.text : colors.textSecondary}
-                  size={17}
-                />
-                <Text style={[styles.filterText, active && styles.activeText]}>
-                  {key}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>{filter}</Text>
-          <Text style={styles.count}>
-            {
-              visible.filter(h => h.completedDates.includes(selectedDate))
-                .length
-            }
-            /{visible.length} finished
-          </Text>
-        </View>
-        <View style={styles.habitList}>
-          {visible.map(habit => (
-            <HabitCard
-              key={habit.id}
-              habit={habit}
-              completed={habit.completedDates.includes(selectedDate)}
-              onToggle={() => toggle(habit.id, selectedDate)}
-              onMenu={() => setMenuHabit(habit)}
-              onPress={() =>
-                navigation.navigate('HabitDetail', { habitId: habit.id })
-              }
-            />
-          ))}
-        </View>
-        {!visible.length ? (
+        showsHorizontalScrollIndicator={false}
+        style={styles.dateStrip}
+        contentContainerStyle={styles.dateStripContent}
+      />
+      <FlashList
+        data={visible}
+        renderItem={renderHabit}
+        keyExtractor={keyById}
+        ItemSeparatorComponent={VerticalListSeparator}
+        ListHeaderComponent={listHeader}
+        ListEmptyComponent={
           <View style={styles.empty}>
             <Check color={colors.muted} size={38} />
             <Text style={styles.emptyTitle}>A clear schedule</Text>
@@ -170,14 +222,19 @@ export function TodayScreen({ navigation }: Props<'TodayHome'>) {
               No habits match this time of day yet.
             </Text>
           </View>
-        ) : null}
-        <AppButton
-          title="CREATE A NEW HABIT"
-          variant="secondary"
-          onPress={() => navigation.navigate('CreateHabit')}
-          style={styles.create}
-        />
-      </ScrollView>
+        }
+        ListFooterComponent={
+          <AppButton
+            title="CREATE A NEW HABIT"
+            variant="secondary"
+            onPress={() => navigation.navigate('CreateHabit')}
+            style={styles.create}
+          />
+        }
+        style={styles.habitList}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.content}
+      />
       <Modal
         transparent
         visible={Boolean(menuHabit)}
@@ -330,10 +387,12 @@ export function CreateHabitScreen({ navigation, route }: Props<'CreateHabit'>) {
         maxLength={80}
       />
       <Text style={styles.label}>ICON</Text>
-      <View style={styles.iconOptions}>
-        {iconOptions.map(({ name, icon: Icon }) => (
+      <FlashList
+        horizontal
+        data={iconOptions}
+        keyExtractor={keyByName}
+        renderItem={({ item: { name, icon: Icon } }) => (
           <Pressable
-            key={name}
             accessibilityLabel={`${name} icon`}
             onPress={() => setIcon(name)}
             style={[styles.iconOption, iconName === name && styles.iconActive]}
@@ -343,22 +402,34 @@ export function CreateHabitScreen({ navigation, route }: Props<'CreateHabit'>) {
               size={23}
             />
           </Pressable>
-        ))}
-      </View>
+        )}
+        ItemSeparatorComponent={SmallVerticalListSeparator}
+        showsHorizontalScrollIndicator={false}
+        style={styles.iconOptions}
+      />
       <Text style={styles.label}>TIME OF DAY</Text>
-      <View style={styles.timeGrid}>
-        {timeOptions.map(item => (
-          <Pressable
-            key={item}
-            onPress={() => setTime(item)}
-            style={[styles.timeOption, time === item && styles.timeActive]}
-          >
-            <Text style={[styles.timeText, time === item && styles.activeText]}>
-              {item}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
+      <FlashList
+        data={timeOptions}
+        numColumns={2}
+        keyExtractor={keyByValue}
+        renderItem={({ item }) => (
+          <View style={styles.timeOptionCell}>
+            <Pressable
+              onPress={() => setTime(item)}
+              style={[styles.timeOption, time === item && styles.timeActive]}
+            >
+              <Text
+                style={[styles.timeText, time === item && styles.activeText]}
+              >
+                {item}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+        ItemSeparatorComponent={HorizontalListSeparator}
+        scrollEnabled={false}
+        style={styles.timeGrid}
+      />
       <View style={styles.reminder}>
         <View style={styles.reminderIcon}>
           <Bell color={colors.primary} size={21} />

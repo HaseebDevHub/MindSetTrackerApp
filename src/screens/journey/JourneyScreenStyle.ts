@@ -10,7 +10,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   pageTitle: { ...typography.headingL, color: colors.text, letterSpacing: 1.3 },
-  page: { paddingBottom: 110 },
+  page: { flex: 1 },
   section: {
     ...typography.caption,
     color: colors.textSecondary,
@@ -19,7 +19,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.screen,
     marginBottom: spacing.medium,
   },
-  carousel: { gap: spacing.medium, paddingHorizontal: spacing.screen },
+  recommendedSection: { marginHorizontal: -spacing.screen },
+  carouselList: { height: 190 },
+  carousel: { paddingHorizontal: spacing.screen },
   art: {
     width: 285,
     height: 190,
@@ -69,7 +71,7 @@ const styles = StyleSheet.create({
   },
   exploreText: { ...typography.caption, color: colors.text, fontWeight: '700' },
   allTitle: { marginTop: spacing.xl },
-  list: { paddingHorizontal: spacing.screen, gap: spacing.medium },
+  list: { paddingHorizontal: spacing.screen, paddingBottom: 110 },
   detailPage: { paddingBottom: 40 },
   detailPageArt: {},
   detailTitle: {
@@ -89,6 +91,13 @@ const styles = StyleSheet.create({
     marginVertical: spacing.xl,
   },
   habits: { gap: spacing.small, marginBottom: spacing.xl },
+  detailSection: {
+    ...typography.caption,
+    color: colors.textSecondary,
+    fontWeight: '700',
+    letterSpacing: 1.1,
+    marginBottom: spacing.medium,
+  },
   habit: {
     minHeight: 58,
     borderRadius: radii.button,
@@ -118,6 +127,7 @@ const styles = StyleSheet.create({
     padding: spacing.large,
     borderRadius: radii.card,
     backgroundColor: colors.surfaceSecondary,
+    marginTop: spacing.xl,
   },
   infoText: { ...typography.caption, color: colors.textSecondary, flex: 1 },
   start: { marginTop: spacing.xl },

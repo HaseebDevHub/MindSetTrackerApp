@@ -10,12 +10,14 @@ const styles = StyleSheet.create({
   pageTitle: { ...typography.headingL, color: colors.text, letterSpacing: 1.3 },
   tabs: {
     height: 48,
-    flexDirection: 'row',
+    flexGrow: 0,
+    flexShrink: 0,
     borderBottomWidth: 1,
     borderBottomColor: colors.divider,
   },
   tab: {
-    flex: 1,
+    width: '100%',
+    height: 48,
     alignItems: 'center',
     justifyContent: 'center',
     borderBottomWidth: 3,
@@ -29,7 +31,8 @@ const styles = StyleSheet.create({
   },
   activeTabText: { color: colors.text },
   scroll: { paddingBottom: 120 },
-  metricRow: { padding: spacing.screen, gap: spacing.medium },
+  metricList: { height: 186 },
+  metricRow: { padding: spacing.screen },
   metric: {
     width: 190,
     height: 146,
@@ -60,7 +63,7 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
   },
   month: { ...typography.bodyLarge, color: colors.text },
-  week: { flexDirection: 'row', marginTop: spacing.small },
+  week: { height: 24, marginTop: spacing.small },
   weekLabel: {
     ...typography.caption,
     color: colors.muted,
@@ -100,12 +103,14 @@ const styles = StyleSheet.create({
     color: colors.primary,
     fontWeight: '700',
     letterSpacing: 1,
+    marginBottom: spacing.medium,
   },
   habitGroup: { marginTop: spacing.xl, gap: spacing.small },
   groupTitle: {
     ...typography.caption,
     color: colors.textSecondary,
     fontWeight: '700',
+    marginTop: spacing.medium,
   },
   historyHabit: {
     minHeight: 68,
@@ -168,6 +173,7 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   achievements: { padding: spacing.screen, paddingBottom: 120 },
+  achievementHeader: { marginBottom: spacing.xl },
   achievementTitle: { ...typography.headingM, color: colors.text },
   noAchievements: {
     ...typography.body,
@@ -182,13 +188,14 @@ const styles = StyleSheet.create({
     marginTop: spacing.xl,
   },
   badgeCard: {
-    width: '48%',
+    width: '100%',
     minHeight: 180,
     padding: spacing.large,
     borderRadius: radii.card,
     backgroundColor: colors.surface,
     alignItems: 'center',
   },
+  badgeCell: { flex: 1, paddingHorizontal: 6 },
   badgeCircle: {
     width: 68,
     height: 68,
