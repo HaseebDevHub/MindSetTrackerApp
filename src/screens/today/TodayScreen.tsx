@@ -1,15 +1,24 @@
-import React, { useCallback, useMemo, useRef, useState } from 'react';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
+  Animated,
   FlatList,
   Pressable,
   Text,
   View,
   useWindowDimensions,
+  type ViewToken,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import {
   Check,
+  ChevronLeft,
   CloudSun,
   ListChecks,
   Moon,
@@ -65,8 +74,19 @@ export function TodayScreen({ navigation }: Props) {
   const [menuHabit, setMenuHabit] = useState<HabitItem>();
   const [noteHabit, setNoteHabit] = useState<HabitItem>();
   const [note, setNote] = useState('');
+  const todayDate = useRef(toDateKey(new Date())).current;
+  const dateListRef = useRef<FlatList<Date>>(null);
+  const todayDateRef = useRef(todayDate);
+  const returnAnimationTimeout = useRef<
+    ReturnType<typeof setTimeout> | undefined
+  >(undefined);
+  const isReturningToTodayRef = useRef(false);
+  const [isTodayInViewport, setIsTodayInViewport] = useState(
+    selectedDate === todayDate,
+  );
+  const [isReturningToToday, setIsReturningToToday] = useState(false);
   const selected = fromDateKey(selectedDate);
-  const dateRangeCenter = useRef(selectedDate).current;
+  const dateRangeCenter = useRef(todayDate).current;
   const dateCellWidth = (width - spacing.small * 2) / 7;
   const dates = useMemo(() => {
     const center = fromDateKey(dateRangeCenter);
@@ -74,7 +94,85 @@ export function TodayScreen({ navigation }: Props) {
       addDays(center, index - DATE_RANGE_DAYS),
     );
   }, [dateRangeCenter]);
+  const todayIndex = DATE_RANGE_DAYS;
+  const initialScrollIndex = useRef(
+    Math.max(
+      0,
+      dates.findIndex(date => toDateKey(date) === selectedDate) - 3,
+    ),
+  ).current;
+  const isTodayButtonVisible =
+    isReturningToToday ||
+    selectedDate !== todayDate ||
+    !isTodayInViewport;
+  const todayButtonProgress = useRef(
+    new Animated.Value(isTodayButtonVisible ? 1 : 0),
+  ).current;
   const visible = habits.filter(h => isHabitVisibleForTodayFilter(h, filter));
+
+  useEffect(() => {
+    const animation = Animated.timing(todayButtonProgress, {
+      toValue: isTodayButtonVisible ? 1 : 0,
+      duration: 180,
+      useNativeDriver: true,
+    });
+    animation.start();
+
+    return () => animation.stop();
+  }, [isTodayButtonVisible, todayButtonProgress]);
+
+  useEffect(
+    () => () => {
+      if (returnAnimationTimeout.current) {
+        clearTimeout(returnAnimationTimeout.current);
+      }
+    },
+    [],
+  );
+
+  const onViewableDatesChanged = useRef(
+    ({ viewableItems }: { viewableItems: ViewToken<Date>[] }) => {
+      const todayIsVisible = viewableItems.some(
+        ({ item }) => item != null && toDateKey(item) === todayDateRef.current,
+      );
+      setIsTodayInViewport(current =>
+        current === todayIsVisible ? current : todayIsVisible,
+      );
+    },
+  ).current;
+  const dateViewabilityConfig = useRef({
+    itemVisiblePercentThreshold: 1,
+  }).current;
+
+  const finishReturningToToday = useCallback(() => {
+    if (!isReturningToTodayRef.current) {
+      return;
+    }
+
+    isReturningToTodayRef.current = false;
+    setIsReturningToToday(false);
+    if (returnAnimationTimeout.current) {
+      clearTimeout(returnAnimationTimeout.current);
+      returnAnimationTimeout.current = undefined;
+    }
+  }, []);
+
+  const returnToToday = useCallback(() => {
+    isReturningToTodayRef.current = true;
+    setIsReturningToToday(true);
+    setDate(todayDate);
+    dateListRef.current?.scrollToIndex({
+      animated: true,
+      index: todayIndex,
+      viewPosition: 0.5,
+    });
+
+    // Some platforms do not emit a momentum event for very short scrolls.
+    returnAnimationTimeout.current = setTimeout(
+      finishReturningToToday,
+      500,
+    );
+  }, [finishReturningToToday, setDate, todayDate, todayIndex]);
 
   const renderDate = useCallback(
     ({ item: date }: { item: Date }) => {
@@ -164,7 +262,13 @@ export function TodayScreen({ navigation }: Props) {
       <View style={styles.headerPad}>
         <View style={styles.todayTop}>
           <View>
-            <Text style={styles.eyebrow}>TODAY</Text>
+            <Text style={styles.eyebrow}>
+              {selectedDate === todayDate
+                ? 'TODAY'
+                : selected
+                    .toLocaleDateString('en-US', { weekday: 'long' })
+                    .toUpperCase()}
+            </Text>
             <Text style={styles.dateTitle}>{formatShortDate(selected)}</Text>
           </View>
           <Pressable
@@ -177,18 +281,23 @@ export function TodayScreen({ navigation }: Props) {
         </View>
       </View>
       <FlatList
+        ref={dateListRef}
         horizontal
         data={dates}
         renderItem={renderDate}
         keyExtractor={date => toDateKey(date)}
         extraData={selectedDate}
-        initialScrollIndex={DATE_RANGE_DAYS - 3}
+        initialScrollIndex={initialScrollIndex}
         getItemLayout={(_, index) => ({
           length: dateCellWidth,
           offset: dateCellWidth * index,
           index,
         })}
         showsHorizontalScrollIndicator={false}
+        onViewableItemsChanged={onViewableDatesChanged}
+        viewabilityConfig={dateViewabilityConfig}
+        onMomentumScrollEnd={finishReturningToToday}
+        onScrollAnimationEnd={finishReturningToToday}
         style={styles.dateStrip}
         contentContainerStyle={styles.dateStripContent}
       />
@@ -219,6 +328,40 @@ export function TodayScreen({ navigation }: Props) {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={styles.content}
       />
+      <Animated.View
+        accessibilityElementsHidden={!isTodayButtonVisible}
+        importantForAccessibility={
+          isTodayButtonVisible ? 'auto' : 'no-hide-descendants'
+        }
+        pointerEvents={isTodayButtonVisible ? 'auto' : 'none'}
+        style={[
+          styles.todayButtonContainer,
+          {
+            opacity: todayButtonProgress,
+            transform: [
+              {
+                scale: todayButtonProgress.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0.9, 1],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <Pressable
+          accessibilityLabel="Return to today"
+          accessibilityRole="button"
+          onPress={returnToToday}
+          style={({ pressed }) => [
+            styles.todayButton,
+            pressed && styles.todayButtonPressed,
+          ]}
+        >
+          <ChevronLeft color={colors.onPrimary} size={18} strokeWidth={2.5} />
+          <Text style={styles.todayButtonText}>Today</Text>
+        </Pressable>
+      </Animated.View>
       <HabitActionModals
         menuHabit={menuHabit}
         noteHabit={noteHabit}
