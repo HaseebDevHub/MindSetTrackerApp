@@ -10,6 +10,7 @@ export interface HabitItem {
   iconName: string;
   note?: string;
   reminderEnabled?: boolean;
+  reminderTime?: string;
   archived?: boolean;
 }
 

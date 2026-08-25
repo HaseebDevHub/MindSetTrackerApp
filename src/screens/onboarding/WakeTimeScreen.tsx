@@ -1,5 +1,5 @@
 import React from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Alert, Pressable, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppButton } from '../../components/common/AppButton';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
@@ -15,6 +15,15 @@ export function WakeTimeScreen({ navigation }: Props) {
   const styles = useStyles();
   const value = useAppStore(s => s.wakeTime);
   const setValue = useAppStore(s => s.setWakeTime);
+  const save = useAppStore(s => s.saveWakeTime);
+  const next = () => {
+    if (save()) navigation.navigate('BedTime');
+    else
+      Alert.alert(
+        'Unable to save',
+        'Please check the selected time and try again.',
+      );
+  };
   return (
     <ScreenContainer>
       <OnboardingTitle
@@ -24,7 +33,7 @@ export function WakeTimeScreen({ navigation }: Props) {
       />
       <TimeWheelPicker value={value} onChange={setValue} />
       <View style={styles.spacer} />
-      <AppButton title="NEXT" onPress={() => navigation.navigate('BedTime')} />
+      <AppButton title="NEXT" onPress={next} />
       <Text style={styles.existing}>Already using Mindset Tracker?</Text>
       <Pressable accessibilityRole="button" onPress={() => {}}>
         <Text style={styles.restore}>Restore existing data</Text>

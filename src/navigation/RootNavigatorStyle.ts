@@ -1,5 +1,5 @@
 import { StyleSheet } from 'react-native';
-import { typography, type ThemeColors } from '../constants/theme';
+import { spacing, typography, type ThemeColors } from '../constants/theme';
 import { useThemedStyles } from '../hooks/useThemedStyles';
 
 const createStyles = (colors: ThemeColors) =>
@@ -8,9 +8,15 @@ const createStyles = (colors: ThemeColors) =>
       height: 66,
       paddingTop: 7,
       paddingBottom: 7,
+      paddingHorizontal: spacing.small,
       backgroundColor: colors.tabBar,
-      borderTopColor: colors.divider,
+      borderTopWidth: 0,
+      borderTopLeftRadius: 24,
+      borderTopRightRadius: 24,
+      shadowOpacity: 0,
+      elevation: 0,
     },
+    tabItem: { paddingVertical: 2 },
     tabLabel: {
       ...typography.caption,
       fontSize: 10,

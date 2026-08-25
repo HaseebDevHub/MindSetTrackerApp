@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import Animated, {
   interpolateColor,
@@ -6,21 +6,18 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import {
-  BookOpen,
-  Brain,
-  Check,
-  Droplets,
-  Footprints,
-  MoreHorizontal,
-  Moon,
-  Sparkles,
-} from 'lucide-react-native';
+import { Check, MoreHorizontal } from 'lucide-react-native';
+import { getHabitIcon } from '../../constants/habitIcons';
 import { useTheme } from '../../context/ThemeContext';
 import type { HabitItem } from '../../types/models';
 import useStyles from './HabitCardStyle';
 
-const iconMap = { Droplets, Footprints, BookOpen, Brain, Moon, Sparkles };
+export type HabitMenuAnchor = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+};
 
 export function HabitCard({
   habit,
@@ -32,11 +29,12 @@ export function HabitCard({
   habit: HabitItem;
   completed: boolean;
   onToggle: () => void;
-  onMenu: () => void;
+  onMenu: (anchor: HabitMenuAnchor) => void;
   onPress?: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const menuButtonRef = useRef<View>(null);
   const progress = useSharedValue(completed ? 1 : 0);
   useEffect(() => {
     progress.value = withSpring(completed ? 1 : 0, {
@@ -48,7 +46,7 @@ export function HabitCard({
     backgroundColor: interpolateColor(
       progress.value,
       [0, 1],
-      [colors.selectedBlue, colors.darkBlue],
+      [colors.selectedBlue, colors.surfaceSecondary],
     ),
     transform: [{ scale: 1 - progress.value * 0.01 }],
   }));
@@ -56,7 +54,12 @@ export function HabitCard({
     transform: [{ scale: progress.value }],
     opacity: progress.value,
   }));
-  const Icon = iconMap[habit.iconName as keyof typeof iconMap] ?? Sparkles;
+  const openMenu = () => {
+    menuButtonRef.current?.measureInWindow((x, y, width, height) => {
+      onMenu({ x, y, width, height });
+    });
+  };
+  const Icon = getHabitIcon(habit.iconName);
   return (
     <Animated.View style={[styles.card, animated]}>
       <Pressable
@@ -95,9 +98,10 @@ export function HabitCard({
         )}
       </Pressable>
       <Pressable
+        ref={menuButtonRef}
         accessibilityLabel={`Options for ${habit.title}`}
         hitSlop={10}
-        onPress={onMenu}
+        onPress={openMenu}
         style={styles.menu}
       >
         <MoreHorizontal color={colors.onPrimary} size={24} />

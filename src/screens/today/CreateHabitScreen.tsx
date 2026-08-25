@@ -2,36 +2,26 @@ import React, { useState } from 'react';
 import { Pressable, Switch, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
-import {
-  Bell,
-  BookOpen,
-  Brain,
-  Droplets,
-  Footprints,
-  Moon,
-} from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import { AppButton } from '../../components/common/AppButton';
 import { AppHeader } from '../../components/common/AppHeader';
 import { AppInput } from '../../components/common/AppInput';
+import { ReminderTimeModal } from '../../components/common/ReminderTimeModal';
 import {
   HorizontalListSeparator,
   SmallVerticalListSeparator,
 } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
+import { DEFAULT_HABIT_ICON_ID, HABIT_ICONS } from '../../constants/habitIcons';
 import { useTheme } from '../../context/ThemeContext';
+import { reminderSettingsStorage } from '../../storage/reminderSettingsStorage';
 import { useAppStore } from '../../store/useAppStore';
 import type { TimeOfDay, TodayStackParamList } from '../../types/models';
-import { keyByName, keyByValue } from '../../utils/lists';
+import { keyByValue } from '../../utils/lists';
+import { formatLocalTime } from '../../utils/time';
 import useStyles from './TodayScreenStyle';
 
 type Props = NativeStackScreenProps<TodayStackParamList, 'CreateHabit'>;
-const iconOptions = [
-  { name: 'Droplets', icon: Droplets },
-  { name: 'Footprints', icon: Footprints },
-  { name: 'BookOpen', icon: BookOpen },
-  { name: 'Brain', icon: Brain },
-  { name: 'Moon', icon: Moon },
-];
 const timeOptions: TimeOfDay[] = ['MORNING', 'AFTERNOON', 'EVENING', 'ANYTIME'];
 
 export function CreateHabitScreen({ navigation, route }: Props) {
@@ -42,9 +32,15 @@ export function CreateHabitScreen({ navigation, route }: Props) {
   const update = useAppStore(s => s.updateHabit);
   const existing = habits.find(h => h.id === route.params?.habitId);
   const [title, setTitle] = useState(existing?.title ?? '');
-  const [iconName, setIcon] = useState(existing?.iconName ?? 'Droplets');
+  const [iconName, setIcon] = useState(
+    existing?.iconName ?? DEFAULT_HABIT_ICON_ID,
+  );
   const [time, setTime] = useState<TimeOfDay>(existing?.timeOfDay ?? 'MORNING');
   const [reminder, setReminder] = useState(existing?.reminderEnabled ?? false);
+  const [reminderTime, setReminderTime] = useState(
+    () => existing?.reminderTime ?? reminderSettingsStorage.getWakeUpDefault(),
+  );
+  const [timeEditorVisible, setTimeEditorVisible] = useState(false);
   const save = () => {
     if (!title.trim()) return;
     const values = {
@@ -52,6 +48,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       iconName,
       timeOfDay: time,
       reminderEnabled: reminder,
+      reminderTime,
     };
     if (existing) update(existing.id, values);
     else add(values);
@@ -79,18 +76,18 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       <Text style={styles.label}>ICON</Text>
       <FlashList
         horizontal
-        data={iconOptions}
-        keyExtractor={keyByName}
-        renderItem={({ item: { name, icon: Icon } }) => (
+        data={HABIT_ICONS}
+        keyExtractor={({ id }) => id}
+        renderItem={({ item: { id, label, icon: Icon } }) => (
           <Pressable
-            accessibilityLabel={`${name} icon`}
-            onPress={() => setIcon(name)}
-            style={[styles.iconOption, iconName === name && styles.iconActive]}
+            accessibilityRole="radio"
+            accessibilityLabel={`${label} icon`}
+            accessibilityState={{ selected: iconName === id }}
+            onPress={() => setIcon(id)}
+            style={[styles.iconOption, iconName === id && styles.iconActive]}
           >
             <Icon
-              color={
-                iconName === name ? colors.onPrimary : colors.textSecondary
-              }
+              color={iconName === id ? colors.onPrimary : colors.textSecondary}
               size={23}
             />
           </Pressable>
@@ -126,16 +123,29 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         style={styles.timeGrid}
       />
       <View style={styles.reminder}>
-        <View style={styles.reminderIcon}>
-          <Bell color={colors.primary} size={21} />
-        </View>
-        <View style={styles.reminderCopy}>
-          <Text style={styles.reminderTitle}>Habit reminder</Text>
-          <Text style={styles.reminderHint}>
-            Local preference only • 8:00 AM
-          </Text>
-        </View>
+        <Pressable
+          accessibilityRole="button"
+          accessibilityLabel={`Edit habit reminder time, currently ${formatLocalTime(
+            reminderTime,
+          )}`}
+          onPress={() => setTimeEditorVisible(true)}
+          style={({ pressed }) => [
+            styles.reminderBody,
+            pressed && styles.reminderPressed,
+          ]}
+        >
+          <View style={styles.reminderIcon}>
+            <Bell color={colors.primary} size={21} />
+          </View>
+          <View style={styles.reminderCopy}>
+            <Text style={styles.reminderTitle}>Habit reminder</Text>
+            <Text style={styles.reminderHint}>
+              Local preference only • {formatLocalTime(reminderTime)}
+            </Text>
+          </View>
+        </Pressable>
         <Switch
+          accessibilityLabel="Enable habit reminder"
           value={reminder}
           onValueChange={setReminder}
           trackColor={{ false: colors.muted, true: colors.primary }}
@@ -150,6 +160,16 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         disabled={!title.trim()}
         onPress={save}
         style={styles.save}
+      />
+      <ReminderTimeModal
+        visible={timeEditorVisible}
+        title="Set habit reminder"
+        value={reminderTime}
+        onCancel={() => setTimeEditorVisible(false)}
+        onSave={value => {
+          setReminderTime(value);
+          setTimeEditorVisible(false);
+        }}
       />
     </ScreenContainer>
   );

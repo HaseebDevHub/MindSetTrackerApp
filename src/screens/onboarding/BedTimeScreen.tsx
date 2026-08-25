@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { AppButton } from '../../components/common/AppButton';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
@@ -15,6 +15,15 @@ export function BedTimeScreen({ navigation }: Props) {
   const styles = useStyles();
   const value = useAppStore(s => s.endTime);
   const setValue = useAppStore(s => s.setEndTime);
+  const save = useAppStore(s => s.saveEndTime);
+  const next = () => {
+    if (save()) navigation.navigate('Goals');
+    else
+      Alert.alert(
+        'Unable to save',
+        'Please check the selected time and try again.',
+      );
+  };
   return (
     <ScreenContainer>
       <OnboardingTitle
@@ -25,7 +34,7 @@ export function BedTimeScreen({ navigation }: Props) {
       />
       <TimeWheelPicker value={value} onChange={setValue} />
       <View style={styles.spacer} />
-      <AppButton title="NEXT" onPress={() => navigation.navigate('Goals')} />
+      <AppButton title="NEXT" onPress={next} />
     </ScreenContainer>
   );
 }

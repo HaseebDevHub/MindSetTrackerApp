@@ -10,12 +10,14 @@ export function SettingRow({
   subtitle,
   onPress,
   right,
+  showDisclosureIndicator = true,
 }: {
   icon: LucideIcon;
   title: string;
   subtitle?: string;
   onPress?: () => void;
   right?: React.ReactNode;
+  showDisclosureIndicator?: boolean;
 }) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -34,7 +36,9 @@ export function SettingRow({
         {subtitle ? <Text style={styles.subtitle}>{subtitle}</Text> : null}
       </View>
       {right ??
-        (onPress ? <ChevronRight color={colors.muted} size={20} /> : null)}
+        (onPress && showDisclosureIndicator ? (
+          <ChevronRight color={colors.muted} size={20} />
+        ) : null)}
     </Pressable>
   );
 }

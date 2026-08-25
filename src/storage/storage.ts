@@ -49,7 +49,10 @@ export const storage = {
   },
 
   setString<Key extends StringStorageKey>(key: Key, value: StorageSchema[Key]) {
-    execute('setString', undefined, instance => instance.set(key, value));
+    return execute('setString', false, instance => {
+      instance.set(key, value);
+      return true;
+    });
   },
 
   getBoolean<Key extends BooleanStorageKey>(key: Key): boolean | undefined {
@@ -59,7 +62,10 @@ export const storage = {
   },
 
   setBoolean<Key extends BooleanStorageKey>(key: Key, value: boolean) {
-    execute('setBoolean', undefined, instance => instance.set(key, value));
+    return execute('setBoolean', false, instance => {
+      instance.set(key, value);
+      return true;
+    });
   },
 
   getNumber<Key extends NumberStorageKey>(key: Key): number | undefined {
@@ -67,7 +73,10 @@ export const storage = {
   },
 
   setNumber<Key extends NumberStorageKey>(key: Key, value: number) {
-    execute('setNumber', undefined, instance => instance.set(key, value));
+    return execute('setNumber', false, instance => {
+      instance.set(key, value);
+      return true;
+    });
   },
 
   remove(key: StorageKey) {

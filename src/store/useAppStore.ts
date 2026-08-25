@@ -1,6 +1,9 @@
 import { create } from 'zustand';
+import { onboardingStorage } from '../storage/onboardingStorage';
 import type { HabitItem, TodayFilter } from '../types/models';
+import type { OnboardingTarget } from '../types/onboarding';
 import { addDays, toDateKey } from '../utils/dates';
+import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 
 const today = new Date();
 const initialHabits: HabitItem[] = [
@@ -49,7 +52,7 @@ const initialHabits: HabitItem[] = [
 interface AppState {
   wakeTime: string;
   endTime: string;
-  targets: string[];
+  targets: OnboardingTarget[];
   firstHabit?: string;
   onboardingComplete: boolean;
   isPremium: boolean;
@@ -58,9 +61,13 @@ interface AppState {
   habits: HabitItem[];
   setWakeTime: (value: string) => void;
   setEndTime: (value: string) => void;
-  toggleTarget: (value: string) => void;
+  toggleTarget: (value: OnboardingTarget) => void;
   setFirstHabit: (value?: string) => void;
-  finishOnboarding: () => void;
+  saveWakeTime: () => boolean;
+  saveEndTime: () => boolean;
+  saveTargets: () => boolean;
+  saveFirstHabit: (title?: string) => boolean;
+  finishOnboarding: () => boolean;
   setPremium: (value: boolean) => void;
   setSelectedDate: (value: string) => void;
   setSelectedFilter: (value: TodayFilter) => void;
@@ -71,15 +78,27 @@ interface AppState {
   updateHabit: (id: string, updates: Partial<HabitItem>) => void;
 }
 
-export const useAppStore = create<AppState>(set => ({
-  wakeTime: '08:00',
-  endTime: '22:00',
-  targets: [],
-  onboardingComplete: false,
+const onboardingDraft = onboardingStorage.getDraft();
+const storedFirstHabit = onboardingDraft.firstHabit;
+const initialStoredHabits =
+  onboardingStorage.isCompleted() &&
+  storedFirstHabit &&
+  !initialHabits.some(
+    habit => habit.title.toLowerCase() === storedFirstHabit.title.toLowerCase(),
+  )
+    ? [...initialHabits, storedFirstHabit]
+    : initialHabits;
+
+export const useAppStore = create<AppState>((set, get) => ({
+  wakeTime: onboardingDraft.wakeUpTime ?? DEFAULT_WAKE_UP_TIME,
+  endTime: onboardingDraft.dayEndTime ?? '22:00',
+  targets: onboardingDraft.targets ?? [],
+  firstHabit: storedFirstHabit?.title,
+  onboardingComplete: onboardingStorage.isCompleted(),
   isPremium: false,
   selectedDate: toDateKey(today),
   selectedFilter: 'MORNING',
-  habits: initialHabits,
+  habits: initialStoredHabits,
   setWakeTime: wakeTime => set({ wakeTime }),
   setEndTime: endTime => set({ endTime }),
   toggleTarget: target =>
@@ -89,32 +108,51 @@ export const useAppStore = create<AppState>(set => ({
         : [...state.targets, target],
     })),
   setFirstHabit: firstHabit => set({ firstHabit }),
-  finishOnboarding: () =>
-    set(state => {
-      const title = state.firstHabit?.trim();
-      const exists = title
-        ? state.habits.some(
-            habit => habit.title.toLowerCase() === title.toLowerCase(),
-          )
-        : true;
-      return {
-        onboardingComplete: true,
-        habits:
-          title && !exists
-            ? [
-                ...state.habits,
-                {
-                  id: `habit-${Date.now()}`,
-                  title,
-                  timeOfDay: 'MORNING',
-                  completedDates: [],
-                  streakCount: 0,
-                  iconName: 'Sparkles',
-                },
-              ]
-            : state.habits,
-      };
-    }),
+  saveWakeTime: () => onboardingStorage.setWakeUpTime(get().wakeTime),
+  saveEndTime: () => onboardingStorage.setDayEndTime(get().endTime),
+  saveTargets: () => onboardingStorage.setTargets(get().targets),
+  saveFirstHabit: candidate => {
+    const title = candidate?.trim() ?? get().firstHabit?.trim();
+    if (!title) return false;
+    set({ firstHabit: title });
+
+    const existing = onboardingStorage.getFirstHabit();
+    const baseHabit: HabitItem =
+      existing?.title === title
+        ? existing
+        : {
+            id: `onboarding-habit-${Date.now()}`,
+            title,
+            timeOfDay: 'MORNING',
+            completedDates: [],
+            streakCount: 0,
+            iconName: 'Sparkles',
+          };
+    const habit: HabitItem = {
+      ...baseHabit,
+      reminderEnabled: baseHabit.reminderEnabled ?? false,
+      reminderTime: baseHabit.reminderTime ?? get().wakeTime,
+    };
+    return onboardingStorage.setFirstHabit(habit);
+  },
+  finishOnboarding: () => {
+    if (!onboardingStorage.complete()) return false;
+
+    const firstHabit = onboardingStorage.getFirstHabit();
+    set(state => ({
+      onboardingComplete: true,
+      habits:
+        firstHabit &&
+        !state.habits.some(
+          habit =>
+            habit.id === firstHabit.id ||
+            habit.title.toLowerCase() === firstHabit.title.toLowerCase(),
+        )
+          ? [...state.habits, firstHabit]
+          : state.habits,
+    }));
+    return true;
+  },
   setPremium: isPremium => set({ isPremium }),
   setSelectedDate: selectedDate => set({ selectedDate }),
   setSelectedFilter: selectedFilter => set({ selectedFilter }),

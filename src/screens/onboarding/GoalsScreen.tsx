@@ -1,5 +1,5 @@
 import React from 'react';
-import { View } from 'react-native';
+import { Alert, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -15,6 +15,7 @@ import { VerticalListSeparator } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingStackParamList } from '../../types/models';
+import { ONBOARDING_TARGETS } from '../../types/onboarding';
 import { keyByTitle } from '../../utils/lists';
 import { GoalCard } from './components/GoalCard';
 import { OnboardingTitle } from './components/OnboardingTitle';
@@ -22,18 +23,27 @@ import useStyles from './OnboardingScreenStyle';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'Goals'>;
 const goals = [
-  { title: 'Live healthier', icon: Apple },
-  { title: 'Relieve pressure', icon: Waves },
-  { title: 'Try new things', icon: Lightbulb },
-  { title: 'Be more focused', icon: Target },
-  { title: 'Better relationship', icon: HeartHandshake },
-  { title: 'Sleep better', icon: Moon },
+  { title: ONBOARDING_TARGETS[0], icon: Apple },
+  { title: ONBOARDING_TARGETS[1], icon: Waves },
+  { title: ONBOARDING_TARGETS[2], icon: Lightbulb },
+  { title: ONBOARDING_TARGETS[3], icon: Target },
+  { title: ONBOARDING_TARGETS[4], icon: HeartHandshake },
+  { title: ONBOARDING_TARGETS[5], icon: Moon },
 ];
 
 export function GoalsScreen({ navigation }: Props) {
   const styles = useStyles();
   const selected = useAppStore(s => s.targets);
   const toggle = useAppStore(s => s.toggleTarget);
+  const save = useAppStore(s => s.saveTargets);
+  const next = () => {
+    if (save()) navigation.navigate('FirstHabit');
+    else
+      Alert.alert(
+        'Choose a target',
+        'Select at least one daily target to continue.',
+      );
+  };
   return (
     <ScreenContainer>
       <OnboardingTitle
@@ -64,7 +74,8 @@ export function GoalsScreen({ navigation }: Props) {
       <View style={styles.spacer} />
       <AppButton
         title="NEXT"
-        onPress={() => navigation.navigate('FirstHabit')}
+        disabled={selected.length === 0}
+        onPress={next}
       />
     </ScreenContainer>
   );

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Pressable, Text, TextInput, View } from 'react-native';
+import { Alert, Pressable, Text, TextInput, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import {
@@ -34,13 +34,22 @@ export function FirstHabitScreen({ navigation }: Props) {
   const styles = useStyles();
   const stored = useAppStore(s => s.firstHabit);
   const setStored = useAppStore(s => s.setFirstHabit);
+  const save = useAppStore(s => s.saveFirstHabit);
   const [custom, setCustom] = useState(
     stored && !presets.some(p => p.title === stored) ? stored : '',
   );
   const chooseCustom = () => {
     if (custom.trim()) setStored(custom.trim());
   };
-  const next = () => navigation.navigate('PlanGenerator');
+  const candidate = custom.trim() || stored;
+  const next = () => {
+    if (save(candidate)) navigation.navigate('PlanGenerator');
+    else
+      Alert.alert(
+        'Choose a habit',
+        'Select a suggested habit or enter your own to continue.',
+      );
+  };
   return (
     <ScreenContainer scroll keyboard>
       <OnboardingTitle
@@ -111,17 +120,9 @@ export function FirstHabitScreen({ navigation }: Props) {
       </View>
       <View style={styles.firstActions}>
         <AppButton
-          title="SKIP"
-          variant="ghost"
-          onPress={next}
-          style={styles.flexButton}
-        />
-        <AppButton
           title="NEXT"
-          onPress={() => {
-            chooseCustom();
-            next();
-          }}
+          disabled={!candidate}
+          onPress={next}
           style={styles.flexButton}
         />
       </View>

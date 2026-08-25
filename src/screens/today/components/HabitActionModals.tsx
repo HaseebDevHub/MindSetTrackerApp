@@ -1,14 +1,24 @@
-import React from 'react';
-import { Modal, Pressable, Text, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  Modal,
+  Pressable,
+  Text,
+  View,
+  useWindowDimensions,
+} from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BookOpen, Pencil, Undo2, X } from 'lucide-react-native';
 import { AppButton } from '../../../components/common/AppButton';
 import { AppInput } from '../../../components/common/AppInput';
+import type { HabitMenuAnchor } from '../../../components/habit/HabitCard';
+import { spacing } from '../../../constants/theme';
 import { useTheme } from '../../../context/ThemeContext';
 import type { HabitItem } from '../../../types/models';
 import useStyles from '../TodayScreenStyle';
 
 type Props = {
   menuHabit?: HabitItem;
+  menuAnchor?: HabitMenuAnchor;
   noteHabit?: HabitItem;
   note: string;
   selectedDate: string;
@@ -20,6 +30,10 @@ type Props = {
   onSetNote: (note: string) => void;
   onUndo: (habit: HabitItem) => void;
 };
+
+const MENU_WIDTH = 190;
+const MENU_ITEM_HEIGHT = 48;
+const MENU_ANCHOR_GAP = spacing.small;
 
 function MenuItem({
   icon: Icon,
@@ -42,6 +56,7 @@ function MenuItem({
 
 export function HabitActionModals({
   menuHabit,
+  menuAnchor,
   noteHabit,
   note,
   selectedDate,
@@ -55,16 +70,81 @@ export function HabitActionModals({
 }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const { width: windowWidth, height: windowHeight } = useWindowDimensions();
+  const insets = useSafeAreaInsets();
+  const menuItemCount = menuHabit?.completedDates.includes(selectedDate)
+    ? 3
+    : 2;
+  const estimatedMenuHeight =
+    spacing.small * 2 + MENU_ITEM_HEIGHT * menuItemCount;
+  const [measuredMenuSize, setMeasuredMenuSize] = useState({
+    width: MENU_WIDTH,
+    height: estimatedMenuHeight,
+    itemCount: menuItemCount,
+  });
+  const menuWidth = measuredMenuSize.width || MENU_WIDTH;
+  const menuHeight =
+    measuredMenuSize.itemCount === menuItemCount
+      ? measuredMenuSize.height || estimatedMenuHeight
+      : estimatedMenuHeight;
+  const minLeft = Math.max(spacing.small, insets.left + spacing.small);
+  const maxLeft = Math.max(
+    minLeft,
+    windowWidth - insets.right - spacing.small - menuWidth,
+  );
+  const minTop = Math.max(spacing.small, insets.top + spacing.small);
+  const maxBottom = windowHeight - insets.bottom - spacing.small;
+  const maxTop = Math.max(minTop, maxBottom - menuHeight);
+
+  let menuLeft = minLeft;
+  let menuTop = minTop;
+  if (menuAnchor) {
+    menuLeft = Math.min(
+      Math.max(menuAnchor.x + menuAnchor.width - menuWidth, minLeft),
+      maxLeft,
+    );
+
+    const topAbove = menuAnchor.y - MENU_ANCHOR_GAP - menuHeight;
+    const topBelow = menuAnchor.y + menuAnchor.height + MENU_ANCHOR_GAP;
+    const fitsAbove = topAbove >= minTop;
+    const fitsBelow = topBelow + menuHeight <= maxBottom;
+
+    if (fitsAbove) {
+      menuTop = topAbove;
+    } else if (fitsBelow) {
+      menuTop = topBelow;
+    } else {
+      const spaceAbove = menuAnchor.y - MENU_ANCHOR_GAP - minTop;
+      const spaceBelow = maxBottom - topBelow;
+      menuTop = spaceAbove >= spaceBelow ? minTop : maxTop;
+    }
+  }
+
   return (
     <>
       <Modal
         transparent
-        visible={Boolean(menuHabit)}
+        visible={Boolean(menuHabit && menuAnchor)}
         animationType="fade"
         onRequestClose={onCloseMenu}
       >
         <Pressable style={styles.backdrop} onPress={onCloseMenu}>
-          <View style={styles.popover}>
+          <View
+            onLayout={({ nativeEvent: { layout } }) => {
+              if (
+                layout.width !== measuredMenuSize.width ||
+                layout.height !== measuredMenuSize.height ||
+                menuItemCount !== measuredMenuSize.itemCount
+              ) {
+                setMeasuredMenuSize({
+                  width: layout.width,
+                  height: layout.height,
+                  itemCount: menuItemCount,
+                });
+              }
+            }}
+            style={[styles.popover, { left: menuLeft, top: menuTop }]}
+          >
             {menuHabit?.completedDates.includes(selectedDate) ? (
               <MenuItem
                 icon={Undo2}

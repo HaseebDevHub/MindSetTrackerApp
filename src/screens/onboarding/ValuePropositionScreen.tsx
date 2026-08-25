@@ -1,5 +1,5 @@
 import React from 'react';
-import { Text, View, useWindowDimensions } from 'react-native';
+import { Alert, Text, View, useWindowDimensions } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
 import { FlashList } from '@shopify/flash-list';
@@ -63,12 +63,18 @@ export function ValuePropositionScreen({ navigation }: Props) {
       <AppButton
         title="START NOW!"
         onPress={() => {
-          finish();
-          navigation
-            .getParent()
-            ?.dispatch(
-              CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
+          if (finish()) {
+            navigation
+              .getParent()
+              ?.dispatch(
+                CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
+              );
+          } else {
+            Alert.alert(
+              'Unable to finish setup',
+              'Your setup could not be saved. Please try again.',
             );
+          }
         }}
       />
     </ScreenContainer>

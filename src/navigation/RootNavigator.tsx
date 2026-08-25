@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarChart3, BookOpen, CalendarDays, User } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
 import { HistoryScreen } from '../screens/history/HistoryScreen';
@@ -22,6 +23,7 @@ import { WakeTimeScreen } from '../screens/onboarding/WakeTimeScreen';
 import { CreateHabitScreen } from '../screens/today/CreateHabitScreen';
 import { HabitDetailScreen } from '../screens/today/HabitDetailScreen';
 import { TodayScreen } from '../screens/today/TodayScreen';
+import { onboardingStorage } from '../storage/onboardingStorage';
 import { useAppStore } from '../store/useAppStore';
 import type {
   JourneyStackParamList,
@@ -52,8 +54,13 @@ function useStackOptions() {
 
 function OnboardingNavigator() {
   const stackOptions = useStackOptions();
+  const resumeStep = onboardingStorage.getResumeStep();
+  const initialRouteName = resumeStep === 'completed' ? 'WakeTime' : resumeStep;
   return (
-    <OnboardingStack.Navigator screenOptions={stackOptions}>
+    <OnboardingStack.Navigator
+      initialRouteName={initialRouteName}
+      screenOptions={stackOptions}
+    >
       <OnboardingStack.Screen name="WakeTime" component={WakeTimeScreen} />
       <OnboardingStack.Screen name="BedTime" component={BedTimeScreen} />
       <OnboardingStack.Screen name="Goals" component={GoalsScreen} />
@@ -155,14 +162,23 @@ function TabLabel({ children, color }: { children: string; color: string }) {
 function MainTabNavigator() {
   const { colors } = useTheme();
   const styles = useStyles();
+  const insets = useSafeAreaInsets();
   return (
     <Tabs.Navigator
       screenOptions={{
         headerShown: false,
-        tabBarStyle: styles.tabBar,
+        tabBarStyle: [
+          styles.tabBar,
+          {
+            height: 66 + insets.bottom,
+            paddingBottom: 7 + insets.bottom,
+          },
+        ],
+        tabBarItemStyle: styles.tabItem,
         tabBarActiveTintColor: colors.primary,
         tabBarInactiveTintColor: colors.tabMuted,
         tabBarLabel: TabLabel,
+        tabBarHideOnKeyboard: true,
       }}
     >
       {tabScreens.map(config => (

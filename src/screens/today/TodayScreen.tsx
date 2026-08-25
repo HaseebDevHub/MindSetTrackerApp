@@ -32,6 +32,7 @@ import {
 } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { HabitCard } from '../../components/habit/HabitCard';
+import type { HabitMenuAnchor } from '../../components/habit/HabitCard';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
 import { useAppStore } from '../../store/useAppStore';
@@ -46,8 +47,10 @@ import {
   fromDateKey,
   toDateKey,
 } from '../../utils/dates';
-import { isHabitVisibleForTodayFilter } from '../../utils/habits';
-import { keyById } from '../../utils/lists';
+import {
+  isHabitVisibleForTodayFilter,
+  partitionHabitsByCompletion,
+} from '../../utils/habits';
 import { HabitActionModals } from './components/HabitActionModals';
 import useStyles from './TodayScreenStyle';
 
@@ -60,6 +63,10 @@ const filters: { key: TodayFilter; icon: typeof Sun }[] = [
 ];
 const DATE_RANGE_DAYS = 365 * 10;
 
+type HabitListItem =
+  | { type: 'habit'; habit: HabitItem }
+  | { type: 'finishedHeader'; id: 'finished' };
+
 export function TodayScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -71,7 +78,10 @@ export function TodayScreen({ navigation }: Props) {
   const habits = useAppStore(s => s.habits);
   const toggle = useAppStore(s => s.toggleHabit);
   const update = useAppStore(s => s.updateHabit);
-  const [menuHabit, setMenuHabit] = useState<HabitItem>();
+  const [habitMenu, setHabitMenu] = useState<{
+    habit: HabitItem;
+    anchor: HabitMenuAnchor;
+  }>();
   const [noteHabit, setNoteHabit] = useState<HabitItem>();
   const [note, setNote] = useState('');
   const todayDate = useRef(toDateKey(new Date())).current;
@@ -96,19 +106,36 @@ export function TodayScreen({ navigation }: Props) {
   }, [dateRangeCenter]);
   const todayIndex = DATE_RANGE_DAYS;
   const initialScrollIndex = useRef(
-    Math.max(
-      0,
-      dates.findIndex(date => toDateKey(date) === selectedDate) - 3,
-    ),
+    Math.max(0, dates.findIndex(date => toDateKey(date) === selectedDate) - 3),
   ).current;
   const isTodayButtonVisible =
-    isReturningToToday ||
-    selectedDate !== todayDate ||
-    !isTodayInViewport;
+    isReturningToToday || selectedDate !== todayDate || !isTodayInViewport;
   const todayButtonProgress = useRef(
     new Animated.Value(isTodayButtonVisible ? 1 : 0),
   ).current;
-  const visible = habits.filter(h => isHabitVisibleForTodayFilter(h, filter));
+  const visible = useMemo(
+    () => habits.filter(h => isHabitVisibleForTodayFilter(h, filter)),
+    [filter, habits],
+  );
+  const { active: activeHabits, finished: finishedHabits } = useMemo(
+    () => partitionHabitsByCompletion(visible, selectedDate),
+    [selectedDate, visible],
+  );
+  const habitListItems = useMemo<HabitListItem[]>(
+    () => [
+      ...activeHabits.map(habit => ({ type: 'habit' as const, habit })),
+      ...(finishedHabits.length
+        ? [
+            { type: 'finishedHeader' as const, id: 'finished' as const },
+            ...finishedHabits.map(habit => ({
+              type: 'habit' as const,
+              habit,
+            })),
+          ]
+        : []),
+    ],
+    [activeHabits, finishedHabits],
+  );
 
   useEffect(() => {
     const animation = Animated.timing(todayButtonProgress, {
@@ -168,10 +195,7 @@ export function TodayScreen({ navigation }: Props) {
     });
 
     // Some platforms do not emit a momentum event for very short scrolls.
-    returnAnimationTimeout.current = setTimeout(
-      finishReturningToToday,
-      500,
-    );
+    returnAnimationTimeout.current = setTimeout(finishReturningToToday, 500);
   }, [finishReturningToToday, setDate, todayDate, todayIndex]);
 
   const renderDate = useCallback(
@@ -211,7 +235,7 @@ export function TodayScreen({ navigation }: Props) {
           style={[styles.filter, active && styles.filterActive]}
         >
           <Icon
-            color={active ? colors.onPrimary : colors.textSecondary}
+            color={active ? colors.yellow : colors.textSecondary}
             size={17}
           />
           <Text style={[styles.filterText, active && styles.accentActiveText]}>
@@ -223,18 +247,30 @@ export function TodayScreen({ navigation }: Props) {
     [colors, filter, setFilter, styles],
   );
   const renderHabit = useCallback(
-    ({ item: habit }: { item: HabitItem }) => (
+    (habit: HabitItem) => (
       <HabitCard
         habit={habit}
         completed={habit.completedDates.includes(selectedDate)}
         onToggle={() => toggle(habit.id, selectedDate)}
-        onMenu={() => setMenuHabit(habit)}
+        onMenu={anchor => setHabitMenu({ habit, anchor })}
         onPress={() =>
           navigation.navigate('HabitDetail', { habitId: habit.id })
         }
       />
     ),
     [navigation, selectedDate, toggle],
+  );
+  const renderHabitListItem = useCallback(
+    ({ item }: { item: HabitListItem }) =>
+      item.type === 'finishedHeader' ? (
+        <View style={styles.finishedSectionRow}>
+          <Text style={styles.finishedSectionTitle}>FINISHED</Text>
+          <Text style={styles.count}>{finishedHabits.length}</Text>
+        </View>
+      ) : (
+        renderHabit(item.habit)
+      ),
+    [finishedHabits.length, renderHabit, styles],
   );
   const listHeader = (
     <>
@@ -251,8 +287,7 @@ export function TodayScreen({ navigation }: Props) {
       <View style={styles.sectionRow}>
         <Text style={styles.sectionTitle}>{filter}</Text>
         <Text style={styles.count}>
-          {visible.filter(h => h.completedDates.includes(selectedDate)).length}/
-          {visible.length} finished
+          {finishedHabits.length}/{visible.length} finished
         </Text>
       </View>
     </>
@@ -302,9 +337,12 @@ export function TodayScreen({ navigation }: Props) {
         contentContainerStyle={styles.dateStripContent}
       />
       <FlashList
-        data={visible}
-        renderItem={renderHabit}
-        keyExtractor={keyById}
+        data={habitListItems}
+        renderItem={renderHabitListItem}
+        keyExtractor={item =>
+          item.type === 'finishedHeader' ? item.id : item.habit.id
+        }
+        getItemType={item => item.type}
         ItemSeparatorComponent={VerticalListSeparator}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
@@ -363,18 +401,19 @@ export function TodayScreen({ navigation }: Props) {
         </Pressable>
       </Animated.View>
       <HabitActionModals
-        menuHabit={menuHabit}
+        menuHabit={habitMenu?.habit}
+        menuAnchor={habitMenu?.anchor}
         noteHabit={noteHabit}
         note={note}
         selectedDate={selectedDate}
-        onCloseMenu={() => setMenuHabit(undefined)}
+        onCloseMenu={() => setHabitMenu(undefined)}
         onCloseNote={() => setNoteHabit(undefined)}
         onEdit={habit => {
           navigation.navigate('CreateHabit', { habitId: habit.id });
-          setMenuHabit(undefined);
+          setHabitMenu(undefined);
         }}
         onOpenNote={habit => {
-          setMenuHabit(undefined);
+          setHabitMenu(undefined);
           setNoteHabit(habit);
           setNote(habit.note ?? '');
         }}
@@ -385,7 +424,7 @@ export function TodayScreen({ navigation }: Props) {
         onSetNote={setNote}
         onUndo={habit => {
           toggle(habit.id, selectedDate);
-          setMenuHabit(undefined);
+          setHabitMenu(undefined);
         }}
       />
     </ScreenContainer>
