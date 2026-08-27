@@ -1,10 +1,13 @@
 import type { HabitItem, TodayFilter } from '../types/models';
+import { isHabitApplicableToDate } from './habitAnalytics';
 
 export const isHabitVisibleForTodayFilter = (
   habit: HabitItem,
   filter: TodayFilter,
+  date?: string,
 ) =>
   !habit.archived &&
+  (!date || isHabitApplicableToDate(habit, date)) &&
   (filter === 'ALL' ||
     habit.timeOfDay === filter ||
     habit.timeOfDay === 'ANYTIME');

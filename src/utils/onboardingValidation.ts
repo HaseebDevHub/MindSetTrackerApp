@@ -5,6 +5,7 @@ import {
   type OnboardingTargets,
 } from '../types/onboarding';
 import { isValidLocalTime } from './time';
+import { isDateKey } from './dates';
 
 const TIME_OF_DAY_VALUES: TimeOfDay[] = [
   'MORNING',
@@ -52,6 +53,11 @@ export function isValidHabit(value: unknown): value is HabitItem {
     habit.iconName.length > 0 &&
     (habit.reminderEnabled === undefined ||
       typeof habit.reminderEnabled === 'boolean') &&
-    (habit.reminderTime === undefined || isValidLocalTime(habit.reminderTime))
+    (habit.reminderTime === undefined ||
+      isValidLocalTime(habit.reminderTime)) &&
+    (habit.frequency === undefined ||
+      habit.frequency === 'EVERYDAY' ||
+      habit.frequency === 'WEEKDAYS') &&
+    (habit.createdAt === undefined || isDateKey(habit.createdAt))
   );
 }

@@ -16,13 +16,18 @@ import { DEFAULT_HABIT_ICON_ID, HABIT_ICONS } from '../../constants/habitIcons';
 import { useTheme } from '../../context/ThemeContext';
 import { reminderSettingsStorage } from '../../storage/reminderSettingsStorage';
 import { useAppStore } from '../../store/useAppStore';
-import type { TimeOfDay, TodayStackParamList } from '../../types/models';
+import type {
+  HabitFrequency,
+  TimeOfDay,
+  TodayStackParamList,
+} from '../../types/models';
 import { keyByValue } from '../../utils/lists';
 import { formatLocalTime } from '../../utils/time';
 import useStyles from './TodayScreenStyle';
 
 type Props = NativeStackScreenProps<TodayStackParamList, 'CreateHabit'>;
 const timeOptions: TimeOfDay[] = ['MORNING', 'AFTERNOON', 'EVENING', 'ANYTIME'];
+const frequencyOptions: HabitFrequency[] = ['EVERYDAY', 'WEEKDAYS'];
 
 export function CreateHabitScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
@@ -36,6 +41,9 @@ export function CreateHabitScreen({ navigation, route }: Props) {
     existing?.iconName ?? DEFAULT_HABIT_ICON_ID,
   );
   const [time, setTime] = useState<TimeOfDay>(existing?.timeOfDay ?? 'MORNING');
+  const [frequency, setFrequency] = useState<HabitFrequency>(
+    existing?.frequency ?? 'EVERYDAY',
+  );
   const [reminder, setReminder] = useState(existing?.reminderEnabled ?? false);
   const [reminderTime, setReminderTime] = useState(
     () => existing?.reminderTime ?? reminderSettingsStorage.getWakeUpDefault(),
@@ -47,6 +55,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       title: title.trim(),
       iconName,
       timeOfDay: time,
+      frequency,
       reminderEnabled: reminder,
       reminderTime,
     };
@@ -121,6 +130,36 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         ItemSeparatorComponent={HorizontalListSeparator}
         scrollEnabled={false}
         style={styles.timeGrid}
+      />
+      <Text style={styles.label}>FREQUENCY</Text>
+      <FlashList
+        data={frequencyOptions}
+        numColumns={2}
+        keyExtractor={keyByValue}
+        renderItem={({ item }) => (
+          <View style={styles.timeOptionCell}>
+            <Pressable
+              accessibilityRole="radio"
+              accessibilityState={{ selected: frequency === item }}
+              onPress={() => setFrequency(item)}
+              style={[
+                styles.timeOption,
+                frequency === item && styles.timeActive,
+              ]}
+            >
+              <Text
+                style={[
+                  styles.timeText,
+                  frequency === item && styles.accentActiveText,
+                ]}
+              >
+                {item === 'EVERYDAY' ? 'EVERY DAY' : 'WEEKDAYS'}
+              </Text>
+            </Pressable>
+          </View>
+        )}
+        scrollEnabled={false}
+        style={styles.frequencyOptions}
       />
       <View style={styles.reminder}>
         <Pressable

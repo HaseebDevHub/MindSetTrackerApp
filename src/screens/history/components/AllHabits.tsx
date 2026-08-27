@@ -6,6 +6,7 @@ import { SmallVerticalListSeparator } from '../../../components/common/ListSepar
 import { useTheme } from '../../../context/ThemeContext';
 import { useAppStore } from '../../../store/useAppStore';
 import type { HabitItem } from '../../../types/models';
+import { calculateHabitStreak } from '../../../utils/habitAnalytics';
 import useStyles from '../HistoryScreenStyle';
 
 type HabitHistoryRow =
@@ -57,8 +58,11 @@ export function AllHabits() {
               <View style={styles.historyCopy}>
                 <Text style={styles.historyTitle}>{item.habit.title}</Text>
                 <Text style={styles.historyMeta}>
-                  {item.habit.completedDates.length} completions •{' '}
-                  {item.habit.streakCount} day streak
+                  {item.habit.frequency === 'WEEKDAYS'
+                    ? 'Weekdays'
+                    : 'Every day'}{' '}
+                  • {item.habit.completedDates.length} completions •{' '}
+                  {calculateHabitStreak(item.habit)} day streak
                 </Text>
               </View>
               <ChevronRight color={colors.muted} size={20} />
@@ -94,6 +98,8 @@ export function AllHabits() {
             <Text style={styles.modalCaption}>TOTAL COMPLETIONS</Text>
             <Text style={styles.modalBody}>
               This habit is scheduled for {selected?.timeOfDay.toLowerCase()}.
+              Frequency:{' '}
+              {selected?.frequency === 'WEEKDAYS' ? 'weekdays' : 'every day'}.
               Edit it from the Today tab.
             </Text>
           </Pressable>

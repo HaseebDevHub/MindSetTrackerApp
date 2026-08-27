@@ -6,6 +6,10 @@ import { HorizontalListSeparator } from '../../../components/common/ListSeparato
 import { useTheme } from '../../../context/ThemeContext';
 import { useAppStore } from '../../../store/useAppStore';
 import { getCalendarDays, monthTitle, toDateKey } from '../../../utils/dates';
+import {
+  calculateCurrentWeekMetrics,
+  getDailyProgress,
+} from '../../../utils/habitAnalytics';
 import { keyByTitle, keyByValue } from '../../../utils/lists';
 import useStyles from '../HistoryScreenStyle';
 
@@ -24,48 +28,34 @@ export function CalendarHistory() {
   const styles = useStyles();
   const { width } = useWindowDimensions();
   const habits = useAppStore(s => s.habits);
+  const stats = useAppStore(s => s.stats);
   const selectedDate = useAppStore(s => s.selectedDate);
   const setSelectedDate = useAppStore(s => s.setSelectedDate);
   const [month, setMonth] = useState(new Date());
-  const allCompletions = habits.flatMap(h => h.completedDates);
-  const uniqueDays = new Set(allCompletions);
-  const completed = allCompletions.length;
-  const currentWeek = allCompletions.filter(
-    key =>
-      Math.abs(
-        (Date.now() - new Date(`${key}T12:00:00`).getTime()) / 86400000,
-      ) < 7,
-  ).length;
-  const totalPossible = Math.max(1, habits.length * 7);
-  const rate = Math.min(100, Math.round((currentWeek / totalPossible) * 100));
+  const currentWeek = calculateCurrentWeekMetrics(habits);
   const metrics = [
     {
       title: 'CURRENT STREAK',
-      value: String(
-        habits.reduce(
-          (highest, habit) => Math.max(highest, habit.streakCount),
-          0,
-        ),
-      ),
-      caption: 'Best Streak: 2',
+      value: String(stats.currentStreak),
+      caption: `Best Streak: ${stats.bestStreak}`,
       color: colors.selectedBlue,
     },
     {
       title: 'HABITS FINISHED',
-      value: String(completed),
-      caption: `This week: ${currentWeek}`,
+      value: String(stats.habitsFinishedTotal),
+      caption: `This week: ${currentWeek.completed}`,
       color: colors.red,
     },
     {
       title: 'COMPLETION RATE',
-      value: `${rate}%`,
-      caption: `${currentWeek}/${totalPossible} habits`,
+      value: `${currentWeek.percentage}%`,
+      caption: `${currentWeek.completed}/${currentWeek.applicable} habits`,
       color: colors.yellow,
     },
     {
       title: 'PERFECT DAYS',
-      value: '0',
-      caption: 'This week: 0',
+      value: String(stats.perfectDays),
+      caption: `This week: ${currentWeek.perfectDays}`,
       color: colors.green,
     },
   ];
@@ -76,7 +66,7 @@ export function CalendarHistory() {
       return <View style={[styles.day, { width: calendarCellSize }]} />;
     const key = toDateKey(date);
     const selected = selectedDate === key;
-    const didComplete = uniqueDays.has(key);
+    const progress = getDailyProgress(habits, key);
     return (
       <Pressable
         accessibilityLabel={date.toDateString()}
@@ -84,14 +74,22 @@ export function CalendarHistory() {
         style={[
           styles.day,
           { width: calendarCellSize },
+          progress.percentage > 0 && styles.partialDay,
+          progress.isPerfect && styles.perfectDay,
           selected && styles.selectedDay,
         ]}
       >
         <Text style={[styles.dayText, selected && styles.selectedDayText]}>
           {date.getDate()}
         </Text>
-        {didComplete ? (
-          <View style={[styles.dot, selected && styles.dotSelected]} />
+        {progress.percentage > 0 ? (
+          <View
+            style={[
+              styles.dot,
+              progress.isPerfect && styles.dotPerfect,
+              selected && styles.dotSelected,
+            ]}
+          />
         ) : null}
       </Pressable>
     );
@@ -167,7 +165,7 @@ export function CalendarHistory() {
       )}
       ListFooterComponent={
         <Text style={styles.legend}>
-          A dot marks days with at least one completed habit.
+          Yellow marks partial progress. Green marks a perfect day.
         </Text>
       }
     />

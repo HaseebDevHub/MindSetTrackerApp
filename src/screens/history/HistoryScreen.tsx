@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { SwipeableTabView } from '../../components/common/SwipeableTabView';
@@ -7,12 +7,22 @@ import { AllHabits } from './components/AllHabits';
 import { CalendarHistory } from './components/CalendarHistory';
 import useStyles from './HistoryScreenStyle';
 
-type Tab = 'Calendar' | 'All Habits' | 'Achievements';
+import type { HistoryTab } from '../../types/models';
+
+type Tab = HistoryTab;
 const tabs: Tab[] = ['Calendar', 'All Habits', 'Achievements'];
 
-export function HistoryScreen() {
+export function HistoryScreen({
+  initialTab,
+  tabRequestId,
+}: { initialTab?: HistoryTab; tabRequestId?: number } = {}) {
   const styles = useStyles();
-  const [currentIndex, setCurrentIndex] = useState(0);
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    initialTab ? tabs.indexOf(initialTab) : 0,
+  );
+  useEffect(() => {
+    if (initialTab) setCurrentIndex(tabs.indexOf(initialTab));
+  }, [initialTab, tabRequestId]);
   const tab = tabs[currentIndex];
   return (
     <ScreenContainer padded={false}>

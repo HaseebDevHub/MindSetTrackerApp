@@ -1,4 +1,10 @@
 const pad = (value: number) => String(value).padStart(2, '0');
+const DATE_KEY_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
+
+export const isDateKey = (value: unknown): value is string => {
+  if (typeof value !== 'string' || !DATE_KEY_PATTERN.test(value)) return false;
+  return toDateKey(fromDateKey(value)) === value;
+};
 
 export const toDateKey = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
@@ -30,4 +36,18 @@ export const getCalendarDays = (month: Date) => {
       (_, index) => new Date(month.getFullYear(), month.getMonth(), index + 1),
     ),
   ];
+};
+
+export const startOfWeek = (date: Date) => addDays(date, -date.getDay());
+
+export const getRelativeDateLabel = (date: Date, today = new Date()) => {
+  const difference = Math.round(
+    (fromDateKey(toDateKey(date)).getTime() -
+      fromDateKey(toDateKey(today)).getTime()) /
+      86400000,
+  );
+  if (difference === -1) return 'YESTERDAY';
+  if (difference === 0) return 'TODAY';
+  if (difference === 1) return 'TOMORROW';
+  return formatShortDate(date).toUpperCase();
 };

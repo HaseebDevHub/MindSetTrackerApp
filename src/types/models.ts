@@ -1,5 +1,7 @@
 export type TimeOfDay = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'ANYTIME';
 export type TodayFilter = 'ALL' | Exclude<TimeOfDay, 'ANYTIME'>;
+export type HabitFrequency = 'EVERYDAY' | 'WEEKDAYS';
+export type HistoryTab = 'Calendar' | 'All Habits' | 'Achievements';
 
 export interface HabitItem {
   id: string;
@@ -12,7 +14,33 @@ export interface HabitItem {
   reminderEnabled?: boolean;
   reminderTime?: string;
   archived?: boolean;
+  frequency?: HabitFrequency;
+  createdAt?: string;
 }
+
+export type UserStats = {
+  currentStreak: number;
+  bestStreak: number;
+  habitsFinishedTotal: number;
+  perfectDays: number;
+  unlockedAchievements: string[];
+};
+
+export type AchievementCategory =
+  | 'HABITS_FINISHED'
+  | 'PERFECT_DAYS'
+  | 'BEST_STREAK';
+
+export type AchievementUnlock = {
+  id: string;
+  unlockedAt: string;
+};
+
+export type Celebration = {
+  id: string;
+  title: string;
+  subtitle: string;
+};
 
 export interface Journey {
   id: string;
@@ -26,6 +54,13 @@ export interface Journey {
 export type RootStackParamList = {
   Onboarding: undefined;
   Main: undefined;
+};
+
+export type MainTabParamList = {
+  Today: undefined;
+  Journey: undefined;
+  History: { initialTab?: HistoryTab; tabRequestId?: number } | undefined;
+  Me: undefined;
 };
 
 export type OnboardingStackParamList = {

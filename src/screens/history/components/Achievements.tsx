@@ -1,72 +1,151 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Text, View } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { Award, Check, Flame, Lock, Target, Trophy } from 'lucide-react-native';
+import {
+  ACHIEVEMENTS,
+  ACHIEVEMENT_CATEGORIES,
+  achievementMetric,
+  type AchievementDefinition,
+} from '../../../constants/achievements';
 import { SmallVerticalListSeparator } from '../../../components/common/ListSeparator';
 import { useTheme } from '../../../context/ThemeContext';
+import { achievementStorage } from '../../../storage/achievementStorage';
 import { useAppStore } from '../../../store/useAppStore';
-import { keyByName } from '../../../utils/lists';
+import type { AchievementCategory } from '../../../types/models';
 import useStyles from '../HistoryScreenStyle';
 
-const badgeData = [
-  { name: 'Finish Habit for The First Time', goal: 1, icon: Check },
-  { name: '10 Times', goal: 10, icon: Trophy },
-  { name: '20 Times', goal: 20, icon: Award },
-  { name: '3 Perfect Days', goal: 3, icon: Target },
-  { name: '3 Days Streak', goal: 3, icon: Flame },
-  { name: '7 Days Streak', goal: 7, icon: Flame },
-];
+const categoryTitles: Record<AchievementCategory, string> = {
+  HABITS_FINISHED: 'HABITS FINISHED',
+  PERFECT_DAYS: 'PERFECT DAYS',
+  BEST_STREAK: 'BEST STREAK',
+};
+
+function AchievementBadge({
+  definition,
+  unlocked,
+}: {
+  definition: AchievementDefinition;
+  unlocked: boolean;
+}) {
+  const { colors } = useTheme();
+  const styles = useStyles();
+  const Icon =
+    definition.category === 'HABITS_FINISHED'
+      ? definition.threshold === 1
+        ? Check
+        : Trophy
+      : definition.category === 'PERFECT_DAYS'
+      ? Target
+      : Flame;
+  return (
+    <View style={styles.badgeCard}>
+      <View style={[styles.badgeCircle, unlocked && styles.badgeUnlocked]}>
+        {unlocked ? (
+          <Icon color={colors.onPrimary} size={25} />
+        ) : (
+          <Lock color={colors.muted} size={22} />
+        )}
+      </View>
+      <Text style={[styles.badgeName, !unlocked && styles.lockedText]}>
+        {definition.threshold}
+      </Text>
+      <Text style={styles.badgeState}>{unlocked ? 'UNLOCKED' : 'LOCKED'}</Text>
+    </View>
+  );
+}
 
 export function Achievements() {
   const { colors } = useTheme();
   const styles = useStyles();
-  const habits = useAppStore(s => s.habits);
-  const completions = habits.reduce(
-    (sum, habit) => sum + habit.completedDates.length,
-    0,
+  const stats = useAppStore(state => state.stats);
+  const unlockedIds = stats.unlockedAchievements;
+  const unlockedSet = useMemo(() => new Set(unlockedIds), [unlockedIds]);
+  const recent = achievementStorage
+    .getUnlocks()
+    .slice(0, 5)
+    .flatMap(unlock => {
+      const definition = ACHIEVEMENTS.find(item => item.id === unlock.id);
+      return definition ? [definition] : [];
+    });
+  const earnedPercentage = Math.round(
+    (unlockedIds.length / ACHIEVEMENTS.length) * 100,
   );
-  const bestStreak = habits.reduce(
-    (highest, habit) => Math.max(highest, habit.streakCount),
-    0,
-  );
+
   return (
     <FlashList
-      data={badgeData}
-      numColumns={2}
-      keyExtractor={keyByName}
+      data={ACHIEVEMENT_CATEGORIES}
+      keyExtractor={category => category}
       contentContainerStyle={styles.achievements}
+      ItemSeparatorComponent={SmallVerticalListSeparator}
       ListHeaderComponent={
         <View style={styles.achievementHeader}>
           <Text style={styles.achievementTitle}>My achievements</Text>
           <Text style={styles.noAchievements}>
-            {completions === 0
-              ? "You haven't got any achievements yet."
-              : 'Keep going — every check builds momentum.'}
+            You've earned {earnedPercentage}% of all achievements.
           </Text>
+          <View style={styles.achievementProgressTrack}>
+            <View
+              style={[
+                styles.achievementProgressFill,
+                { width: `${earnedPercentage}%` },
+              ]}
+            />
+          </View>
+          {recent.length ? (
+            <>
+              <Text style={styles.recentTitle}>RECENT ACHIEVEMENTS</Text>
+              <FlashList
+                horizontal
+                data={recent}
+                keyExtractor={item => item.id}
+                showsHorizontalScrollIndicator={false}
+                renderItem={({ item }) => (
+                  <View style={styles.recentAchievement}>
+                    <Award color={colors.yellow} size={20} />
+                    <Text
+                      numberOfLines={2}
+                      style={styles.recentAchievementText}
+                    >
+                      {item.title}
+                    </Text>
+                  </View>
+                )}
+              />
+            </>
+          ) : null}
         </View>
       }
-      ItemSeparatorComponent={SmallVerticalListSeparator}
-      renderItem={({ item: { name, goal, icon: Icon }, index }) => {
-        const unlocked = index < 3 ? completions >= goal : bestStreak >= goal;
+      renderItem={({ item: category }) => {
+        const definitions = ACHIEVEMENTS.filter(
+          definition => definition.category === category,
+        );
+        const unlockedCount = definitions.filter(definition =>
+          unlockedSet.has(definition.id),
+        ).length;
         return (
-          <View style={styles.badgeCell}>
-            <View style={styles.badgeCard}>
-              <View
-                style={[styles.badgeCircle, unlocked && styles.badgeUnlocked]}
-              >
-                {unlocked ? (
-                  <Icon color={colors.onPrimary} size={28} />
-                ) : (
-                  <Lock color={colors.muted} size={25} />
-                )}
-              </View>
-              <Text style={[styles.badgeName, !unlocked && styles.lockedText]}>
-                {name}
-              </Text>
-              <Text style={styles.badgeState}>
-                {unlocked ? 'UNLOCKED' : 'LOCKED'}
+          <View style={styles.achievementCategory}>
+            <View style={styles.achievementCategoryHeader}>
+              <Text style={styles.groupTitle}>{categoryTitles[category]}</Text>
+              <Text style={styles.achievementCount}>
+                {unlockedCount}/{definitions.length} Unlocked
               </Text>
             </View>
+            <Text style={styles.categoryProgress}>
+              Current progress: {achievementMetric(stats, category)}
+            </Text>
+            <FlashList
+              horizontal
+              data={definitions}
+              keyExtractor={definition => definition.id}
+              showsHorizontalScrollIndicator={false}
+              renderItem={({ item: definition }) => (
+                <AchievementBadge
+                  definition={definition}
+                  unlocked={unlockedSet.has(definition.id)}
+                />
+              )}
+            />
           </View>
         );
       }}

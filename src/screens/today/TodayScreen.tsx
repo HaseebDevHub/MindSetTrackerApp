@@ -15,6 +15,7 @@ import {
   type ViewToken,
 } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { FlashList } from '@shopify/flash-list';
 import {
   Check,
@@ -26,6 +27,7 @@ import {
   Sun,
 } from 'lucide-react-native';
 import { AppButton } from '../../components/common/AppButton';
+import { CelebrationModal } from '../../components/common/CelebrationModal';
 import {
   HorizontalListSeparator,
   VerticalListSeparator,
@@ -38,6 +40,7 @@ import { useTheme } from '../../context/ThemeContext';
 import { useAppStore } from '../../store/useAppStore';
 import type {
   HabitItem,
+  MainTabParamList,
   TodayFilter,
   TodayStackParamList,
 } from '../../types/models';
@@ -45,8 +48,10 @@ import {
   addDays,
   formatShortDate,
   fromDateKey,
+  getRelativeDateLabel,
   toDateKey,
 } from '../../utils/dates';
+import { getDailyProgress } from '../../utils/habitAnalytics';
 import {
   isHabitVisibleForTodayFilter,
   partitionHabitsByCompletion,
@@ -78,6 +83,8 @@ export function TodayScreen({ navigation }: Props) {
   const habits = useAppStore(s => s.habits);
   const toggle = useAppStore(s => s.toggleHabit);
   const update = useAppStore(s => s.updateHabit);
+  const celebration = useAppStore(s => s.celebration);
+  const dismissCelebration = useAppStore(s => s.dismissCelebration);
   const [habitMenu, setHabitMenu] = useState<{
     habit: HabitItem;
     anchor: HabitMenuAnchor;
@@ -114,8 +121,13 @@ export function TodayScreen({ navigation }: Props) {
     new Animated.Value(isTodayButtonVisible ? 1 : 0),
   ).current;
   const visible = useMemo(
-    () => habits.filter(h => isHabitVisibleForTodayFilter(h, filter)),
-    [filter, habits],
+    () =>
+      habits.filter(h => isHabitVisibleForTodayFilter(h, filter, selectedDate)),
+    [filter, habits, selectedDate],
+  );
+  const selectedProgress = useMemo(
+    () => getDailyProgress(habits, selectedDate),
+    [habits, selectedDate],
   );
   const { active: activeHabits, finished: finishedHabits } = useMemo(
     () => partitionHabitsByCompletion(visible, selectedDate),
@@ -202,6 +214,7 @@ export function TodayScreen({ navigation }: Props) {
     ({ item: date }: { item: Date }) => {
       const key = toDateKey(date);
       const active = key === selectedDate;
+      const progress = getDailyProgress(habits, key);
       return (
         <Pressable
           accessibilityLabel={date.toDateString()}
@@ -221,10 +234,19 @@ export function TodayScreen({ navigation }: Props) {
           <Text style={[styles.dayNumber, active && styles.activeText]}>
             {date.getDate()}
           </Text>
+          <View style={styles.dateProgressTrack}>
+            <View
+              style={[
+                styles.dateProgressFill,
+                progress.isPerfect && styles.dateProgressPerfect,
+                { width: 18 * (progress.percentage / 100) },
+              ]}
+            />
+          </View>
         </Pressable>
       );
     },
-    [dateCellWidth, selectedDate, setDate, styles],
+    [dateCellWidth, habits, selectedDate, setDate, styles],
   );
   const renderFilter = useCallback(
     ({ item: { key, icon: Icon } }: { item: (typeof filters)[number] }) => {
@@ -246,19 +268,27 @@ export function TodayScreen({ navigation }: Props) {
     },
     [colors, filter, setFilter, styles],
   );
+  const openHabitMenu = useCallback(
+    (habit: HabitItem, anchor: HabitMenuAnchor) =>
+      setHabitMenu({ habit, anchor }),
+    [],
+  );
+  const openHabit = useCallback(
+    (habitId: string) => navigation.navigate('HabitDetail', { habitId }),
+    [navigation],
+  );
   const renderHabit = useCallback(
     (habit: HabitItem) => (
       <HabitCard
         habit={habit}
         completed={habit.completedDates.includes(selectedDate)}
-        onToggle={() => toggle(habit.id, selectedDate)}
-        onMenu={anchor => setHabitMenu({ habit, anchor })}
-        onPress={() =>
-          navigation.navigate('HabitDetail', { habitId: habit.id })
-        }
+        selectedDate={selectedDate}
+        onToggle={toggle}
+        onMenu={openHabitMenu}
+        onPress={openHabit}
       />
     ),
-    [navigation, selectedDate, toggle],
+    [openHabit, openHabitMenu, selectedDate, toggle],
   );
   const renderHabitListItem = useCallback(
     ({ item }: { item: HabitListItem }) =>
@@ -297,14 +327,11 @@ export function TodayScreen({ navigation }: Props) {
       <View style={styles.headerPad}>
         <View style={styles.todayTop}>
           <View>
-            <Text style={styles.eyebrow}>
-              {selectedDate === todayDate
-                ? 'TODAY'
-                : selected
-                    .toLocaleDateString('en-US', { weekday: 'long' })
-                    .toUpperCase()}
-            </Text>
+            <Text style={styles.eyebrow}>{getRelativeDateLabel(selected)}</Text>
             <Text style={styles.dateTitle}>{formatShortDate(selected)}</Text>
+            <Text style={styles.progressText}>
+              {selectedProgress.percentage}% Finished
+            </Text>
           </View>
           <Pressable
             accessibilityLabel="Create a new habit"
@@ -425,6 +452,19 @@ export function TodayScreen({ navigation }: Props) {
         onUndo={habit => {
           toggle(habit.id, selectedDate);
           setHabitMenu(undefined);
+        }}
+      />
+      <CelebrationModal
+        celebration={celebration}
+        onClose={dismissCelebration}
+        onViewAchievements={() => {
+          dismissCelebration();
+          navigation
+            .getParent<BottomTabNavigationProp<MainTabParamList>>()
+            ?.navigate('History', {
+              initialTab: 'Achievements',
+              tabRequestId: Date.now(),
+            });
         }}
       />
     </ScreenContainer>

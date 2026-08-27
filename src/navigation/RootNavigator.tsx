@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { Text } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import type { BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarChart3, BookOpen, CalendarDays, User } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
@@ -27,6 +28,7 @@ import { onboardingStorage } from '../storage/onboardingStorage';
 import { useAppStore } from '../store/useAppStore';
 import type {
   JourneyStackParamList,
+  MainTabParamList,
   MeStackParamList,
   OnboardingStackParamList,
   RootStackParamList,
@@ -39,7 +41,7 @@ const OnboardingStack = createNativeStackNavigator<OnboardingStackParamList>();
 const TodayStack = createNativeStackNavigator<TodayStackParamList>();
 const JourneyStack = createNativeStackNavigator<JourneyStackParamList>();
 const MeStack = createNativeStackNavigator<MeStackParamList>();
-const Tabs = createBottomTabNavigator();
+const Tabs = createBottomTabNavigator<MainTabParamList>();
 function useStackOptions() {
   const { colors } = useTheme();
   return useMemo(
@@ -104,8 +106,15 @@ function JourneyNavigator() {
     </JourneyStack.Navigator>
   );
 }
-function HistoryNavigator() {
-  return <HistoryScreen />;
+function HistoryNavigator({
+  route,
+}: BottomTabScreenProps<MainTabParamList, 'History'>) {
+  return (
+    <HistoryScreen
+      initialTab={route.params?.initialTab}
+      tabRequestId={route.params?.tabRequestId}
+    />
+  );
 }
 function MeNavigator() {
   const stackOptions = useStackOptions();
@@ -127,13 +136,6 @@ function MeNavigator() {
   );
 }
 
-const tabConfig = {
-  Today: { icon: CalendarDays, component: TodayNavigator },
-  Journey: { icon: BookOpen, component: JourneyNavigator },
-  History: { icon: BarChart3, component: HistoryNavigator },
-  Me: { icon: User, component: MeNavigator },
-};
-
 const renderTabIcon =
   (Icon: typeof CalendarDays) =>
   ({ color, focused }: { color: string; focused: boolean }) =>
@@ -144,12 +146,6 @@ const renderTabIcon =
         strokeWidth={focused ? 2.5 : 2}
       />
     );
-const tabScreens = Object.entries(tabConfig).map(([name, config]) => ({
-  name,
-  component: config.component,
-  icon: renderTabIcon(config.icon),
-}));
-
 function TabLabel({ children, color }: { children: string; color: string }) {
   const styles = useStyles();
   return (
@@ -181,14 +177,26 @@ function MainTabNavigator() {
         tabBarHideOnKeyboard: true,
       }}
     >
-      {tabScreens.map(config => (
-        <Tabs.Screen
-          key={config.name}
-          name={config.name}
-          component={config.component}
-          options={{ tabBarIcon: config.icon }}
-        />
-      ))}
+      <Tabs.Screen
+        name="Today"
+        component={TodayNavigator}
+        options={{ tabBarIcon: renderTabIcon(CalendarDays) }}
+      />
+      <Tabs.Screen
+        name="Journey"
+        component={JourneyNavigator}
+        options={{ tabBarIcon: renderTabIcon(BookOpen) }}
+      />
+      <Tabs.Screen
+        name="History"
+        component={HistoryNavigator}
+        options={{ tabBarIcon: renderTabIcon(BarChart3) }}
+      />
+      <Tabs.Screen
+        name="Me"
+        component={MeNavigator}
+        options={{ tabBarIcon: renderTabIcon(User) }}
+      />
     </Tabs.Navigator>
   );
 }

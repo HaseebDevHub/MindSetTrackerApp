@@ -1,53 +1,26 @@
 import { create } from 'zustand';
+import { ACHIEVEMENTS } from '../constants/achievements';
+import { achievementStorage } from '../storage/achievementStorage';
+import { completionStorage } from '../storage/completionStorage';
+import { habitStorage } from '../storage/habitStorage';
 import { onboardingStorage } from '../storage/onboardingStorage';
-import type { HabitItem, TodayFilter } from '../types/models';
+import type {
+  Celebration,
+  HabitItem,
+  TodayFilter,
+  UserStats,
+} from '../types/models';
 import type { OnboardingTarget } from '../types/onboarding';
-import { addDays, toDateKey } from '../utils/dates';
+import { toDateKey } from '../utils/dates';
+import {
+  calculateHabitStreak,
+  calculateStats,
+  getDailyProgress,
+} from '../utils/habitAnalytics';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 
 const today = new Date();
-const initialHabits: HabitItem[] = [
-  {
-    id: 'water',
-    title: 'Drink 8 cups of water',
-    timeOfDay: 'MORNING',
-    completedDates: [toDateKey(addDays(today, -1))],
-    streakCount: 1,
-    iconName: 'Droplets',
-  },
-  {
-    id: 'walk',
-    title: 'Morning walk',
-    timeOfDay: 'MORNING',
-    completedDates: [toDateKey(today), toDateKey(addDays(today, -1))],
-    streakCount: 2,
-    iconName: 'Footprints',
-  },
-  {
-    id: 'read',
-    title: 'Read 10 pages',
-    timeOfDay: 'AFTERNOON',
-    completedDates: [],
-    streakCount: 0,
-    iconName: 'BookOpen',
-  },
-  {
-    id: 'meditate',
-    title: 'Meditate for 10 minutes',
-    timeOfDay: 'EVENING',
-    completedDates: [toDateKey(addDays(today, -2))],
-    streakCount: 0,
-    iconName: 'Brain',
-  },
-  {
-    id: 'sleep',
-    title: 'Sleep before 11 PM',
-    timeOfDay: 'ANYTIME',
-    completedDates: [],
-    streakCount: 0,
-    iconName: 'Moon',
-  },
-];
+const todayKey = toDateKey(today);
 
 interface AppState {
   wakeTime: string;
@@ -59,6 +32,8 @@ interface AppState {
   selectedDate: string;
   selectedFilter: TodayFilter;
   habits: HabitItem[];
+  stats: UserStats;
+  celebration?: Celebration;
   setWakeTime: (value: string) => void;
   setEndTime: (value: string) => void;
   toggleTarget: (value: OnboardingTarget) => void;
@@ -76,18 +51,60 @@ interface AppState {
     habit: Omit<HabitItem, 'id' | 'completedDates' | 'streakCount'>,
   ) => void;
   updateHabit: (id: string, updates: Partial<HabitItem>) => void;
+  dismissCelebration: () => void;
 }
 
 const onboardingDraft = onboardingStorage.getDraft();
 const storedFirstHabit = onboardingDraft.firstHabit;
+const hadStoredHabitCollection = habitStorage.hasStoredHabits();
+const storedHabits = habitStorage.getHabits();
+const hydratedHabits = completionStorage.hydrateHabits(storedHabits);
 const initialStoredHabits =
+  !hadStoredHabitCollection &&
   onboardingStorage.isCompleted() &&
   storedFirstHabit &&
-  !initialHabits.some(
+  !hydratedHabits.some(
     habit => habit.title.toLowerCase() === storedFirstHabit.title.toLowerCase(),
   )
-    ? [...initialHabits, storedFirstHabit]
-    : initialHabits;
+    ? [...hydratedHabits, storedFirstHabit]
+    : hydratedHabits;
+
+if (!hadStoredHabitCollection) habitStorage.setHabits(initialStoredHabits);
+
+function withDerivedStreaks(habits: HabitItem[]) {
+  return habits.map(habit => ({
+    ...habit,
+    frequency: habit.frequency ?? ('EVERYDAY' as const),
+    createdAt:
+      habit.createdAt ?? habit.completedDates.slice().sort()[0] ?? todayKey,
+    streakCount: calculateHabitStreak(habit, todayKey),
+  }));
+}
+
+const initialHabitsWithStreaks = withDerivedStreaks(initialStoredHabits);
+const storedUnlocks = achievementStorage.getUnlocks();
+const initialStatsCandidate = calculateStats(
+  initialHabitsWithStreaks,
+  todayKey,
+  storedUnlocks.map(unlock => unlock.id),
+);
+const initialUnlocks = achievementStorage.evaluate(
+  initialStatsCandidate,
+  false,
+).unlocks;
+const initialStats = calculateStats(
+  initialHabitsWithStreaks,
+  todayKey,
+  initialUnlocks.map(unlock => unlock.id),
+);
+
+function derivedState(habits: HabitItem[], unlockedAchievements: string[]) {
+  const nextHabits = withDerivedStreaks(habits);
+  return {
+    habits: nextHabits,
+    stats: calculateStats(nextHabits, todayKey, unlockedAchievements),
+  };
+}
 
 export const useAppStore = create<AppState>((set, get) => ({
   wakeTime: onboardingDraft.wakeUpTime ?? DEFAULT_WAKE_UP_TIME,
@@ -98,7 +115,8 @@ export const useAppStore = create<AppState>((set, get) => ({
   isPremium: false,
   selectedDate: toDateKey(today),
   selectedFilter: 'MORNING',
-  habits: initialStoredHabits,
+  habits: initialHabitsWithStreaks,
+  stats: initialStats,
   setWakeTime: wakeTime => set({ wakeTime }),
   setEndTime: endTime => set({ endTime }),
   toggleTarget: target =>
@@ -132,6 +150,8 @@ export const useAppStore = create<AppState>((set, get) => ({
       ...baseHabit,
       reminderEnabled: baseHabit.reminderEnabled ?? false,
       reminderTime: baseHabit.reminderTime ?? get().wakeTime,
+      frequency: baseHabit.frequency ?? 'EVERYDAY',
+      createdAt: baseHabit.createdAt ?? todayKey,
     };
     return onboardingStorage.setFirstHabit(habit);
   },
@@ -139,9 +159,8 @@ export const useAppStore = create<AppState>((set, get) => ({
     if (!onboardingStorage.complete()) return false;
 
     const firstHabit = onboardingStorage.getFirstHabit();
-    set(state => ({
-      onboardingComplete: true,
-      habits:
+    set(state => {
+      const habits =
         firstHabit &&
         !state.habits.some(
           habit =>
@@ -149,16 +168,27 @@ export const useAppStore = create<AppState>((set, get) => ({
             habit.title.toLowerCase() === firstHabit.title.toLowerCase(),
         )
           ? [...state.habits, firstHabit]
-          : state.habits,
-    }));
+          : state.habits;
+      habitStorage.setHabits(habits);
+      return {
+        onboardingComplete: true,
+        ...derivedState(habits, state.stats.unlockedAchievements),
+      };
+    });
     return true;
   },
   setPremium: isPremium => set({ isPremium }),
   setSelectedDate: selectedDate => set({ selectedDate }),
   setSelectedFilter: selectedFilter => set({ selectedFilter }),
   toggleHabit: (id, date) =>
-    set(state => ({
-      habits: state.habits.map(habit =>
+    set(state => {
+      const selectedHabit = state.habits.find(habit => habit.id === id);
+      if (!selectedHabit) return state;
+      const completed = !selectedHabit.completedDates.includes(date);
+      if (!completionStorage.setHabitCompletion(id, date, completed))
+        return state;
+
+      const habits = state.habits.map(habit =>
         habit.id !== id
           ? habit
           : {
@@ -167,24 +197,68 @@ export const useAppStore = create<AppState>((set, get) => ({
                 ? habit.completedDates.filter(key => key !== date)
                 : [...habit.completedDates, date],
             },
-      ),
-    })),
+      );
+      const streakHabits = withDerivedStreaks(habits);
+      const statsCandidate = calculateStats(
+        streakHabits,
+        todayKey,
+        state.stats.unlockedAchievements,
+      );
+      const achievementResult = achievementStorage.evaluate(
+        statsCandidate,
+        true,
+      );
+      const unlockedIds = achievementResult.unlocks.map(unlock => unlock.id);
+      const stats = calculateStats(streakHabits, todayKey, unlockedIds);
+      const perfect =
+        completed &&
+        date <= todayKey &&
+        getDailyProgress(streakHabits, date).isPerfect;
+      const newlyUnlocked = achievementResult.newlyUnlocked[0];
+      const definition = newlyUnlocked
+        ? ACHIEVEMENTS.find(item => item.id === newlyUnlocked.id)
+        : undefined;
+      const isNewPerfectDay = perfect
+        ? achievementStorage.claimPerfectDay(date)
+        : false;
+      const celebration = definition
+        ? {
+            id: newlyUnlocked!.id,
+            title: definition.title,
+            subtitle: 'NEW ACHIEVEMENT',
+          }
+        : isNewPerfectDay
+        ? {
+            id: `perfect-day-${date}`,
+            title: 'Perfect Day',
+            subtitle: 'ALL HABITS FINISHED',
+          }
+        : state.celebration;
+      return { habits: streakHabits, stats, celebration };
+    }),
   addHabit: habit =>
-    set(state => ({
-      habits: [
+    set(state => {
+      const habits = [
         ...state.habits,
         {
           ...habit,
-          id: `habit-${Date.now()}`,
+          id: `habit-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
           completedDates: [],
           streakCount: 0,
+          frequency: habit.frequency ?? 'EVERYDAY',
+          createdAt: habit.createdAt ?? todayKey,
         },
-      ],
-    })),
+      ];
+      if (!habitStorage.setHabits(habits)) return state;
+      return derivedState(habits, state.stats.unlockedAchievements);
+    }),
   updateHabit: (id, updates) =>
-    set(state => ({
-      habits: state.habits.map(habit =>
+    set(state => {
+      const habits = state.habits.map(habit =>
         habit.id === id ? { ...habit, ...updates } : habit,
-      ),
-    })),
+      );
+      if (!habitStorage.setHabits(habits)) return state;
+      return derivedState(habits, state.stats.unlockedAchievements);
+    }),
+  dismissCelebration: () => set({ celebration: undefined }),
 }));

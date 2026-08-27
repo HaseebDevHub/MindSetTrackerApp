@@ -3,7 +3,7 @@ import type {
   BooleanStorageKey,
   NumberStorageKey,
   StorageKey,
-  StorageSchema,
+  StorageValue,
   StringStorageKey,
 } from './storageKeys';
 
@@ -44,11 +44,15 @@ function execute<T>(
 export const storage = {
   getString<Key extends StringStorageKey>(
     key: Key,
-  ): StorageSchema[Key] | undefined {
-    return execute('getString', undefined, instance => instance.getString(key));
+  ): StorageValue<Key> | undefined {
+    return execute(
+      'getString',
+      undefined,
+      instance => instance.getString(key) as StorageValue<Key> | undefined,
+    );
   },
 
-  setString<Key extends StringStorageKey>(key: Key, value: StorageSchema[Key]) {
+  setString<Key extends StringStorageKey>(key: Key, value: StorageValue<Key>) {
     return execute('setString', false, instance => {
       instance.set(key, value);
       return true;

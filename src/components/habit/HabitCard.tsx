@@ -19,18 +19,20 @@ export type HabitMenuAnchor = {
   height: number;
 };
 
-export function HabitCard({
+export const HabitCard = React.memo(function HabitCardComponent({
   habit,
   completed,
+  selectedDate,
   onToggle,
   onMenu,
   onPress,
 }: {
   habit: HabitItem;
   completed: boolean;
-  onToggle: () => void;
-  onMenu: (anchor: HabitMenuAnchor) => void;
-  onPress?: () => void;
+  selectedDate: string;
+  onToggle: (habitId: string, date: string) => void;
+  onMenu: (habit: HabitItem, anchor: HabitMenuAnchor) => void;
+  onPress?: (habitId: string) => void;
 }) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -56,7 +58,7 @@ export function HabitCard({
   }));
   const openMenu = () => {
     menuButtonRef.current?.measureInWindow((x, y, width, height) => {
-      onMenu({ x, y, width, height });
+      onMenu(habit, { x, y, width, height });
     });
   };
   const Icon = getHabitIcon(habit.iconName);
@@ -69,7 +71,7 @@ export function HabitCard({
         }`}
         accessibilityState={{ checked: completed }}
         hitSlop={8}
-        onPress={onToggle}
+        onPress={() => onToggle(habit.id, selectedDate)}
         style={styles.checkbox}
       >
         {completed ? (
@@ -78,7 +80,7 @@ export function HabitCard({
           </Animated.View>
         ) : null}
       </Pressable>
-      <Pressable onPress={onPress} style={styles.copy}>
+      <Pressable onPress={() => onPress?.(habit.id)} style={styles.copy}>
         <View style={styles.titleRow}>
           <Icon color={colors.onPrimary} size={19} />
           <Text
@@ -108,4 +110,4 @@ export function HabitCard({
       </Pressable>
     </Animated.View>
   );
-}
+});

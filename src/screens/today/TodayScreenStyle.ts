@@ -11,7 +11,7 @@ const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     headerPad: { paddingHorizontal: spacing.screen },
     todayTop: {
-      height: 82,
+      minHeight: 92,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between',
@@ -23,6 +23,11 @@ const createStyles = (colors: ThemeColors) =>
       letterSpacing: 1.4,
     },
     dateTitle: { ...typography.headingXL, color: colors.text },
+    progressText: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      marginTop: 2,
+    },
     plus: {
       width: 44,
       height: 44,
@@ -52,6 +57,19 @@ const createStyles = (colors: ThemeColors) =>
     dateActive: { borderBottomColor: colors.primary },
     dayName: { fontSize: 10, color: colors.muted, fontWeight: '700' },
     dayNumber: { ...typography.bodyLarge, color: colors.textSecondary },
+    dateProgressTrack: {
+      width: 18,
+      height: 3,
+      overflow: 'hidden',
+      borderRadius: 2,
+      backgroundColor: colors.divider,
+    },
+    dateProgressFill: {
+      height: 3,
+      borderRadius: 2,
+      backgroundColor: colors.yellow,
+    },
+    dateProgressPerfect: { backgroundColor: colors.green },
     activeText: { color: colors.text },
     accentActiveText: { color: colors.onPrimary },
     content: { paddingHorizontal: spacing.screen, paddingBottom: 110 },
@@ -214,6 +232,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     iconActive: { backgroundColor: colors.selectedBlue },
     timeGrid: { height: 96, marginHorizontal: -4 },
+    frequencyOptions: { height: 52, marginHorizontal: -4 },
     timeOptionCell: { flex: 1, padding: 4 },
     timeOption: {
       width: '100%',

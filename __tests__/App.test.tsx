@@ -9,6 +9,10 @@ import {
 import { isHabitVisibleForTodayFilter } from '../src/utils/habits';
 
 describe('local application behavior', () => {
+  test('starts with no habits when the user has not created one', () => {
+    expect(useAppStore.getState().habits).toEqual([]);
+  });
+
   test('date keys round-trip without timezone drift', () => {
     const source = new Date(2026, 7, 18);
     expect(toDateKey(fromDateKey(toDateKey(source)))).toBe('2026-08-18');
@@ -17,13 +21,23 @@ describe('local application behavior', () => {
   });
 
   test('habit completion can be checked and undone', () => {
-    const habit = useAppStore.getState().habits[0];
+    const originalHabits = useAppStore.getState().habits;
+    const habit: HabitItem = {
+      id: 'habit-completion-test',
+      title: 'Test completion persistence',
+      timeOfDay: 'MORNING',
+      completedDates: [],
+      streakCount: 0,
+      iconName: 'Check',
+    };
+    useAppStore.setState({ habits: [habit] });
     const date = '2030-01-02';
     expect(habit.completedDates).not.toContain(date);
     useAppStore.getState().toggleHabit(habit.id, date);
     expect(useAppStore.getState().habits[0].completedDates).toContain(date);
     useAppStore.getState().toggleHabit(habit.id, date);
     expect(useAppStore.getState().habits[0].completedDates).not.toContain(date);
+    useAppStore.setState({ habits: originalHabits });
   });
 
   test.each<[TodayFilter, string[]]>([
