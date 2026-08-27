@@ -23,7 +23,11 @@ const weekLabels = [
   { id: 'sat', name: 'S' },
 ];
 
-export function CalendarHistory() {
+export function CalendarHistory({
+  onDateSelected,
+}: {
+  onDateSelected?: (dateKey: string) => void;
+}) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { width } = useWindowDimensions();
@@ -70,7 +74,10 @@ export function CalendarHistory() {
     return (
       <Pressable
         accessibilityLabel={date.toDateString()}
-        onPress={() => setSelectedDate(key)}
+        onPress={() => {
+          setSelectedDate(key);
+          onDateSelected?.(key);
+        }}
         style={[
           styles.day,
           { width: calendarCellSize },

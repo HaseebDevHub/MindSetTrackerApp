@@ -15,7 +15,12 @@ const tabs: Tab[] = ['Calendar', 'All Habits', 'Achievements'];
 export function HistoryScreen({
   initialTab,
   tabRequestId,
-}: { initialTab?: HistoryTab; tabRequestId?: number } = {}) {
+  onDateSelected,
+}: {
+  initialTab?: HistoryTab;
+  tabRequestId?: number;
+  onDateSelected?: (dateKey: string) => void;
+} = {}) {
   const styles = useStyles();
   const [currentIndex, setCurrentIndex] = useState(() =>
     initialTab ? tabs.indexOf(initialTab) : 0,
@@ -51,7 +56,7 @@ export function HistoryScreen({
         currentIndex={currentIndex}
         onIndexChange={setCurrentIndex}
       >
-        <CalendarHistory />
+        <CalendarHistory onDateSelected={onDateSelected} />
         <AllHabits />
         <Achievements />
       </SwipeableTabView>

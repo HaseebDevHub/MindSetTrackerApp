@@ -23,7 +23,11 @@ jest.mock(
     ),
 );
 jest.mock('../src/components/habit/HabitCard', () => ({
-  HabitCard: () => null,
+  HabitCard: (props: object) =>
+    require('react').createElement(require('react-native').View, {
+      ...props,
+      testID: 'habit-card',
+    }),
 }));
 
 const initialMetrics = {
@@ -168,6 +172,7 @@ describe('Today date strip', () => {
           completedDates: [],
           streakCount: 0,
           iconName: 'Droplets',
+          createdAt: date,
         },
         {
           id: 'second',
@@ -176,6 +181,7 @@ describe('Today date strip', () => {
           completedDates: [],
           streakCount: 0,
           iconName: 'BookOpen',
+          createdAt: date,
         },
         {
           id: 'third',
@@ -184,6 +190,7 @@ describe('Today date strip', () => {
           completedDates: [],
           streakCount: 0,
           iconName: 'Moon',
+          createdAt: date,
         },
       ],
     });
@@ -258,6 +265,76 @@ describe('Today date strip', () => {
       selectedDate: originalState.selectedDate,
       selectedFilter: originalState.selectedFilter,
       habits: originalState.habits,
+    });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
+  test('refreshes from shared date context and disables only future completion', () => {
+    jest.useFakeTimers();
+    const originalState = useAppStore.getState();
+    const today = new Date();
+    const todayKey = toDateKey(today);
+    const futureKey = toDateKey(addDays(today, 1));
+    useAppStore.setState({
+      selectedDate: todayKey,
+      selectedFilter: 'ALL',
+      habits: [
+        {
+          id: 'future-view-habit',
+          title: 'Future habit',
+          timeOfDay: 'ANYTIME',
+          completedDates: [],
+          streakCount: 0,
+          iconName: 'Check',
+          createdAt: todayKey,
+        },
+      ],
+    });
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(<TodayTestScreen />);
+    });
+
+    act(() => {
+      // This is the same shared state update performed by History's calendar.
+      useAppStore.getState().setSelectedDate(futureKey);
+      jest.runOnlyPendingTimers();
+    });
+
+    const card = renderer!.root.findByProps({ testID: 'habit-card' });
+    expect(card.props.selectedDate).toBe(futureKey);
+    expect(card.props.completionDisabled).toBe(true);
+
+    act(() => card.props.onToggle(card.props.habit.id, futureKey));
+    expect(
+      useAppStore
+        .getState()
+        .habits.find(habit => habit.id === 'future-view-habit')?.completedDates,
+    ).toEqual([]);
+
+    const returnToToday = renderer!.root
+      .findAllByProps({ accessibilityLabel: 'Return to today' })
+      .find(node => typeof node.props.onPress === 'function');
+    expect(returnToToday).toBeDefined();
+    act(() => {
+      returnToToday!.props.onPress();
+      jest.runOnlyPendingTimers();
+    });
+    expect(useAppStore.getState().selectedDate).toBe(todayKey);
+    expect(
+      renderer!.root.findByProps({ testID: 'habit-card' }).props
+        .completionDisabled,
+    ).toBe(false);
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({
+      selectedDate: originalState.selectedDate,
+      selectedFilter: originalState.selectedFilter,
+      habits: originalState.habits,
+      stats: originalState.stats,
+      celebration: originalState.celebration,
     });
     jest.clearAllTimers();
     jest.useRealTimers();

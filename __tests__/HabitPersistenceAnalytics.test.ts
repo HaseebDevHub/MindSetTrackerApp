@@ -9,6 +9,10 @@ import {
 } from '../src/storage/storageKeys';
 import type { HabitItem, UserStats } from '../src/types/models';
 import {
+  addDays,
+  toDateKey,
+} from '../src/utils/dates';
+import {
   calculateStats,
   getDailyProgress,
   isHabitApplicableToDate,
@@ -132,6 +136,30 @@ describe('habit and completion persistence', () => {
       'habit-a',
     ]);
   });
+
+  test('rejects future completion before creating any MMKV record', () => {
+    const futureDate = toDateKey(addDays(new Date(), 1));
+    const futureKey = `habits.completions.${futureDate}` as CompletionStorageKey;
+
+    expect(
+      completionStorage.setHabitCompletion('habit-a', futureDate, true),
+    ).toBe(false);
+    expect(completionStorage.getCompletedHabitIds(futureDate)).toEqual([]);
+    expect(completionStorage.getDates()).not.toContain(futureDate);
+    expect(storage.has(futureKey)).toBe(false);
+  });
+
+  test('persists past completion against the requested date key', () => {
+    const pastDate = toDateKey(addDays(new Date(), -1));
+
+    expect(
+      completionStorage.setHabitCompletion('habit-a', pastDate, true),
+    ).toBe(true);
+    expect(completionStorage.getCompletedHabitIds(pastDate)).toEqual([
+      'habit-a',
+    ]);
+    expect(completionStorage.getDates()).toContain(pastDate);
+  });
 });
 
 describe('schedule-aware analytics', () => {
@@ -170,6 +198,23 @@ describe('schedule-aware analytics', () => {
       bestStreak: 5,
       perfectDays: 5,
       habitsFinishedTotal: 5,
+    });
+  });
+
+  test('ignores a future completion record in default daily progress', () => {
+    const futureDate = toDateKey(addDays(new Date(), 1));
+    const futureCompletedHabit: HabitItem = {
+      ...weekdayHabit,
+      frequency: 'EVERYDAY',
+      createdAt: toDateKey(new Date()),
+      completedDates: [futureDate],
+    };
+
+    expect(getDailyProgress([futureCompletedHabit], futureDate)).toEqual({
+      applicable: 1,
+      completed: 0,
+      percentage: 0,
+      isPerfect: false,
     });
   });
 });

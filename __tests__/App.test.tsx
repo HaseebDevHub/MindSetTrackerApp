@@ -3,6 +3,7 @@ import type { HabitItem, TodayFilter } from '../src/types/models';
 import {
   addDays,
   fromDateKey,
+  getDateStatus,
   getCalendarDays,
   toDateKey,
 } from '../src/utils/dates';
@@ -20,6 +21,13 @@ describe('local application behavior', () => {
     expect(getCalendarDays(source).filter(Boolean)).toHaveLength(31);
   });
 
+  test('classifies local date keys without comparing time-of-day timestamps', () => {
+    const localToday = new Date(2026, 7, 27, 23, 59);
+    expect(getDateStatus('2026-08-26', localToday)).toBe('past');
+    expect(getDateStatus('2026-08-27', localToday)).toBe('today');
+    expect(getDateStatus('2026-08-28', localToday)).toBe('future');
+  });
+
   test('habit completion can be checked and undone', () => {
     const originalHabits = useAppStore.getState().habits;
     const habit: HabitItem = {
@@ -31,7 +39,7 @@ describe('local application behavior', () => {
       iconName: 'Check',
     };
     useAppStore.setState({ habits: [habit] });
-    const date = '2030-01-02';
+    const date = toDateKey(new Date());
     expect(habit.completedDates).not.toContain(date);
     useAppStore.getState().toggleHabit(habit.id, date);
     expect(useAppStore.getState().habits[0].completedDates).toContain(date);

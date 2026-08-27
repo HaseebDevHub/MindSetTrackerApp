@@ -6,12 +6,12 @@ import React, {
   useState,
 } from 'react';
 import {
+  FlatList,
   NativeScrollEvent,
   NativeSyntheticEvent,
   Text,
   View,
 } from 'react-native';
-import { FlashList, type FlashListRef } from '@shopify/flash-list';
 import {
   fromTwelveHourTime,
   toTwelveHourTime,
@@ -29,8 +29,6 @@ const twelveHourHours = Array.from({ length: 12 }, (_, index) =>
   String(index + 1).padStart(2, '0'),
 );
 const periods: DayPeriod[] = ['AM', 'PM'];
-const SELECTION_OFFSET = ITEM_HEIGHT * 2;
-
 function indexForOffset(offset: number, itemCount: number) {
   return Math.max(0, Math.min(itemCount - 1, Math.round(offset / ITEM_HEIGHT)));
 }
@@ -45,7 +43,7 @@ function Wheel({
   onChange: (value: string) => void;
 }) {
   const styles = useStyles();
-  const ref = useRef<FlashListRef<string>>(null);
+  const ref = useRef<FlatList<string>>(null);
   const index = Math.max(0, items.indexOf(value));
   const activeIndexRef = useRef(index);
   const [activeIndex, setActiveIndex] = useState(index);
@@ -112,22 +110,45 @@ function Wheel({
     [items.length, selectIndex],
   );
 
+  const onDragEnd = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const velocity = Math.abs(event.nativeEvent.velocity?.y ?? 0);
+      if (velocity < 0.05) onEnd(event);
+    },
+    [onEnd],
+  );
+
+  const getItemLayout = useCallback(
+    (_data: ArrayLike<string> | null | undefined, itemIndex: number) => ({
+      length: ITEM_HEIGHT,
+      offset: ITEM_HEIGHT * itemIndex,
+      index: itemIndex,
+    }),
+    [],
+  );
+
   return (
-    <FlashList
+    <FlatList
       ref={ref}
       data={items}
       extraData={activeIndex}
       keyExtractor={item => item}
       renderItem={renderItem}
-      initialScrollIndex={index}
-      initialScrollIndexParams={{ viewOffset: -SELECTION_OFFSET }}
+      getItemLayout={getItemLayout}
+      contentOffset={{ x: 0, y: index * ITEM_HEIGHT }}
       snapToInterval={ITEM_HEIGHT}
+      snapToAlignment="start"
       decelerationRate="fast"
+      nestedScrollEnabled
+      bounces={false}
+      overScrollMode="never"
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.wheelPadding}
+      style={styles.wheel}
       onScroll={onScroll}
       scrollEventThrottle={16}
       onMomentumScrollEnd={onEnd}
+      onScrollEndDrag={onDragEnd}
     />
   );
 }

@@ -1,6 +1,8 @@
 const pad = (value: number) => String(value).padStart(2, '0');
 const DATE_KEY_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
 
+export type DateStatus = 'past' | 'today' | 'future';
+
 export const isDateKey = (value: unknown): value is string => {
   if (typeof value !== 'string' || !DATE_KEY_PATTERN.test(value)) return false;
   return toDateKey(fromDateKey(value)) === value;
@@ -8,6 +10,15 @@ export const isDateKey = (value: unknown): value is string => {
 
 export const toDateKey = (date: Date) =>
   `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+
+export function getDateStatus(
+  dateKey: string,
+  localToday = new Date(),
+): DateStatus {
+  const todayKey = toDateKey(localToday);
+  if (dateKey === todayKey) return 'today';
+  return dateKey < todayKey ? 'past' : 'future';
+}
 
 export const fromDateKey = (key: string) => {
   const [year, month, day] = key.split('-').map(Number);

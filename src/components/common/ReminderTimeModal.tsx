@@ -34,12 +34,14 @@ export function ReminderTimeModal({
       statusBarTranslucent
       onRequestClose={onCancel}
     >
-      <Pressable style={styles.backdrop} onPress={onCancel}>
+      <View style={styles.backdrop}>
         <Pressable
-          accessibilityViewIsModal
-          style={styles.sheet}
-          onPress={event => event.stopPropagation()}
-        >
+          accessibilityLabel="Close reminder time picker"
+          accessibilityRole="button"
+          style={styles.backdropDismissArea}
+          onPress={onCancel}
+        />
+        <View accessibilityViewIsModal style={styles.sheet}>
           <View style={styles.handle} />
           <Text style={styles.title}>{title}</Text>
           <TimeWheelPicker use12Hour value={draft} onChange={setDraft} />
@@ -56,8 +58,8 @@ export function ReminderTimeModal({
               style={styles.action}
             />
           </View>
-        </Pressable>
-      </Pressable>
+        </View>
+      </View>
     </Modal>
   );
 }

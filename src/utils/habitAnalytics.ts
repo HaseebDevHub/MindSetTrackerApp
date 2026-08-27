@@ -34,11 +34,14 @@ export function getApplicableHabits(habits: HabitItem[], dateKey: string) {
 export function getDailyProgress(
   habits: HabitItem[],
   dateKey: string,
+  completionCutoffKey = toDateKey(new Date()),
 ): DailyProgress {
   const applicableHabits = getApplicableHabits(habits, dateKey);
-  const completed = applicableHabits.filter(habit =>
-    habit.completedDates.includes(dateKey),
-  ).length;
+  const completed =
+    dateKey <= completionCutoffKey
+      ? applicableHabits.filter(habit => habit.completedDates.includes(dateKey))
+          .length
+      : 0;
   const applicable = applicableHabits.length;
   return {
     applicable,
@@ -90,7 +93,7 @@ export function calculateStats(
   const start = getRelevantStartDate(activeHabits, endDateKey);
   const progress = getDateRange(start, endDateKey).map(date => ({
     date,
-    ...getDailyProgress(activeHabits, date),
+    ...getDailyProgress(activeHabits, date, endDateKey),
   }));
 
   let running = 0;
@@ -139,7 +142,7 @@ export function calculateCurrentWeekMetrics(
   const todayKey = toDateKey(today);
   const weekStart = toDateKey(startOfWeek(today));
   const daily = getDateRange(weekStart, todayKey).map(date =>
-    getDailyProgress(habits, date),
+    getDailyProgress(habits, date, todayKey),
   );
   const completed = daily.reduce((sum, day) => sum + day.completed, 0);
   const applicable = daily.reduce((sum, day) => sum + day.applicable, 0);

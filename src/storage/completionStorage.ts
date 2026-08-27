@@ -1,5 +1,5 @@
 import type { HabitItem } from '../types/models';
-import { isDateKey } from '../utils/dates';
+import { getDateStatus, isDateKey } from '../utils/dates';
 import { storage } from './storage';
 import { STORAGE_KEYS, type CompletionStorageKey } from './storageKeys';
 
@@ -32,7 +32,12 @@ function getCompletedHabitIds(date: string) {
 }
 
 function setHabitCompletion(habitId: string, date: string, completed: boolean) {
-  if (!habitId || !isDateKey(date)) return false;
+  if (
+    !habitId ||
+    !isDateKey(date) ||
+    getDateStatus(date) === 'future'
+  )
+    return false;
   const current = getCompletedHabitIds(date);
   const next = completed
     ? [...new Set([...current, habitId])]

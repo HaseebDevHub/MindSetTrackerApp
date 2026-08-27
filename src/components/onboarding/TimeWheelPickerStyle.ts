@@ -13,6 +13,12 @@ const createStyles = (colors: ThemeColors) =>
       justifyContent: 'center',
       marginVertical: spacing.xl,
     },
+    wheel: {
+      width: 88,
+      height: ITEM_HEIGHT * 5,
+      flexGrow: 0,
+      flexShrink: 0,
+    },
     wheelPadding: { paddingVertical: ITEM_HEIGHT * 2 },
     item: {
       width: 88,

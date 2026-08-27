@@ -11,7 +11,7 @@ import type {
   UserStats,
 } from '../types/models';
 import type { OnboardingTarget } from '../types/onboarding';
-import { toDateKey } from '../utils/dates';
+import { getDateStatus, toDateKey } from '../utils/dates';
 import {
   calculateHabitStreak,
   calculateStats,
@@ -182,6 +182,7 @@ export const useAppStore = create<AppState>((set, get) => ({
   setSelectedFilter: selectedFilter => set({ selectedFilter }),
   toggleHabit: (id, date) =>
     set(state => {
+      if (getDateStatus(date) === 'future') return state;
       const selectedHabit = state.habits.find(habit => habit.id === id);
       if (!selectedHabit) return state;
       const completed = !selectedHabit.completedDates.includes(date);
@@ -212,7 +213,6 @@ export const useAppStore = create<AppState>((set, get) => ({
       const stats = calculateStats(streakHabits, todayKey, unlockedIds);
       const perfect =
         completed &&
-        date <= todayKey &&
         getDailyProgress(streakHabits, date).isPerfect;
       const newlyUnlocked = achievementResult.newlyUnlocked[0];
       const definition = newlyUnlocked

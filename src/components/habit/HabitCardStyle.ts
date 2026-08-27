@@ -27,6 +27,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'center',
     },
+    checkboxDisabled: { opacity: 0.42 },
     copy: { flex: 1 },
     titleRow: {
       flexDirection: 'row',
@@ -36,7 +37,7 @@ const createStyles = (colors: ThemeColors) =>
     title: { ...typography.bodyLarge, color: colors.onPrimary, flex: 1 },
     completedTitle: {
       textDecorationLine: 'line-through',
-      color: colors.onPrimaryMuted,
+      color: colors.completedHabitText,
     },
     time: {
       ...typography.caption,
@@ -50,7 +51,10 @@ const createStyles = (colors: ThemeColors) =>
       gap: spacing.xs,
       marginTop: spacing.xs,
     },
-    finishedText: { ...typography.caption, color: colors.onPrimaryFaint },
+    finishedText: {
+      ...typography.caption,
+      color: colors.completedHabitStatus,
+    },
     menu: {
       width: 34,
       minHeight: 44,

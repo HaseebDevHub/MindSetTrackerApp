@@ -107,12 +107,16 @@ function JourneyNavigator() {
   );
 }
 function HistoryNavigator({
+  navigation,
   route,
 }: BottomTabScreenProps<MainTabParamList, 'History'>) {
   return (
     <HistoryScreen
       initialTab={route.params?.initialTab}
       tabRequestId={route.params?.tabRequestId}
+      onDateSelected={() =>
+        navigation.navigate('Today', { screen: 'TodayHome' })
+      }
     />
   );
 }

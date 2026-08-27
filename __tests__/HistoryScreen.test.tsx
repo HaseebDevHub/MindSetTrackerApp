@@ -4,6 +4,8 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getSwipeTargetIndex } from '../src/components/common/SwipeableTabView';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { HistoryScreen } from '../src/screens/history/HistoryScreen';
+import { useAppStore } from '../src/store/useAppStore';
+import { addDays, toDateKey } from '../src/utils/dates';
 
 jest.mock('react-native-gesture-handler', () => {
   const { View } = require('react-native');
@@ -111,4 +113,32 @@ describe('History tabs', () => {
       expect(getSwipeTargetIndex(current, 3, distance, velocity)).toBe(next);
     },
   );
+
+  test('calendar selection updates the shared Today date context', () => {
+    const originalDate = useAppStore.getState().selectedDate;
+    const onDateSelected = jest.fn();
+    const now = new Date();
+    const target = addDays(now, now.getDate() === 1 ? 1 : -1);
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(
+        <GestureHandlerRootView>
+          <ThemeProvider initialMode="dark">
+            <HistoryScreen onDateSelected={onDateSelected} />
+          </ThemeProvider>
+        </GestureHandlerRootView>,
+      );
+    });
+
+    const targetDay = renderer!.root
+      .findAllByProps({ accessibilityLabel: target.toDateString() })
+      .find(node => typeof node.props.onPress === 'function');
+    expect(targetDay).toBeDefined();
+    act(() => targetDay!.props.onPress());
+    expect(useAppStore.getState().selectedDate).toBe(toDateKey(target));
+    expect(onDateSelected).toHaveBeenCalledWith(toDateKey(target));
+
+    act(() => renderer!.unmount());
+    useAppStore.getState().setSelectedDate(originalDate);
+  });
 });

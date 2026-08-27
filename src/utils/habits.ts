@@ -1,4 +1,5 @@
 import type { HabitItem, TodayFilter } from '../types/models';
+import { getDateStatus } from './dates';
 import { isHabitApplicableToDate } from './habitAnalytics';
 
 export const isHabitVisibleForTodayFilter = (
@@ -13,6 +14,10 @@ export const isHabitVisibleForTodayFilter = (
     habit.timeOfDay === 'ANYTIME');
 
 export function partitionHabitsByCompletion(habits: HabitItem[], date: string) {
+  if (getDateStatus(date) === 'future') {
+    return { active: habits, finished: [] as HabitItem[] };
+  }
+
   const active: HabitItem[] = [];
   const finished: HabitItem[] = [];
 

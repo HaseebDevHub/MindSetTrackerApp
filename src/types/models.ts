@@ -1,3 +1,5 @@
+import type { NavigatorScreenParams } from '@react-navigation/native';
+
 export type TimeOfDay = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'ANYTIME';
 export type TodayFilter = 'ALL' | Exclude<TimeOfDay, 'ANYTIME'>;
 export type HabitFrequency = 'EVERYDAY' | 'WEEKDAYS';
@@ -57,7 +59,7 @@ export type RootStackParamList = {
 };
 
 export type MainTabParamList = {
-  Today: undefined;
+  Today: NavigatorScreenParams<TodayStackParamList> | undefined;
   Journey: undefined;
   History: { initialTab?: HistoryTab; tabRequestId?: number } | undefined;
   Me: undefined;

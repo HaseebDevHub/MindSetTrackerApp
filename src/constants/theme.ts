@@ -21,6 +21,9 @@ export type ThemeColors = {
   onPrimaryMuted: string;
   onPrimarySubtle: string;
   onPrimaryFaint: string;
+  completedHabitForeground: string;
+  completedHabitText: string;
+  completedHabitStatus: string;
   iconSurface: string;
   tabBar: string;
   shadow: string;
@@ -56,6 +59,9 @@ export const darkColors: ThemeColors = {
   onPrimaryMuted: '#D9E7FF',
   onPrimarySubtle: 'rgba(255,255,255,0.78)',
   onPrimaryFaint: '#BFDBFE',
+  completedHabitForeground: '#FFFFFF',
+  completedHabitText: '#D9E7FF',
+  completedHabitStatus: '#BFDBFE',
   iconSurface: '#25344A',
   tabBar: '#1A1D24',
   shadow: '#000000',
@@ -91,6 +97,9 @@ export const lightColors: ThemeColors = {
   onPrimaryMuted: '#EAF2FF',
   onPrimarySubtle: 'rgba(255,255,255,0.86)',
   onPrimaryFaint: '#DBEAFE',
+  completedHabitForeground: '#526076',
+  completedHabitText: '#334155',
+  completedHabitStatus: '#2563EB',
   iconSurface: '#E8F0FC',
   tabBar: '#FFFFFF',
   shadow: '#0F172A',

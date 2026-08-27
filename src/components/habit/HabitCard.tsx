@@ -22,6 +22,7 @@ export type HabitMenuAnchor = {
 export const HabitCard = React.memo(function HabitCardComponent({
   habit,
   completed,
+  completionDisabled,
   selectedDate,
   onToggle,
   onMenu,
@@ -29,6 +30,7 @@ export const HabitCard = React.memo(function HabitCardComponent({
 }: {
   habit: HabitItem;
   completed: boolean;
+  completionDisabled: boolean;
   selectedDate: string;
   onToggle: (habitId: string, date: string) => void;
   onMenu: (habit: HabitItem, anchor: HabitMenuAnchor) => void;
@@ -66,13 +68,19 @@ export const HabitCard = React.memo(function HabitCardComponent({
     <Animated.View style={[styles.card, animated]}>
       <Pressable
         accessibilityRole="checkbox"
-        accessibilityLabel={`${completed ? 'Mark incomplete' : 'Complete'} ${
-          habit.title
-        }`}
-        accessibilityState={{ checked: completed }}
+        accessibilityLabel={
+          completionDisabled
+            ? `Completion unavailable for ${habit.title} on a future date`
+            : `${completed ? 'Mark incomplete' : 'Complete'} ${habit.title}`
+        }
+        accessibilityState={{ checked: completed, disabled: completionDisabled }}
+        disabled={completionDisabled}
         hitSlop={8}
         onPress={() => onToggle(habit.id, selectedDate)}
-        style={styles.checkbox}
+        style={[
+          styles.checkbox,
+          completionDisabled && styles.checkboxDisabled,
+        ]}
       >
         {completed ? (
           <Animated.View style={checkAnimated}>
@@ -82,7 +90,12 @@ export const HabitCard = React.memo(function HabitCardComponent({
       </Pressable>
       <Pressable onPress={() => onPress?.(habit.id)} style={styles.copy}>
         <View style={styles.titleRow}>
-          <Icon color={colors.onPrimary} size={19} />
+          <Icon
+            color={
+              completed ? colors.completedHabitForeground : colors.onPrimary
+            }
+            size={19}
+          />
           <Text
             numberOfLines={2}
             style={[styles.title, completed && styles.completedTitle]}
@@ -92,7 +105,7 @@ export const HabitCard = React.memo(function HabitCardComponent({
         </View>
         {completed ? (
           <View style={styles.finished}>
-            <Check color={colors.onPrimaryFaint} size={13} />
+            <Check color={colors.completedHabitStatus} size={13} />
             <Text style={styles.finishedText}>Finished</Text>
           </View>
         ) : (
@@ -106,7 +119,12 @@ export const HabitCard = React.memo(function HabitCardComponent({
         onPress={openMenu}
         style={styles.menu}
       >
-        <MoreHorizontal color={colors.onPrimary} size={24} />
+        <MoreHorizontal
+          color={
+            completed ? colors.completedHabitForeground : colors.onPrimary
+          }
+          size={24}
+        />
       </Pressable>
     </Animated.View>
   );
