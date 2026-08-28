@@ -126,9 +126,25 @@ describe('Today date strip', () => {
     });
     act(() => {
       allFilter.props.onPress();
-      jest.runOnlyPendingTimers();
     });
 
+    expect(useAppStore.getState().selectedFilter).toBe('MORNING');
+    const optimisticFilterList = renderer!.root
+      .findAllByType(FlatList)
+      .find(list => list.props.horizontal && list.props.data[0]?.key === 'ALL');
+    const optimisticAllFilter = optimisticFilterList!.props.renderItem({
+      item: optimisticFilterList!.props.data[0],
+    });
+    expect(StyleSheet.flatten(optimisticAllFilter.props.style)).toMatchObject({
+      backgroundColor: colors.selectedBlue,
+    });
+    expect(
+      renderer!.root
+        .findAllByType(FlatList)
+        .find(list => list.props.data[0]?.type === 'skeleton')?.props.data,
+    ).toHaveLength(3);
+
+    act(() => jest.runOnlyPendingTimers());
     expect(useAppStore.getState().selectedFilter).toBe('ALL');
     expect(useAppStore.getState().habits.map(habit => habit.timeOfDay)).toEqual(
       timeOfDayBefore,

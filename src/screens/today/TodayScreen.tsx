@@ -17,6 +17,7 @@ import {
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { FlashList } from '@shopify/flash-list';
+import { useShallow } from 'zustand/react/shallow';
 import {
   Check,
   ChevronLeft,
@@ -48,6 +49,7 @@ import {
   addDays,
   formatShortDate,
   fromDateKey,
+  getDateStatus,
   getRelativeDateLabel,
   toDateKey,
 } from '../../utils/dates';
@@ -70,21 +72,49 @@ const DATE_RANGE_DAYS = 365 * 10;
 
 type HabitListItem =
   | { type: 'habit'; habit: HabitItem }
-  | { type: 'finishedHeader'; id: 'finished' };
+  | { type: 'finishedHeader'; id: 'finished' }
+  | { type: 'skeleton'; id: string };
+
+const filterSkeletonItems: HabitListItem[] = Array.from(
+  { length: 3 },
+  (_, index) => ({ type: 'skeleton', id: `filter-skeleton-${index}` }),
+);
+
+const keyByFilter = (item: (typeof filters)[number]) => item.key;
+const keyByHabitListItem = (item: HabitListItem) =>
+  item.type === 'habit' ? item.habit.id : item.id;
+const getHabitListItemType = (item: HabitListItem) => item.type;
 
 export function TodayScreen({ navigation }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { width } = useWindowDimensions();
-  const selectedDate = useAppStore(s => s.selectedDate);
-  const setDate = useAppStore(s => s.setSelectedDate);
-  const filter = useAppStore(s => s.selectedFilter);
-  const setFilter = useAppStore(s => s.setSelectedFilter);
-  const habits = useAppStore(s => s.habits);
-  const toggle = useAppStore(s => s.toggleHabit);
-  const update = useAppStore(s => s.updateHabit);
-  const celebration = useAppStore(s => s.celebration);
-  const dismissCelebration = useAppStore(s => s.dismissCelebration);
+  const {
+    selectedDate,
+    storedFilter,
+    habits,
+    celebration,
+    setDate,
+    setFilter,
+    toggle,
+    update,
+    dismissCelebration,
+  } = useAppStore(
+    useShallow(state => ({
+      selectedDate: state.selectedDate,
+      storedFilter: state.selectedFilter,
+      habits: state.habits,
+      celebration: state.celebration,
+      setDate: state.setSelectedDate,
+      setFilter: state.setSelectedFilter,
+      toggle: state.toggleHabit,
+      update: state.updateHabit,
+      dismissCelebration: state.dismissCelebration,
+    })),
+  );
+  const [activeFilter, setActiveFilter] = useState(storedFilter);
+  const [isFilterLoading, setIsFilterLoading] = useState(false);
+  const filterFrameRef = useRef<number | undefined>(undefined);
   const [habitMenu, setHabitMenu] = useState<{
     habit: HabitItem;
     anchor: HabitMenuAnchor;
@@ -122,8 +152,10 @@ export function TodayScreen({ navigation }: Props) {
   ).current;
   const visible = useMemo(
     () =>
-      habits.filter(h => isHabitVisibleForTodayFilter(h, filter, selectedDate)),
-    [filter, habits, selectedDate],
+      habits.filter(habit =>
+        isHabitVisibleForTodayFilter(habit, storedFilter, selectedDate),
+      ),
+    [habits, selectedDate, storedFilter],
   );
   const selectedProgress = useMemo(
     () => getDailyProgress(habits, selectedDate),
@@ -148,6 +180,13 @@ export function TodayScreen({ navigation }: Props) {
     ],
     [activeHabits, finishedHabits],
   );
+  const displayedHabitListItems = isFilterLoading
+    ? filterSkeletonItems
+    : habitListItems;
+
+  useEffect(() => {
+    setActiveFilter(storedFilter);
+  }, [storedFilter]);
 
   useEffect(() => {
     const animation = Animated.timing(todayButtonProgress, {
@@ -165,8 +204,29 @@ export function TodayScreen({ navigation }: Props) {
       if (returnAnimationTimeout.current) {
         clearTimeout(returnAnimationTimeout.current);
       }
+      if (filterFrameRef.current !== undefined) {
+        cancelAnimationFrame(filterFrameRef.current);
+      }
     },
     [],
+  );
+
+  const selectFilter = useCallback(
+    (nextFilter: TodayFilter) => {
+      if (nextFilter === activeFilter && nextFilter === storedFilter) return;
+
+      setActiveFilter(nextFilter);
+      setIsFilterLoading(true);
+      if (filterFrameRef.current !== undefined) {
+        cancelAnimationFrame(filterFrameRef.current);
+      }
+      filterFrameRef.current = requestAnimationFrame(() => {
+        filterFrameRef.current = undefined;
+        setFilter(nextFilter);
+        setIsFilterLoading(false);
+      });
+    },
+    [activeFilter, setFilter, storedFilter],
   );
 
   const onViewableDatesChanged = useRef(
@@ -250,10 +310,10 @@ export function TodayScreen({ navigation }: Props) {
   );
   const renderFilter = useCallback(
     ({ item: { key, icon: Icon } }: { item: (typeof filters)[number] }) => {
-      const active = filter === key;
+      const active = activeFilter === key;
       return (
         <Pressable
-          onPress={() => setFilter(key)}
+          onPress={() => selectFilter(key)}
           style={[styles.filter, active && styles.filterActive]}
         >
           <Icon
@@ -266,7 +326,7 @@ export function TodayScreen({ navigation }: Props) {
         </Pressable>
       );
     },
-    [colors, filter, setFilter, styles],
+    [activeFilter, colors, selectFilter, styles],
   );
   const openHabitMenu = useCallback(
     (habit: HabitItem, anchor: HabitMenuAnchor) =>
@@ -282,6 +342,7 @@ export function TodayScreen({ navigation }: Props) {
       <HabitCard
         habit={habit}
         completed={habit.completedDates.includes(selectedDate)}
+        completionDisabled={getDateStatus(selectedDate) === 'future'}
         selectedDate={selectedDate}
         onToggle={toggle}
         onMenu={openHabitMenu}
@@ -292,7 +353,16 @@ export function TodayScreen({ navigation }: Props) {
   );
   const renderHabitListItem = useCallback(
     ({ item }: { item: HabitListItem }) =>
-      item.type === 'finishedHeader' ? (
+      item.type === 'skeleton' ? (
+        <View style={styles.skeletonCard}>
+          <View style={styles.skeletonCheckbox} />
+          <View style={styles.skeletonCopy}>
+            <View style={styles.skeletonTitle} />
+            <View style={styles.skeletonSubtitle} />
+          </View>
+          <View style={styles.skeletonMenu} />
+        </View>
+      ) : item.type === 'finishedHeader' ? (
         <View style={styles.finishedSectionRow}>
           <Text style={styles.finishedSectionTitle}>FINISHED</Text>
           <Text style={styles.count}>{finishedHabits.length}</Text>
@@ -302,25 +372,38 @@ export function TodayScreen({ navigation }: Props) {
       ),
     [finishedHabits.length, renderHabit, styles],
   );
-  const listHeader = (
-    <>
-      <FlashList
-        horizontal
-        data={filters}
-        renderItem={renderFilter}
-        keyExtractor={item => item.key}
-        ItemSeparatorComponent={HorizontalListSeparator}
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterList}
-        contentContainerStyle={styles.filters}
-      />
-      <View style={styles.sectionRow}>
-        <Text style={styles.sectionTitle}>{filter}</Text>
-        <Text style={styles.count}>
-          {finishedHabits.length}/{visible.length} finished
-        </Text>
-      </View>
-    </>
+  const listHeader = useMemo(
+    () => (
+      <>
+        <FlashList
+          horizontal
+          data={filters}
+          extraData={activeFilter}
+          renderItem={renderFilter}
+          keyExtractor={keyByFilter}
+          ItemSeparatorComponent={HorizontalListSeparator}
+          showsHorizontalScrollIndicator={false}
+          style={styles.filterList}
+          contentContainerStyle={styles.filters}
+        />
+        <View style={styles.sectionRow}>
+          <Text style={styles.sectionTitle}>{activeFilter}</Text>
+          <Text style={styles.count}>
+            {isFilterLoading
+              ? 'Loading…'
+              : `${finishedHabits.length}/${visible.length} finished`}
+          </Text>
+        </View>
+      </>
+    ),
+    [
+      activeFilter,
+      finishedHabits.length,
+      isFilterLoading,
+      renderFilter,
+      styles,
+      visible.length,
+    ],
   );
   return (
     <ScreenContainer padded={false}>
@@ -364,12 +447,11 @@ export function TodayScreen({ navigation }: Props) {
         contentContainerStyle={styles.dateStripContent}
       />
       <FlashList
-        data={habitListItems}
+        data={displayedHabitListItems}
+        extraData={selectedDate}
         renderItem={renderHabitListItem}
-        keyExtractor={item =>
-          item.type === 'finishedHeader' ? item.id : item.habit.id
-        }
-        getItemType={item => item.type}
+        keyExtractor={keyByHabitListItem}
+        getItemType={getHabitListItemType}
         ItemSeparatorComponent={VerticalListSeparator}
         ListHeaderComponent={listHeader}
         ListEmptyComponent={
