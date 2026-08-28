@@ -3,6 +3,7 @@ import {
   ActivityIndicator,
   Pressable,
   Text,
+  type StyleProp,
   type ViewStyle,
 } from 'react-native';
 import { useTheme } from '../../context/ThemeContext';
@@ -14,7 +15,7 @@ interface Props {
   variant?: 'primary' | 'secondary' | 'ghost';
   disabled?: boolean;
   loading?: boolean;
-  style?: ViewStyle;
+  style?: StyleProp<ViewStyle>;
 }
 
 export function AppButton({
@@ -27,11 +28,14 @@ export function AppButton({
 }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
+  const interactionDisabled = Boolean(disabled || loading);
+
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={title}
-      disabled={disabled || loading}
+      accessibilityState={{ disabled: interactionDisabled, busy: loading }}
+      disabled={interactionDisabled}
       onPress={onPress}
       style={({ pressed }) => [
         styles.button,

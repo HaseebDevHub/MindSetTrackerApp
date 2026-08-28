@@ -10,6 +10,8 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     button: {
+      width: '100%',
+      alignSelf: 'stretch',
       minHeight: 54,
       borderRadius: radii.pill,
       alignItems: 'center',

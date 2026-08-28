@@ -7,6 +7,9 @@ import {
 } from '../../constants/theme';
 import { useThemedStyles } from '../../hooks/useThemedStyles';
 
+const TIME_OPTION_HEIGHT = 44;
+const TIME_OPTION_ROW_HEIGHT = TIME_OPTION_HEIGHT + spacing.xs * 2;
+
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     headerPad: { paddingHorizontal: spacing.screen },
@@ -266,12 +269,15 @@ const createStyles = (colors: ThemeColors) =>
       marginHorizontal: 4,
     },
     iconActive: { backgroundColor: colors.selectedBlue },
-    timeGrid: { height: 96, marginHorizontal: -4 },
-    frequencyOptions: { height: 52, marginHorizontal: -4 },
-    timeOptionCell: { flex: 1, padding: 4 },
+    timeGrid: { height: TIME_OPTION_ROW_HEIGHT * 2, marginHorizontal: -4 },
+    frequencyOptions: {
+      height: TIME_OPTION_ROW_HEIGHT,
+      marginHorizontal: -4,
+    },
+    timeOptionCell: { flex: 1, padding: spacing.xs },
     timeOption: {
       width: '100%',
-      height: 44,
+      height: TIME_OPTION_HEIGHT,
       backgroundColor: colors.surfaceSecondary,
       borderRadius: radii.small,
       alignItems: 'center',
