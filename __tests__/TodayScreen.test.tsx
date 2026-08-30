@@ -173,11 +173,12 @@ describe('Today date strip', () => {
     jest.useRealTimers();
   });
 
-  test('moves only the completed habit into the finished section', () => {
+  test('moves only the completed habit into the finished section', async () => {
     jest.useFakeTimers();
     const date = '2026-08-25';
     const originalState = useAppStore.getState();
     useAppStore.setState({
+      isHydrated: true,
       selectedDate: date,
       selectedFilter: 'ALL',
       habits: [
@@ -216,8 +217,8 @@ describe('Today date strip', () => {
       renderer = TestRenderer.create(<TodayTestScreen />);
     });
 
-    act(() => {
-      useAppStore.getState().toggleHabit('first', date);
+    await act(async () => {
+      await useAppStore.getState().toggleHabit('first', date);
       jest.runOnlyPendingTimers();
     });
 
@@ -240,8 +241,8 @@ describe('Today date strip', () => {
         ?.completedDates,
     ).not.toContain(date);
 
-    act(() => {
-      useAppStore.getState().toggleHabit('second', date);
+    await act(async () => {
+      await useAppStore.getState().toggleHabit('second', date);
       jest.runOnlyPendingTimers();
     });
     const updatedHabitList = renderer!.root
@@ -281,6 +282,7 @@ describe('Today date strip', () => {
       selectedDate: originalState.selectedDate,
       selectedFilter: originalState.selectedFilter,
       habits: originalState.habits,
+      isHydrated: originalState.isHydrated,
     });
     jest.clearAllTimers();
     jest.useRealTimers();
@@ -293,6 +295,7 @@ describe('Today date strip', () => {
     const todayKey = toDateKey(today);
     const futureKey = toDateKey(addDays(today, 1));
     useAppStore.setState({
+      isHydrated: true,
       selectedDate: todayKey,
       selectedFilter: 'ALL',
       habits: [
@@ -351,6 +354,7 @@ describe('Today date strip', () => {
       habits: originalState.habits,
       stats: originalState.stats,
       celebration: originalState.celebration,
+      isHydrated: originalState.isHydrated,
     });
     jest.clearAllTimers();
     jest.useRealTimers();

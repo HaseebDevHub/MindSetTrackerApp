@@ -9,6 +9,7 @@ export const STORAGE_KEYS = {
   HABITS: 'habits.items',
   LEGACY_DEMO_HABITS_REMOVED: 'migrations.legacyDemoHabitsRemoved',
   COMPLETION_DATES: 'habits.completionDates',
+  WATERMELON_HABIT_MIGRATION_V1: 'migrations.watermelonHabits.v1',
   ACHIEVEMENT_UNLOCKS: 'achievements.unlocks',
   CELEBRATED_PERFECT_DAYS: 'achievements.celebratedPerfectDays',
 } as const;
@@ -28,6 +29,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.HABITS]: string;
   [STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED]: boolean;
   [STORAGE_KEYS.COMPLETION_DATES]: string;
+  [STORAGE_KEYS.WATERMELON_HABIT_MIGRATION_V1]: boolean;
   [STORAGE_KEYS.ACHIEVEMENT_UNLOCKS]: string;
   [STORAGE_KEYS.CELEBRATED_PERFECT_DAYS]: string;
 };

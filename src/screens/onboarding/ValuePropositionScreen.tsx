@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useState } from 'react';
 import { Alert, Text, View, useWindowDimensions } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { CommonActions } from '@react-navigation/native';
@@ -28,6 +28,28 @@ export function ValuePropositionScreen({ navigation }: Props) {
   const styles = useStyles();
   const { height } = useWindowDimensions();
   const finish = useAppStore(s => s.finishOnboarding);
+  const [isFinishing, setIsFinishing] = useState(false);
+  const finishingRef = useRef(false);
+  const finishSetup = async () => {
+    if (finishingRef.current) return;
+    finishingRef.current = true;
+    setIsFinishing(true);
+    const finished = await finish();
+    if (finished) {
+      navigation
+        .getParent()
+        ?.dispatch(
+          CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
+        );
+      return;
+    }
+    finishingRef.current = false;
+    setIsFinishing(false);
+    Alert.alert(
+      'Unable to finish setup',
+      'Your setup could not be saved. Please try again.',
+    );
+  };
   return (
     <ScreenContainer scroll style={styles.valueScreen}>
       <View style={[styles.hero, { height: Math.min(310, height * 0.36) }]}>
@@ -62,19 +84,9 @@ export function ValuePropositionScreen({ navigation }: Props) {
       />
       <AppButton
         title="START NOW!"
+        loading={isFinishing}
         onPress={() => {
-          if (finish()) {
-            navigation
-              .getParent()
-              ?.dispatch(
-                CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
-              );
-          } else {
-            Alert.alert(
-              'Unable to finish setup',
-              'Your setup could not be saved. Please try again.',
-            );
-          }
+          finishSetup().catch(() => undefined);
         }}
       />
     </ScreenContainer>

@@ -58,9 +58,10 @@ describe('reminder settings', () => {
     expect(storage.has(STORAGE_KEYS.NOTIFICATION_REMINDER_TIME)).toBe(false);
   });
 
-  test('stores a customized reminder and icon on only the new habit', () => {
+  test('stores a customized reminder and icon on only the new habit', async () => {
     onboardingStorage.setWakeUpTime('06:30');
-    useAppStore.getState().addHabit({
+    useAppStore.setState({ isHydrated: true });
+    await useAppStore.getState().addHabit({
       title: 'Morning medicine test habit',
       iconName: 'Pill',
       timeOfDay: 'MORNING',
@@ -77,6 +78,7 @@ describe('reminder settings', () => {
       reminderTime: '10:00',
     });
     expect(reminderSettingsStorage.getWakeUpDefault()).toBe('06:30');
+    useAppStore.setState({ habits: [], isHydrated: false });
   });
 });
 

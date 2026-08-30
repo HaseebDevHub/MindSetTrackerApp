@@ -1,5 +1,5 @@
 import type { HabitItem } from '../types/models';
-import { getDateStatus, isDateKey } from '../utils/dates';
+import { isDateKey } from '../utils/dates';
 import { storage } from './storage';
 import { STORAGE_KEYS, type CompletionStorageKey } from './storageKeys';
 
@@ -11,9 +11,8 @@ function parseStringArray(value: string | undefined) {
   if (!value) return [];
   try {
     const parsed: unknown = JSON.parse(value);
-    return Array.isArray(parsed) &&
-      parsed.every(item => typeof item === 'string')
-      ? [...new Set(parsed)]
+    return Array.isArray(parsed)
+      ? [...new Set(parsed.filter(item => typeof item === 'string'))]
       : [];
   } catch {
     return [];
@@ -31,46 +30,33 @@ function getCompletedHabitIds(date: string) {
   return parseStringArray(storage.getString(completionKey(date)));
 }
 
-function setHabitCompletion(habitId: string, date: string, completed: boolean) {
-  if (
-    !habitId ||
-    !isDateKey(date) ||
-    getDateStatus(date) === 'future'
-  )
-    return false;
-  const current = getCompletedHabitIds(date);
-  const next = completed
-    ? [...new Set([...current, habitId])]
-    : current.filter(id => id !== habitId);
-  if (!storage.setString(completionKey(date), JSON.stringify(next)))
-    return false;
-
-  const dates = getDates();
-  if (!dates.includes(date)) {
-    return storage.setString(
-      STORAGE_KEYS.COMPLETION_DATES,
-      JSON.stringify([...dates, date].sort()),
-    );
-  }
-  return true;
-}
-
 function hydrateHabits(
   habits: Array<Omit<HabitItem, 'completedDates' | 'streakCount'>>,
 ): HabitItem[] {
   const dates = getDates();
+  const habitIds = new Set(habits.map(habit => habit.id));
+  const orphanHabitIds = new Set<string>();
   const completionsByHabit = new Map<string, string[]>();
   dates.forEach(date =>
     getCompletedHabitIds(date).forEach(habitId => {
+      if (!habitIds.has(habitId)) {
+        orphanHabitIds.add(habitId);
+        return;
+      }
       completionsByHabit.set(habitId, [
         ...(completionsByHabit.get(habitId) ?? []),
         date,
       ]);
     }),
   );
+  if (__DEV__ && orphanHabitIds.size) {
+    console.warn(
+      `[habit migration] Ignored completion data for ${orphanHabitIds.size} missing habit record(s).`,
+    );
+  }
   return habits.map(habit => ({
     ...habit,
-    completedDates: completionsByHabit.get(habit.id) ?? [],
+    completedDates: [...new Set(completionsByHabit.get(habit.id) ?? [])].sort(),
     streakCount: 0,
   }));
 }
@@ -78,6 +64,5 @@ function hydrateHabits(
 export const completionStorage = {
   getDates,
   getCompletedHabitIds,
-  setHabitCompletion,
   hydrateHabits,
 };

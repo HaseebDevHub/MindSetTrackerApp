@@ -28,7 +28,7 @@ describe('local application behavior', () => {
     expect(getDateStatus('2026-08-28', localToday)).toBe('future');
   });
 
-  test('habit completion can be checked and undone', () => {
+  test('habit completion can be checked and undone', async () => {
     const originalHabits = useAppStore.getState().habits;
     const habit: HabitItem = {
       id: 'habit-completion-test',
@@ -38,14 +38,14 @@ describe('local application behavior', () => {
       streakCount: 0,
       iconName: 'Check',
     };
-    useAppStore.setState({ habits: [habit] });
+    useAppStore.setState({ habits: [habit], isHydrated: true });
     const date = toDateKey(new Date());
     expect(habit.completedDates).not.toContain(date);
-    useAppStore.getState().toggleHabit(habit.id, date);
+    await useAppStore.getState().toggleHabit(habit.id, date);
     expect(useAppStore.getState().habits[0].completedDates).toContain(date);
-    useAppStore.getState().toggleHabit(habit.id, date);
+    await useAppStore.getState().toggleHabit(habit.id, date);
     expect(useAppStore.getState().habits[0].completedDates).not.toContain(date);
-    useAppStore.setState({ habits: originalHabits });
+    useAppStore.setState({ habits: originalHabits, isHydrated: false });
   });
 
   test.each<[TodayFilter, string[]]>([

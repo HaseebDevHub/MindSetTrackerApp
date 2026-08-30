@@ -7,6 +7,7 @@ import React, {
 } from 'react';
 import {
   Animated,
+  Alert,
   FlatList,
   Pressable,
   Text,
@@ -344,7 +345,9 @@ export function TodayScreen({ navigation }: Props) {
         completed={habit.completedDates.includes(selectedDate)}
         completionDisabled={getDateStatus(selectedDate) === 'future'}
         selectedDate={selectedDate}
-        onToggle={toggle}
+        onToggle={(habitId, date) => {
+          toggle(habitId, date).catch(() => undefined);
+        }}
         onMenu={openHabitMenu}
         onPress={openHabit}
       />
@@ -527,12 +530,20 @@ export function TodayScreen({ navigation }: Props) {
           setNote(habit.note ?? '');
         }}
         onSaveNote={(habit, value) => {
-          update(habit.id, { note: value.trim() });
-          setNoteHabit(undefined);
+          (async () => {
+            if (await update(habit.id, { note: value.trim() })) {
+              setNoteHabit(undefined);
+            } else {
+              Alert.alert(
+                'Unable to save note',
+                'Your note could not be saved. Please try again.',
+              );
+            }
+          })().catch(() => undefined);
         }}
         onSetNote={setNote}
         onUndo={habit => {
-          toggle(habit.id, selectedDate);
+          toggle(habit.id, selectedDate).catch(() => undefined);
           setHabitMenu(undefined);
         }}
       />

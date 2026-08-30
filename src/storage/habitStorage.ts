@@ -1,5 +1,5 @@
 import type { HabitFrequency, HabitItem } from '../types/models';
-import { isDateKey, toDateKey } from '../utils/dates';
+import { isDateKey } from '../utils/dates';
 import { isValidLocalTime } from '../utils/time';
 import { storage } from './storage';
 import { STORAGE_KEYS } from './storageKeys';
@@ -51,45 +51,11 @@ function isStoredHabit(value: unknown): value is StoredHabit {
   );
 }
 
-function toStoredHabit(habit: HabitItem): StoredHabit {
-  return {
-    id: habit.id,
-    title: habit.title,
-    timeOfDay: habit.timeOfDay,
-    iconName: habit.iconName,
-    note: habit.note,
-    reminderEnabled: habit.reminderEnabled,
-    reminderTime: habit.reminderTime,
-    archived: habit.archived,
-    frequency: habit.frequency ?? 'EVERYDAY',
-    createdAt:
-      habit.createdAt ??
-      habit.completedDates.slice().sort()[0] ??
-      toDateKey(new Date()),
-  };
-}
-
-function writeStoredHabits(habits: StoredHabit[]) {
-  return storage.setString(STORAGE_KEYS.HABITS, JSON.stringify(habits));
-}
-
 function removeLegacySeededHabits(habits: StoredHabit[]) {
   if (storage.getBoolean(STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED) === true) {
     return habits;
   }
-
-  const userHabits = habits.filter(
-    habit => !LEGACY_SEEDED_HABIT_IDS.has(habit.id),
-  );
-  if (
-    userHabits.length !== habits.length &&
-    !writeStoredHabits(userHabits)
-  ) {
-    return habits;
-  }
-
-  storage.setBoolean(STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED, true);
-  return userHabits;
+  return habits.filter(habit => !LEGACY_SEEDED_HABIT_IDS.has(habit.id));
 }
 
 function hasStoredHabits() {
@@ -98,15 +64,25 @@ function hasStoredHabits() {
 
 function getHabits(): StoredHabit[] {
   const parsed = parseJson(storage.getString(STORAGE_KEYS.HABITS));
-  if (!Array.isArray(parsed) || !parsed.every(isStoredHabit)) return [];
-  return removeLegacySeededHabits(parsed);
+  if (!Array.isArray(parsed)) return [];
+  const valid = parsed.filter(isStoredHabit);
+  if (__DEV__ && valid.length !== parsed.length) {
+    console.warn(
+      `[habit migration] Ignored ${
+        parsed.length - valid.length
+      } malformed legacy habit record(s).`,
+    );
+  }
+  const byId = new Map<string, StoredHabit>();
+  valid.forEach(habit => {
+    if (!byId.has(habit.id)) byId.set(habit.id, habit);
+    else if (__DEV__) {
+      console.warn(
+        `[habit migration] Ignored duplicate legacy habit id: ${habit.id}`,
+      );
+    }
+  });
+  return removeLegacySeededHabits([...byId.values()]);
 }
 
-function setHabits(habits: HabitItem[]) {
-  return storage.setString(
-    STORAGE_KEYS.HABITS,
-    JSON.stringify(habits.map(toStoredHabit)),
-  );
-}
-
-export const habitStorage = { getHabits, hasStoredHabits, setHabits };
+export const habitStorage = { getHabits, hasStoredHabits };

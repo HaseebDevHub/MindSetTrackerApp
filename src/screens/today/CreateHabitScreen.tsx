@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import React, { useRef, useState } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { FlashList } from '@shopify/flash-list';
 import { Bell } from 'lucide-react-native';
@@ -49,8 +49,13 @@ export function CreateHabitScreen({ navigation, route }: Props) {
     () => existing?.reminderTime ?? reminderSettingsStorage.getWakeUpDefault(),
   );
   const [timeEditorVisible, setTimeEditorVisible] = useState(false);
-  const save = () => {
+  const [isSaving, setIsSaving] = useState(false);
+  const savingRef = useRef(false);
+  const save = async () => {
     if (!title.trim()) return;
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setIsSaving(true);
     const values = {
       title: title.trim(),
       iconName,
@@ -59,9 +64,17 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       reminderEnabled: reminder,
       reminderTime,
     };
-    if (existing) update(existing.id, values);
-    else add(values);
-    navigation.goBack();
+    const saved = existing
+      ? await update(existing.id, values)
+      : await add(values);
+    savingRef.current = false;
+    setIsSaving(false);
+    if (saved) navigation.goBack();
+    else
+      Alert.alert(
+        'Unable to save habit',
+        'Your habit could not be saved. Please try again.',
+      );
   };
   return (
     <ScreenContainer scroll keyboard style={styles.form}>
@@ -197,7 +210,10 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       <AppButton
         title={existing ? 'SAVE CHANGES' : 'CREATE HABIT'}
         disabled={!title.trim()}
-        onPress={save}
+        loading={isSaving}
+        onPress={() => {
+          save().catch(() => undefined);
+        }}
         style={styles.save}
       />
       <ReminderTimeModal

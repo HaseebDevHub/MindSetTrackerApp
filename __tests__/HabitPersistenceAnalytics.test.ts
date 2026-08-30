@@ -8,10 +8,7 @@ import {
   type CompletionStorageKey,
 } from '../src/storage/storageKeys';
 import type { HabitItem, UserStats } from '../src/types/models';
-import {
-  addDays,
-  toDateKey,
-} from '../src/utils/dates';
+import { addDays, toDateKey } from '../src/utils/dates';
 import {
   calculateStats,
   getDailyProgress,
@@ -29,6 +26,20 @@ const weekdayHabit: HabitItem = {
   iconName: 'BookOpen',
 };
 
+function storedHabit(habit: HabitItem) {
+  const stored: Partial<HabitItem> = { ...habit };
+  delete stored.completedDates;
+  delete stored.streakCount;
+  return stored;
+}
+
+function seedLegacyCompletions(date: string, habitIds: string[]) {
+  storage.setString(
+    `habits.completions.${date}` as CompletionStorageKey,
+    JSON.stringify(habitIds),
+  );
+}
+
 function resetDomainStorage() {
   completionStorage
     .getDates()
@@ -39,126 +50,108 @@ function resetDomainStorage() {
     STORAGE_KEYS.HABITS,
     STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED,
     STORAGE_KEYS.COMPLETION_DATES,
+    STORAGE_KEYS.WATERMELON_HABIT_MIGRATION_V1,
     STORAGE_KEYS.ACHIEVEMENT_UNLOCKS,
     STORAGE_KEYS.CELEBRATED_PERFECT_DAYS,
   ].forEach(key => storage.remove(key));
 }
 
-describe('habit and completion persistence', () => {
+describe('read-only legacy habit and completion recovery', () => {
   beforeEach(resetDomainStorage);
   afterAll(resetDomainStorage);
 
-  test('stores habit metadata separately from date-specific completion records', () => {
-    expect(habitStorage.setHabits([weekdayHabit])).toBe(true);
+  test('reads habit metadata and hydrates date-specific completion records', () => {
+    storage.setString(
+      STORAGE_KEYS.HABITS,
+      JSON.stringify([storedHabit(weekdayHabit)]),
+    );
+    storage.setString(
+      STORAGE_KEYS.COMPLETION_DATES,
+      JSON.stringify(weekdayHabit.completedDates),
+    );
     weekdayHabit.completedDates.forEach(date =>
-      expect(
-        completionStorage.setHabitCompletion(weekdayHabit.id, date, true),
-      ).toBe(true),
+      seedLegacyCompletions(date, [weekdayHabit.id, weekdayHabit.id]),
     );
 
     const stored = habitStorage.getHabits();
     expect(stored).toHaveLength(1);
-    expect(stored?.[0]).not.toHaveProperty('completedDates');
-    expect(stored?.[0]).not.toHaveProperty('streakCount');
-
-    const hydrated = completionStorage.hydrateHabits(stored!);
-    expect(hydrated[0].completedDates).toEqual(weekdayHabit.completedDates);
+    expect(stored[0]).not.toHaveProperty('completedDates');
+    expect(stored[0]).not.toHaveProperty('streakCount');
+    expect(completionStorage.hydrateHabits(stored)[0].completedDates).toEqual(
+      weekdayHabit.completedDates,
+    );
   });
 
-  test('uses an empty collection when habit storage is missing or empty', () => {
-    expect(habitStorage.hasStoredHabits()).toBe(false);
-    expect(habitStorage.getHabits()).toEqual([]);
-
-    expect(habitStorage.setHabits([])).toBe(true);
-    expect(habitStorage.hasStoredHabits()).toBe(true);
-    expect(habitStorage.getHabits()).toEqual([]);
+  test('preserves valid records when another legacy record is malformed', () => {
+    storage.setString(
+      STORAGE_KEYS.HABITS,
+      JSON.stringify([storedHabit(weekdayHabit), { id: 'broken', title: 42 }]),
+    );
+    expect(habitStorage.getHabits().map(habit => habit.id)).toEqual([
+      weekdayHabit.id,
+    ]);
   });
 
-  test('removes only legacy seeded IDs and preserves user records and completions', () => {
-    const userHabit: HabitItem = {
+  test('deduplicates legacy IDs without using the habit title as identity', () => {
+    const sameTitleDifferentId = {
       ...weekdayHabit,
-      id: 'habit-user-created',
-      title: 'Drink 8 cups of water',
+      id: 'weekday-2',
     };
-    const legacySeed: HabitItem = {
-      ...weekdayHabit,
-      id: 'water',
-      title: 'Legacy seeded record',
-    };
-
-    expect(habitStorage.setHabits([legacySeed, userHabit])).toBe(true);
-    expect(
-      completionStorage.setHabitCompletion(
-        userHabit.id,
-        '2026-08-25',
-        true,
-      ),
-    ).toBe(true);
-    expect(
-      completionStorage.setHabitCompletion(
-        legacySeed.id,
-        '2026-08-25',
-        true,
-      ),
-    ).toBe(true);
+    storage.setString(
+      STORAGE_KEYS.HABITS,
+      JSON.stringify([
+        storedHabit(weekdayHabit),
+        storedHabit({ ...weekdayHabit, title: 'Duplicate ID ignored' }),
+        storedHabit(sameTitleDifferentId),
+      ]),
+    );
 
     expect(habitStorage.getHabits().map(habit => habit.id)).toEqual([
-      userHabit.id,
+      'weekday',
+      'weekday-2',
     ]);
+  });
+
+  test('filters old demo records without deleting the MMKV recovery backup', () => {
+    const demo = { ...weekdayHabit, id: 'water', title: 'Old demo' };
+    storage.setString(
+      STORAGE_KEYS.HABITS,
+      JSON.stringify([storedHabit(demo), storedHabit(weekdayHabit)]),
+    );
+    const rawBefore = storage.getString(STORAGE_KEYS.HABITS);
+
     expect(habitStorage.getHabits().map(habit => habit.id)).toEqual([
-      userHabit.id,
+      weekdayHabit.id,
     ]);
+    expect(storage.getString(STORAGE_KEYS.HABITS)).toBe(rawBefore);
+  });
+
+  test('preserves post-cleanup records even when they reuse an old demo id', () => {
+    const retained = { ...weekdayHabit, id: 'water', title: 'My water habit' };
+    storage.setBoolean(STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED, true);
+    storage.setString(
+      STORAGE_KEYS.HABITS,
+      JSON.stringify([storedHabit(retained)]),
+    );
+
+    expect(habitStorage.getHabits()).toEqual([storedHabit(retained)]);
+  });
+
+  test('keeps valid completion ids when a legacy completion array is partly malformed', () => {
+    storage.setString(STORAGE_KEYS.COMPLETION_DATES, JSON.stringify(['2026-08-25']));
+    storage.setString(
+      'habits.completions.2026-08-25',
+      JSON.stringify([weekdayHabit.id, 42, weekdayHabit.id]),
+    );
+
     expect(completionStorage.getCompletedHabitIds('2026-08-25')).toEqual([
-      userHabit.id,
-      legacySeed.id,
+      weekdayHabit.id,
     ]);
   });
 
-  test('updates only the selected habit and date idempotently', () => {
-    completionStorage.setHabitCompletion('habit-a', '2026-08-25', true);
-    completionStorage.setHabitCompletion('habit-a', '2026-08-25', true);
-    completionStorage.setHabitCompletion('habit-b', '2026-08-25', true);
-    completionStorage.setHabitCompletion('habit-a', '2026-08-26', true);
-
-    expect(completionStorage.getCompletedHabitIds('2026-08-25')).toEqual([
-      'habit-a',
-      'habit-b',
-    ]);
-    expect(completionStorage.getCompletedHabitIds('2026-08-26')).toEqual([
-      'habit-a',
-    ]);
-
-    completionStorage.setHabitCompletion('habit-a', '2026-08-25', false);
-    expect(completionStorage.getCompletedHabitIds('2026-08-25')).toEqual([
-      'habit-b',
-    ]);
-    expect(completionStorage.getCompletedHabitIds('2026-08-26')).toEqual([
-      'habit-a',
-    ]);
-  });
-
-  test('rejects future completion before creating any MMKV record', () => {
-    const futureDate = toDateKey(addDays(new Date(), 1));
-    const futureKey = `habits.completions.${futureDate}` as CompletionStorageKey;
-
-    expect(
-      completionStorage.setHabitCompletion('habit-a', futureDate, true),
-    ).toBe(false);
-    expect(completionStorage.getCompletedHabitIds(futureDate)).toEqual([]);
-    expect(completionStorage.getDates()).not.toContain(futureDate);
-    expect(storage.has(futureKey)).toBe(false);
-  });
-
-  test('persists past completion against the requested date key', () => {
-    const pastDate = toDateKey(addDays(new Date(), -1));
-
-    expect(
-      completionStorage.setHabitCompletion('habit-a', pastDate, true),
-    ).toBe(true);
-    expect(completionStorage.getCompletedHabitIds(pastDate)).toEqual([
-      'habit-a',
-    ]);
-    expect(completionStorage.getDates()).toContain(pastDate);
+  test('exposes no normal-runtime MMKV habit or completion writer', () => {
+    expect(habitStorage).not.toHaveProperty('setHabits');
+    expect(completionStorage).not.toHaveProperty('setHabitCompletion');
   });
 });
 

@@ -28,3 +28,24 @@ jest.mock('react-native-mmkv', () => {
     },
   };
 });
+
+jest.mock('./src/database/repositories/habitRepository', () => {
+  let nextId = 1;
+  return {
+    habitRepository: {
+      loadAllHabits: jest.fn(async () => []),
+      createHabit: jest.fn(async habit => ({
+        ...habit,
+        id: `test-habit-${nextId++}`,
+        completedDates: [],
+        streakCount: 0,
+      })),
+      updateHabit: jest.fn(async () => true),
+      setArchived: jest.fn(async () => true),
+      setHabitCompletion: jest.fn(async () => true),
+      isHabitCompleted: jest.fn(async () => false),
+      importLegacyHabits: jest.fn(async () => undefined),
+      ensureOnboardingHabit: jest.fn(async habit => habit.id),
+    },
+  };
+});
