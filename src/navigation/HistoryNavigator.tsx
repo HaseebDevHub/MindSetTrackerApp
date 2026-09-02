@@ -13,7 +13,10 @@ export function HistoryNavigator({
       initialTab={route.params?.initialTab}
       tabRequestId={route.params?.tabRequestId}
       onDateSelected={() =>
-        navigation.navigate('Today', { screen: 'TodayHome' })
+        navigation.navigate('Today', {
+          screen: 'TodayHome',
+          params: { dateFocusRequestId: Date.now() },
+        })
       }
     />
   );

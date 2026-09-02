@@ -71,6 +71,29 @@ function TodayTestScreen() {
 }
 
 describe('Today date strip', () => {
+  test('shows the relative date label only for nearby dates', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 2, 12));
+    const originalDate = useAppStore.getState().selectedDate;
+    useAppStore.setState({ selectedDate: '2026-09-23' });
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(<TodayTestScreen />);
+    });
+
+    const renderedText = () =>
+      renderer!.root.findAllByType(Text).map(node => node.props.children);
+    expect(renderedText()).not.toContain('SEP 23');
+
+    act(() => useAppStore.getState().setSelectedDate('2026-09-02'));
+    expect(renderedText()).toContain('TODAY');
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({ selectedDate: originalDate });
+    jest.clearAllTimers();
+    jest.useRealTimers();
+  });
+
   test('shows and clears a successful habit creation toast', () => {
     jest.useFakeTimers();
     const setParams = jest.fn();
@@ -196,17 +219,24 @@ describe('Today date strip', () => {
       toDateKey(addDays(fromDateKey(initialDate), 1)),
     );
 
+    act(() => jest.runOnlyPendingTimers());
     const nextDate = dateList!.props.data[centerIndex + 1] as Date;
+    const scrollToIndex = jest.spyOn(dateList!.instance, 'scrollToIndex');
     const nextDateCell = dateList!.props.renderItem({
       item: nextDate,
       index: centerIndex + 1,
     });
     act(() => {
       nextDateCell.props.onPress();
-      jest.runOnlyPendingTimers();
     });
+    act(() => jest.runOnlyPendingTimers());
 
     expect(useAppStore.getState().selectedDate).toBe(toDateKey(nextDate));
+    expect(scrollToIndex).toHaveBeenCalledWith({
+      animated: true,
+      index: centerIndex + 1,
+      viewPosition: 0.5,
+    });
     const updatedDateList = renderer!.root
       .findAllByType(FlatList)
       .find(list => list.props.horizontal && list.props.data.length > 7);

@@ -107,7 +107,11 @@ export type OnboardingStackParamList = {
 
 export type TodayStackParamList = {
   TodayHome:
-    | { toastMessage?: string; toastRequestId?: number }
+    | {
+        toastMessage?: string;
+        toastRequestId?: number;
+        dateFocusRequestId?: number;
+      }
     | undefined;
   CreateHabit: { habitId?: string } | undefined;
   HabitDetail: { habitId: string };

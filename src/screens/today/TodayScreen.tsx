@@ -146,6 +146,11 @@ export function TodayScreen({ navigation, route }: Props) {
   );
   const [isReturningToToday, setIsReturningToToday] = useState(false);
   const selected = fromDateKey(selectedDate);
+  const relativeDateLabel = getRelativeDateLabel(selected);
+  const showRelativeDateLabel =
+    relativeDateLabel === 'YESTERDAY' ||
+    relativeDateLabel === 'TODAY' ||
+    relativeDateLabel === 'TOMORROW';
   const dateRangeCenter = useRef(todayDate).current;
   const dateCellWidth = (width - spacing.small * 2) / 7;
   const dates = useMemo(() => {
@@ -217,6 +222,22 @@ export function TodayScreen({ navigation, route }: Props) {
   useEffect(() => {
     setActiveFilter(storedFilter);
   }, [storedFilter]);
+
+  useEffect(() => {
+    const selectedIndex = dates.findIndex(
+      date => toDateKey(date) === selectedDate,
+    );
+    if (selectedIndex < 0) return undefined;
+
+    const frame = requestAnimationFrame(() => {
+      dateListRef.current?.scrollToIndex({
+        animated: true,
+        index: selectedIndex,
+        viewPosition: 0.5,
+      });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [dates, route.params?.dateFocusRequestId, selectedDate]);
 
   useEffect(() => {
     const animation = Animated.timing(todayButtonProgress, {
@@ -301,7 +322,7 @@ export function TodayScreen({ navigation, route }: Props) {
   }, [finishReturningToToday, setDate, todayDate, todayIndex]);
 
   const renderDate = useCallback(
-    ({ item: date, index }: { item: Date; index: number }) => {
+    ({ item: date }: { item: Date }) => {
       const key = toDateKey(date);
       const active = key === selectedDate;
       const progress = getDailyProgress(habits, key);
@@ -310,14 +331,7 @@ export function TodayScreen({ navigation, route }: Props) {
           accessibilityLabel={date.toDateString()}
           accessibilityRole="button"
           accessibilityState={{ selected: active }}
-          onPress={() => {
-            setDate(key);
-            dateListRef.current?.scrollToIndex({
-              animated: true,
-              index,
-              viewPosition: 0.5,
-            });
-          }}
+          onPress={() => setDate(key)}
           style={[
             styles.dateCell,
             styles.dateListCell,
@@ -493,7 +507,9 @@ export function TodayScreen({ navigation, route }: Props) {
       <View style={styles.headerPad}>
         <View style={styles.todayTop}>
           <View>
-            <Text style={styles.eyebrow}>{getRelativeDateLabel(selected)}</Text>
+            {showRelativeDateLabel ? (
+              <Text style={styles.eyebrow}>{relativeDateLabel}</Text>
+            ) : null}
             <Text style={styles.dateTitle}>{formatShortDate(selected)}</Text>
             <Text style={styles.progressText}>
               {selected.toLocaleDateString('en-US', { weekday: 'long' })}
