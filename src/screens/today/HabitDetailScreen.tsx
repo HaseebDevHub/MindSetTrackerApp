@@ -6,6 +6,11 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useAppStore } from '../../store/useAppStore';
 import type { TodayStackParamList } from '../../types/models';
+import { getHabitTotalSuccesses } from '../../utils/habitAnalytics';
+import {
+  getHabitScheduleSummary,
+  normalizeHabitType,
+} from '../../utils/habitSchedule';
 import useStyles from './TodayScreenStyle';
 
 type Props = NativeStackScreenProps<TodayStackParamList, 'HabitDetail'>;
@@ -28,10 +33,15 @@ export function HabitDetailScreen({ navigation, route }: Props) {
       <AppHeader title="HABIT DETAILS" onBack={navigation.goBack} />
       <View style={styles.detailHero}>
         <Text style={styles.detailTitle}>{habit.title}</Text>
-        <Text style={styles.detailTime}>{habit.timeOfDay}</Text>
+        <Text style={styles.detailTime}>
+          {normalizeHabitType(habit.habitType).replace('_', '-')} •{' '}
+          {getHabitScheduleSummary(habit)} • {habit.timeOfDay}
+        </Text>
         <View style={styles.detailMetric}>
-          <Text style={styles.metricNumber}>{habit.completedDates.length}</Text>
-          <Text style={styles.metricLabel}>TOTAL COMPLETIONS</Text>
+          <Text style={styles.metricNumber}>
+            {getHabitTotalSuccesses(habit)}
+          </Text>
+          <Text style={styles.metricLabel}>TOTAL SUCCESSFUL DAYS</Text>
         </View>
       </View>
       {habit.note ? (

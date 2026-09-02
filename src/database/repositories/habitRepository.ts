@@ -3,6 +3,13 @@ import type Habit from '../models/Habit';
 import type HabitCompletion from '../models/HabitCompletion';
 import { mapHabitRecord } from '../mappers/habitMapper';
 import type { HabitItem } from '../../types/models';
+import type { HabitActionType } from '../../types/models';
+import {
+  encodeWeekdays,
+  normalizeGoalMode,
+  normalizeHabitType,
+  normalizeScheduleMode,
+} from '../../utils/habitSchedule';
 import { getDateStatus, isDateKey, toDateKey } from '../../utils/dates';
 import type {
   HabitCreateInput,
@@ -44,7 +51,22 @@ function setHabitFields(
   record.isReminderEnabled = habit.reminderEnabled ?? false;
   record.reminderTime = habit.reminderTime ?? null;
   record.isArchived = habit.archived ?? false;
+  record.archivedDateKey = habit.archivedAt ?? null;
   record.createdDateKey = habit.createdAt ?? toDateKey(new Date());
+  record.habitType = normalizeHabitType(habit.habitType);
+  record.color = habit.color ?? null;
+  record.scheduleMode = normalizeScheduleMode(
+    habit.scheduleMode,
+    habit.frequency,
+  );
+  record.selectedWeekdays = encodeWeekdays(habit.selectedWeekdays) ?? null;
+  record.quotaCount = habit.quotaCount ?? null;
+  record.endDateKey = habit.endDate ?? null;
+  record.targetDateKey = habit.targetDate ?? null;
+  record.goalMode = normalizeGoalMode(habit.goalMode);
+  record.goalTarget = habit.goalTarget ?? null;
+  record.goalUnit = habit.goalUnit ?? null;
+  record.motivationalText = habit.motivationalText ?? null;
 }
 
 function applyHabitUpdates(record: Habit, updates: HabitUpdateInput) {
@@ -62,8 +84,40 @@ function applyHabitUpdates(record: Habit, updates: HabitUpdateInput) {
     record.reminderTime = updates.reminderTime ?? null;
   }
   if (updates.archived !== undefined) record.isArchived = updates.archived;
+  if (Object.prototype.hasOwnProperty.call(updates, 'archivedAt')) {
+    record.archivedDateKey = updates.archivedAt ?? null;
+  }
   if (updates.createdAt !== undefined) {
     record.createdDateKey = updates.createdAt;
+  }
+  if (updates.habitType !== undefined) record.habitType = updates.habitType;
+  if (Object.prototype.hasOwnProperty.call(updates, 'color')) {
+    record.color = updates.color ?? null;
+  }
+  if (updates.scheduleMode !== undefined) {
+    record.scheduleMode = updates.scheduleMode;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'selectedWeekdays')) {
+    record.selectedWeekdays = encodeWeekdays(updates.selectedWeekdays) ?? null;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'quotaCount')) {
+    record.quotaCount = updates.quotaCount ?? null;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'endDate')) {
+    record.endDateKey = updates.endDate ?? null;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'targetDate')) {
+    record.targetDateKey = updates.targetDate ?? null;
+  }
+  if (updates.goalMode !== undefined) record.goalMode = updates.goalMode;
+  if (Object.prototype.hasOwnProperty.call(updates, 'goalTarget')) {
+    record.goalTarget = updates.goalTarget ?? null;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'goalUnit')) {
+    record.goalUnit = updates.goalUnit ?? null;
+  }
+  if (Object.prototype.hasOwnProperty.call(updates, 'motivationalText')) {
+    record.motivationalText = updates.motivationalText ?? null;
   }
 }
 
@@ -116,8 +170,31 @@ async function updateHabit(id: string, updates: HabitUpdateInput) {
   });
 }
 
-async function setArchived(id: string, archived: boolean) {
-  return updateHabit(id, { archived });
+async function deleteHabit(id: string) {
+  if (!id) return false;
+  return serializeWrite(`habit:${id}`, async () => {
+    const database = await getDatabase();
+    return database.write(async () => {
+      const habit = await findHabit(database, id);
+      if (!habit) return false;
+      const completions = await database
+        .get<HabitCompletion>('habit_completions')
+        .query(Q.where('habit_id', id))
+        .fetch();
+      await database.batch(
+        ...completions.map(record => record.prepareDestroyPermanently()),
+        habit.prepareDestroyPermanently(),
+      );
+      return true;
+    });
+  });
+}
+
+async function setArchived(id: string, archived: boolean, archivedAt?: string) {
+  return updateHabit(id, {
+    archived,
+    archivedAt: archived ? archivedAt ?? toDateKey(new Date()) : undefined,
+  });
 }
 
 async function setHabitCompletion(
@@ -129,14 +206,18 @@ async function setHabitCompletion(
     return false;
   }
 
-  return serializeWrite(`completion:${habitId}:${dateKey}`, async () => {
+  return serializeWrite(`habit:${habitId}`, async () => {
     const database = await getDatabase();
     return database.write(async () => {
       if (!(await findHabit(database, habitId))) return false;
-      const records = await database
+      const dateRecords = await database
         .get<HabitCompletion>('habit_completions')
         .query(Q.where('habit_id', habitId), Q.where('date_key', dateKey))
         .fetch();
+      const records = dateRecords.filter(
+        record =>
+          record.actionType === null || record.actionType === 'COMPLETION',
+      );
 
       if (completed) {
         if (!records.length) {
@@ -145,6 +226,8 @@ async function setHabitCompletion(
             .create(record => {
               record.habitId = habitId;
               record.dateKey = dateKey;
+              record.actionType = 'COMPLETION';
+              record.progressValue = 1;
             });
         } else if (records.length > 1) {
           await database.batch(
@@ -164,12 +247,83 @@ async function setHabitCompletion(
 async function isHabitCompleted(habitId: string, dateKey: string) {
   if (!habitId || !isDateKey(dateKey)) return false;
   const database = await getDatabase();
-  return (
-    (await database
-      .get<HabitCompletion>('habit_completions')
-      .query(Q.where('habit_id', habitId), Q.where('date_key', dateKey))
-      .fetchCount()) > 0
+  const records = await database
+    .get<HabitCompletion>('habit_completions')
+    .query(Q.where('habit_id', habitId), Q.where('date_key', dateKey))
+    .fetch();
+  return records.some(
+    record => record.actionType === null || record.actionType === 'COMPLETION',
   );
+}
+
+async function setHabitAction(
+  habitId: string,
+  dateKey: string,
+  actionType: HabitActionType,
+  value = 1,
+) {
+  if (!habitId || !isDateKey(dateKey) || value < 0) return false;
+  return serializeWrite(`habit:${habitId}`, async () => {
+    const database = await getDatabase();
+    return database.write(async () => {
+      if (!(await findHabit(database, habitId))) return false;
+      const collection = database.get<HabitCompletion>('habit_completions');
+      const records = await collection
+        .query(
+          Q.where('habit_id', habitId),
+          Q.where('date_key', dateKey),
+          Q.where('action_type', actionType),
+        )
+        .fetch();
+      if (records[0]) {
+        await records[0].update(record => {
+          record.progressValue = value;
+        });
+        if (records.length > 1) {
+          await database.batch(
+            records
+              .slice(1)
+              .map(record => record.prepareDestroyPermanently()),
+          );
+        }
+      } else {
+        await collection.create(record => {
+          record.habitId = habitId;
+          record.dateKey = dateKey;
+          record.actionType = actionType;
+          record.progressValue = value;
+        });
+      }
+      return true;
+    });
+  });
+}
+
+async function removeHabitAction(
+  habitId: string,
+  dateKey: string,
+  actionType: HabitActionType,
+) {
+  if (!habitId || !isDateKey(dateKey)) return false;
+  return serializeWrite(`habit:${habitId}`, async () => {
+    const database = await getDatabase();
+    return database.write(async () => {
+      const records = await database
+        .get<HabitCompletion>('habit_completions')
+        .query(
+          Q.where('habit_id', habitId),
+          Q.where('date_key', dateKey),
+          Q.where('action_type', actionType),
+        )
+        .fetch();
+      if (records.length) {
+        await database.batch(
+          records.map(record => record.prepareDestroyPermanently()),
+        );
+      }
+      return true;
+    });
+  });
 }
 
 async function importLegacyHabits(habits: HabitItem[]) {
@@ -187,14 +341,20 @@ async function importLegacyHabits(habits: HabitItem[]) {
       const firstCompletionByKey = new Map<string, HabitCompletion>();
       const operations: Model[] = [];
 
-      existingCompletions.forEach(completion => {
-        const key = `${completion.habitId}\u0000${completion.dateKey}`;
-        if (firstCompletionByKey.has(key)) {
-          operations.push(completion.prepareDestroyPermanently());
-        } else {
-          firstCompletionByKey.set(key, completion);
-        }
-      });
+      existingCompletions
+        .filter(
+          completion =>
+            completion.actionType === null ||
+            completion.actionType === 'COMPLETION',
+        )
+        .forEach(completion => {
+          const key = `${completion.habitId}\u0000${completion.dateKey}`;
+          if (firstCompletionByKey.has(key)) {
+            operations.push(completion.prepareDestroyPermanently());
+          } else {
+            firstCompletionByKey.set(key, completion);
+          }
+        });
 
       habits.forEach(habit => {
         if (!existingHabitIds.has(habit.id)) {
@@ -213,6 +373,8 @@ async function importLegacyHabits(habits: HabitItem[]) {
           const completion = completionCollection.prepareCreate(record => {
             record.habitId = habit.id;
             record.dateKey = dateKey;
+            record.actionType = 'COMPLETION';
+            record.progressValue = 1;
           });
           firstCompletionByKey.set(key, completion);
           operations.push(completion);
@@ -242,9 +404,12 @@ export const habitRepository: HabitRepository = {
   loadAllHabits,
   createHabit,
   updateHabit,
+  deleteHabit,
   setArchived,
   setHabitCompletion,
   isHabitCompleted,
+  setHabitAction,
+  removeHabitAction,
   importLegacyHabits,
   ensureOnboardingHabit,
 };

@@ -3,6 +3,7 @@ import type { Associations } from '@nozbe/watermelondb/Model';
 import type Relation from '@nozbe/watermelondb/Relation';
 import { field, immutableRelation } from '@nozbe/watermelondb/decorators';
 import type Habit from './Habit';
+import type { HabitActionType } from '../../types/models';
 
 export default class HabitCompletion extends Model {
   static table = 'habit_completions' as const;
@@ -16,5 +17,7 @@ export default class HabitCompletion extends Model {
 
   @field('habit_id') habitId!: string;
   @field('date_key') dateKey!: string;
+  @field('action_type') actionType!: HabitActionType | null;
+  @field('progress_value') progressValue!: number | null;
   @immutableRelation('habits', 'habit_id') habit!: Relation<Habit>;
 }

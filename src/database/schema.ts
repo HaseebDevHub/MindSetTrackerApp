@@ -1,6 +1,6 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
-export const habitColumns = [
+export const habitV2Columns = [
   { name: 'title', type: 'string' as const },
   { name: 'time_of_day', type: 'string' as const },
   { name: 'frequency', type: 'string' as const },
@@ -12,7 +12,31 @@ export const habitColumns = [
   { name: 'created_date_key', type: 'string' as const },
 ];
 
-export const habitCompletionColumns = [
+export const habitV3Columns = [
+  { name: 'habit_type', type: 'string' as const, isOptional: true },
+  { name: 'color', type: 'string' as const, isOptional: true },
+  { name: 'schedule_mode', type: 'string' as const, isOptional: true },
+  { name: 'selected_weekdays', type: 'string' as const, isOptional: true },
+  { name: 'quota_count', type: 'number' as const, isOptional: true },
+  { name: 'end_date_key', type: 'string' as const, isOptional: true },
+  { name: 'target_date_key', type: 'string' as const, isOptional: true },
+  { name: 'goal_mode', type: 'string' as const, isOptional: true },
+  { name: 'goal_target', type: 'number' as const, isOptional: true },
+  { name: 'goal_unit', type: 'string' as const, isOptional: true },
+  { name: 'motivational_text', type: 'string' as const, isOptional: true },
+];
+
+export const habitV4Columns = [
+  { name: 'archived_date_key', type: 'string' as const, isOptional: true },
+];
+
+export const habitColumns = [
+  ...habitV2Columns,
+  ...habitV3Columns,
+  ...habitV4Columns,
+];
+
+export const habitCompletionV2Columns = [
   {
     name: 'habit_id',
     type: 'string' as const,
@@ -21,8 +45,18 @@ export const habitCompletionColumns = [
   { name: 'date_key', type: 'string' as const },
 ];
 
+export const habitCompletionV3Columns = [
+  { name: 'action_type', type: 'string' as const, isOptional: true },
+  { name: 'progress_value', type: 'number' as const, isOptional: true },
+];
+
+export const habitCompletionColumns = [
+  ...habitCompletionV2Columns,
+  ...habitCompletionV3Columns,
+];
+
 const schema = appSchema({
-  version: 2,
+  version: 4,
   tables: [
     tableSchema({
       name: 'habits',

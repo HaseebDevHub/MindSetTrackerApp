@@ -1,27 +1,24 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { HorizontalListSeparator } from '../../../components/common/ListSeparator';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAppStore } from '../../../store/useAppStore';
-import { getCalendarDays, monthTitle, toDateKey } from '../../../utils/dates';
 import {
-  calculateCurrentWeekMetrics,
+  fromDateKey,
+  getCalendarDays,
+  getWeekdayLabels,
+  monthTitle,
+  toDateKey,
+} from '../../../utils/dates';
+import {
+  calculateSelectedWeekMetrics,
   getDailyProgress,
 } from '../../../utils/habitAnalytics';
 import { keyByTitle, keyByValue } from '../../../utils/lists';
 import useStyles from '../HistoryScreenStyle';
-
-const weekLabels = [
-  { id: 'sun', name: 'S' },
-  { id: 'mon', name: 'M' },
-  { id: 'tue', name: 'T' },
-  { id: 'wed', name: 'W' },
-  { id: 'thu', name: 'T' },
-  { id: 'fri', name: 'F' },
-  { id: 'sat', name: 'S' },
-];
+import { WeeklyProgress } from './WeeklyProgress';
 
 export function CalendarHistory({
   onDateSelected,
@@ -35,8 +32,23 @@ export function CalendarHistory({
   const stats = useAppStore(s => s.stats);
   const selectedDate = useAppStore(s => s.selectedDate);
   const setSelectedDate = useAppStore(s => s.setSelectedDate);
-  const [month, setMonth] = useState(new Date());
-  const currentWeek = calculateCurrentWeekMetrics(habits);
+  const weekStartsOn = useAppStore(s => s.weekStartsOn);
+  const [month, setMonth] = useState(() => fromDateKey(selectedDate));
+
+  useEffect(() => {
+    const nextMonth = fromDateKey(selectedDate);
+    setMonth(current =>
+      current.getFullYear() === nextMonth.getFullYear() &&
+      current.getMonth() === nextMonth.getMonth()
+        ? current
+        : nextMonth,
+    );
+  }, [selectedDate]);
+  const selectedWeek = calculateSelectedWeekMetrics(
+    habits,
+    selectedDate,
+    weekStartsOn,
+  );
   const metrics = [
     {
       title: 'CURRENT STREAK',
@@ -47,23 +59,24 @@ export function CalendarHistory({
     {
       title: 'HABITS FINISHED',
       value: String(stats.habitsFinishedTotal),
-      caption: `This week: ${currentWeek.completed}`,
+      caption: `Selected week: ${selectedWeek.achieved}`,
       color: colors.red,
     },
     {
       title: 'COMPLETION RATE',
-      value: `${currentWeek.percentage}%`,
-      caption: `${currentWeek.completed}/${currentWeek.applicable} habits`,
+      value: `${selectedWeek.percentage}%`,
+      caption: `${selectedWeek.achieved}/${selectedWeek.target} progress`,
       color: colors.yellow,
     },
     {
       title: 'PERFECT DAYS',
       value: String(stats.perfectDays),
-      caption: `This week: ${currentWeek.perfectDays}`,
+      caption: `Selected week: ${selectedWeek.days.filter(day => day.isPerfect).length}`,
       color: colors.green,
     },
   ];
-  const days = getCalendarDays(month);
+  const weekLabels = getWeekdayLabels(weekStartsOn);
+  const days = getCalendarDays(month, weekStartsOn);
   const calendarCellSize = (width - 72) / 7;
   const renderDay = ({ item: date }: { item: Date | null }) => {
     if (!date)
@@ -149,10 +162,13 @@ export function CalendarHistory({
           <FlashList
             horizontal
             data={weekLabels}
-            keyExtractor={item => item.id}
+            keyExtractor={item => String(item.id)}
             renderItem={({ item }) => (
-              <Text style={[styles.weekLabel, { width: calendarCellSize }]}>
-                {item.name}
+              <Text
+                accessibilityLabel={item.long}
+                style={[styles.weekLabel, { width: calendarCellSize }]}
+              >
+                {item.short}
               </Text>
             )}
             scrollEnabled={false}
@@ -171,9 +187,15 @@ export function CalendarHistory({
         </View>
       )}
       ListFooterComponent={
-        <Text style={styles.legend}>
-          Yellow marks partial progress. Green marks a perfect day.
-        </Text>
+        <>
+          <Text style={styles.legend}>
+            Yellow marks partial progress. Green marks a perfect day.
+          </Text>
+          <WeeklyProgress
+            selectedDate={selectedDate}
+            weekStartsOn={weekStartsOn}
+          />
+        </>
       }
     />
   );

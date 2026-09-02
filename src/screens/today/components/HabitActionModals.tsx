@@ -7,7 +7,7 @@ import {
   useWindowDimensions,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { BookOpen, Pencil, Undo2, X } from 'lucide-react-native';
+import { BookOpen, Pencil, X } from 'lucide-react-native';
 import { AppButton } from '../../../components/common/AppButton';
 import { AppInput } from '../../../components/common/AppInput';
 import type { HabitMenuAnchor } from '../../../components/habit/HabitCard';
@@ -21,14 +21,12 @@ type Props = {
   menuAnchor?: HabitMenuAnchor;
   noteHabit?: HabitItem;
   note: string;
-  selectedDate: string;
   onCloseMenu: () => void;
   onCloseNote: () => void;
   onEdit: (habit: HabitItem) => void;
   onOpenNote: (habit: HabitItem) => void;
   onSaveNote: (habit: HabitItem, note: string) => void;
   onSetNote: (note: string) => void;
-  onUndo: (habit: HabitItem) => void;
 };
 
 const MENU_WIDTH = 190;
@@ -40,14 +38,19 @@ function MenuItem({
   text,
   onPress,
 }: {
-  icon: typeof Undo2;
+  icon: typeof Pencil;
   text: string;
   onPress: () => void;
 }) {
   const { colors } = useTheme();
   const styles = useStyles();
   return (
-    <Pressable onPress={onPress} style={styles.menuItem}>
+    <Pressable
+      accessibilityLabel={text}
+      accessibilityRole="button"
+      onPress={onPress}
+      style={styles.menuItem}
+    >
       <Icon color={colors.textSecondary} size={18} />
       <Text style={styles.menuText}>{text}</Text>
     </Pressable>
@@ -59,22 +62,18 @@ export function HabitActionModals({
   menuAnchor,
   noteHabit,
   note,
-  selectedDate,
   onCloseMenu,
   onCloseNote,
   onEdit,
   onOpenNote,
   onSaveNote,
   onSetNote,
-  onUndo,
 }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { width: windowWidth, height: windowHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-  const menuItemCount = menuHabit?.completedDates.includes(selectedDate)
-    ? 3
-    : 2;
+  const menuItemCount = 2;
   const estimatedMenuHeight =
     spacing.small * 2 + MENU_ITEM_HEIGHT * menuItemCount;
   const [measuredMenuSize, setMeasuredMenuSize] = useState({
@@ -145,20 +144,13 @@ export function HabitActionModals({
             }}
             style={[styles.popover, { left: menuLeft, top: menuTop }]}
           >
-            {menuHabit?.completedDates.includes(selectedDate) ? (
-              <MenuItem
-                icon={Undo2}
-                text="UNDO"
-                onPress={() => onUndo(menuHabit)}
-              />
-            ) : null}
             <MenuItem
-              icon={Pencil}
+              icon={BookOpen}
               text="TAKE A NOTE"
               onPress={() => menuHabit && onOpenNote(menuHabit)}
             />
             <MenuItem
-              icon={BookOpen}
+              icon={Pencil}
               text="EDIT"
               onPress={() => menuHabit && onEdit(menuHabit)}
             />

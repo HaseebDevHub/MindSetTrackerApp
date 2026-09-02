@@ -1,3 +1,5 @@
+import type { WeekStartsOn } from '../types/models';
+
 const pad = (value: number) => String(value).padStart(2, '0');
 const DATE_KEY_PATTERN = /^\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\d|3[01])$/;
 
@@ -37,11 +39,12 @@ export const formatShortDate = (date: Date) =>
 export const monthTitle = (date: Date) =>
   date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-export const getCalendarDays = (month: Date) => {
+export const getCalendarDays = (month: Date, weekStartsOn: WeekStartsOn = 0) => {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
+  const leadingBlanks = (first.getDay() - weekStartsOn + 7) % 7;
   return [
-    ...Array.from({ length: first.getDay() }, () => null),
+    ...Array.from({ length: leadingBlanks }, () => null),
     ...Array.from(
       { length: days },
       (_, index) => new Date(month.getFullYear(), month.getMonth(), index + 1),
@@ -49,7 +52,32 @@ export const getCalendarDays = (month: Date) => {
   ];
 };
 
-export const startOfWeek = (date: Date) => addDays(date, -date.getDay());
+export const startOfWeek = (date: Date, weekStartsOn: WeekStartsOn = 0) =>
+  addDays(date, -((date.getDay() - weekStartsOn + 7) % 7));
+
+export function getWeekDateKeys(
+  dateKey: string,
+  weekStartsOn: WeekStartsOn = 0,
+) {
+  if (!isDateKey(dateKey)) return [];
+  const first = startOfWeek(fromDateKey(dateKey), weekStartsOn);
+  return Array.from({ length: 7 }, (_, index) =>
+    toDateKey(addDays(first, index)),
+  );
+}
+
+export function getWeekdayLabels(weekStartsOn: WeekStartsOn = 0) {
+  const labels = [
+    { id: 0, short: 'S', long: 'Sunday' },
+    { id: 1, short: 'M', long: 'Monday' },
+    { id: 2, short: 'T', long: 'Tuesday' },
+    { id: 3, short: 'W', long: 'Wednesday' },
+    { id: 4, short: 'T', long: 'Thursday' },
+    { id: 5, short: 'F', long: 'Friday' },
+    { id: 6, short: 'S', long: 'Saturday' },
+  ];
+  return [...labels.slice(weekStartsOn), ...labels.slice(0, weekStartsOn)];
+}
 
 export const getRelativeDateLabel = (date: Date, today = new Date()) => {
   const difference = Math.round(

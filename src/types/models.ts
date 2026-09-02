@@ -1,8 +1,26 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
 
 export type TimeOfDay = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'ANYTIME';
-export type TodayFilter = 'ALL' | Exclude<TimeOfDay, 'ANYTIME'>;
+export type TodayFilter = 'ALL' | TimeOfDay;
+export type WeekStartsOn = 0 | 1;
 export type HabitFrequency = 'EVERYDAY' | 'WEEKDAYS';
+export type HabitType = 'REGULAR' | 'NEGATIVE' | 'ONE_TIME';
+export type HabitScheduleMode =
+  | 'EVERYDAY'
+  | 'WEEKDAYS'
+  | 'SPECIFIC_DAYS'
+  | 'WEEKLY_QUOTA'
+  | 'MONTHLY_QUOTA'
+  | 'YEARLY_QUOTA'
+  | 'ONE_TIME';
+export type HabitGoalMode = 'OFF' | 'DURATION' | 'REPEAT';
+export type HabitActionType = 'COMPLETION' | 'RELAPSE' | 'PROGRESS';
+
+export type HabitProgressEntry = {
+  dateKey: string;
+  actionType: HabitActionType;
+  value: number;
+};
 export type HistoryTab = 'Calendar' | 'All Habits' | 'Achievements';
 
 export interface HabitItem {
@@ -16,8 +34,21 @@ export interface HabitItem {
   reminderEnabled?: boolean;
   reminderTime?: string;
   archived?: boolean;
+  archivedAt?: string;
   frequency?: HabitFrequency;
   createdAt?: string;
+  habitType?: HabitType;
+  color?: string;
+  scheduleMode?: HabitScheduleMode;
+  selectedWeekdays?: number[];
+  quotaCount?: number;
+  endDate?: string;
+  targetDate?: string;
+  goalMode?: HabitGoalMode;
+  goalTarget?: number;
+  goalUnit?: 'MINUTES' | 'REPS';
+  motivationalText?: string;
+  progressEntries?: HabitProgressEntry[];
 }
 
 export type UserStats = {
@@ -75,7 +106,9 @@ export type OnboardingStackParamList = {
 };
 
 export type TodayStackParamList = {
-  TodayHome: undefined;
+  TodayHome:
+    | { toastMessage?: string; toastRequestId?: number }
+    | undefined;
   CreateHabit: { habitId?: string } | undefined;
   HabitDetail: { habitId: string };
 };

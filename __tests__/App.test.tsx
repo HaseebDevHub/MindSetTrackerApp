@@ -5,6 +5,7 @@ import {
   fromDateKey,
   getDateStatus,
   getCalendarDays,
+  getWeekDateKeys,
   toDateKey,
 } from '../src/utils/dates';
 import { isHabitVisibleForTodayFilter } from '../src/utils/habits';
@@ -19,6 +20,34 @@ describe('local application behavior', () => {
     expect(toDateKey(fromDateKey(toDateKey(source)))).toBe('2026-08-18');
     expect(toDateKey(addDays(source, 1))).toBe('2026-08-19');
     expect(getCalendarDays(source).filter(Boolean)).toHaveLength(31);
+    expect(getWeekDateKeys('2026-09-01', 0)).toEqual([
+      '2026-08-30',
+      '2026-08-31',
+      '2026-09-01',
+      '2026-09-02',
+      '2026-09-03',
+      '2026-09-04',
+      '2026-09-05',
+    ]);
+    expect(getWeekDateKeys('2026-09-01', 1)).toEqual([
+      '2026-08-31',
+      '2026-09-01',
+      '2026-09-02',
+      '2026-09-03',
+      '2026-09-04',
+      '2026-09-05',
+      '2026-09-06',
+    ]);
+    expect(getWeekDateKeys('2027-01-01', 1)).toEqual([
+      '2026-12-28',
+      '2026-12-29',
+      '2026-12-30',
+      '2026-12-31',
+      '2027-01-01',
+      '2027-01-02',
+      '2027-01-03',
+    ]);
+    expect(getWeekDateKeys('2028-02-29', 1)).toContain('2028-02-29');
   });
 
   test('classifies local date keys without comparing time-of-day timestamps', () => {
@@ -50,6 +79,7 @@ describe('local application behavior', () => {
 
   test.each<[TodayFilter, string[]]>([
     ['ALL', ['morning', 'afternoon', 'evening', 'anytime']],
+    ['ANYTIME', ['anytime']],
     ['MORNING', ['morning', 'anytime']],
     ['AFTERNOON', ['afternoon', 'anytime']],
     ['EVENING', ['evening', 'anytime']],
@@ -105,7 +135,13 @@ describe('local application behavior', () => {
     expect(visible.map(habit => habit.id)).toEqual(expectedIds);
     expect(
       visible.filter(habit => habit.completedDates.includes('2026-08-19')),
-    ).toHaveLength(filter === 'ALL' ? 3 : filter === 'AFTERNOON' ? 1 : 2);
+    ).toHaveLength(
+      filter === 'ALL' || filter === 'ANYTIME' || filter === 'AFTERNOON'
+        ? filter === 'ALL'
+          ? 3
+          : 1
+        : 2,
+    );
     expect(habits.map(habit => habit.timeOfDay)).toEqual([
       'MORNING',
       'AFTERNOON',

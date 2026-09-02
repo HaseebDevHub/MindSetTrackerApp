@@ -22,6 +22,7 @@ import { useShallow } from 'zustand/react/shallow';
 import {
   Check,
   ChevronLeft,
+  Clock3,
   CloudSun,
   ListChecks,
   Moon,
@@ -35,6 +36,7 @@ import {
   VerticalListSeparator,
 } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
+import { ToastMessage } from '../../components/common/ToastMessage';
 import { HabitCard } from '../../components/habit/HabitCard';
 import type { HabitMenuAnchor } from '../../components/habit/HabitCard';
 import { spacing } from '../../constants/theme';
@@ -54,7 +56,13 @@ import {
   getRelativeDateLabel,
   toDateKey,
 } from '../../utils/dates';
-import { getDailyProgress } from '../../utils/habitAnalytics';
+import {
+  getDailyProgress,
+  hasHabitRelapseOnDate,
+  isHabitCompleteOnDate,
+  isLongTermHabit,
+} from '../../utils/habitAnalytics';
+import { normalizeHabitType } from '../../utils/habitSchedule';
 import {
   isHabitVisibleForTodayFilter,
   partitionHabitsByCompletion,
@@ -65,6 +73,7 @@ import useStyles from './TodayScreenStyle';
 type Props = NativeStackScreenProps<TodayStackParamList, 'TodayHome'>;
 const filters: { key: TodayFilter; icon: typeof Sun }[] = [
   { key: 'ALL', icon: ListChecks },
+  { key: 'ANYTIME', icon: Clock3 },
   { key: 'MORNING', icon: Sun },
   { key: 'AFTERNOON', icon: CloudSun },
   { key: 'EVENING', icon: Moon },
@@ -74,6 +83,7 @@ const DATE_RANGE_DAYS = 365 * 10;
 type HabitListItem =
   | { type: 'habit'; habit: HabitItem }
   | { type: 'finishedHeader'; id: 'finished' }
+  | { type: 'longTermHeader'; id: 'long-term' }
   | { type: 'skeleton'; id: string };
 
 const filterSkeletonItems: HabitListItem[] = Array.from(
@@ -86,7 +96,7 @@ const keyByHabitListItem = (item: HabitListItem) =>
   item.type === 'habit' ? item.habit.id : item.id;
 const getHabitListItemType = (item: HabitListItem) => item.type;
 
-export function TodayScreen({ navigation }: Props) {
+export function TodayScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
   const { width } = useWindowDimensions();
@@ -100,6 +110,7 @@ export function TodayScreen({ navigation }: Props) {
     toggle,
     update,
     dismissCelebration,
+    weekStartsOn,
   } = useAppStore(
     useShallow(state => ({
       selectedDate: state.selectedDate,
@@ -111,6 +122,7 @@ export function TodayScreen({ navigation }: Props) {
       toggle: state.toggleHabit,
       update: state.updateHabit,
       dismissCelebration: state.dismissCelebration,
+      weekStartsOn: state.weekStartsOn,
     })),
   );
   const [activeFilter, setActiveFilter] = useState(storedFilter);
@@ -162,9 +174,17 @@ export function TodayScreen({ navigation }: Props) {
     () => getDailyProgress(habits, selectedDate),
     [habits, selectedDate],
   );
+  const standardHabits = useMemo(
+    () => visible.filter(habit => !isLongTermHabit(habit)),
+    [visible],
+  );
+  const longTermHabits = useMemo(
+    () => visible.filter(isLongTermHabit),
+    [visible],
+  );
   const { active: activeHabits, finished: finishedHabits } = useMemo(
-    () => partitionHabitsByCompletion(visible, selectedDate),
-    [selectedDate, visible],
+    () => partitionHabitsByCompletion(standardHabits, selectedDate),
+    [selectedDate, standardHabits],
   );
   const habitListItems = useMemo<HabitListItem[]>(
     () => [
@@ -178,8 +198,17 @@ export function TodayScreen({ navigation }: Props) {
             })),
           ]
         : []),
+      ...(longTermHabits.length
+        ? [
+            { type: 'longTermHeader' as const, id: 'long-term' as const },
+            ...longTermHabits.map(habit => ({
+              type: 'habit' as const,
+              habit,
+            })),
+          ]
+        : []),
     ],
-    [activeHabits, finishedHabits],
+    [activeHabits, finishedHabits, longTermHabits],
   );
   const displayedHabitListItems = isFilterLoading
     ? filterSkeletonItems
@@ -272,14 +301,23 @@ export function TodayScreen({ navigation }: Props) {
   }, [finishReturningToToday, setDate, todayDate, todayIndex]);
 
   const renderDate = useCallback(
-    ({ item: date }: { item: Date }) => {
+    ({ item: date, index }: { item: Date; index: number }) => {
       const key = toDateKey(date);
       const active = key === selectedDate;
       const progress = getDailyProgress(habits, key);
       return (
         <Pressable
           accessibilityLabel={date.toDateString()}
-          onPress={() => setDate(key)}
+          accessibilityRole="button"
+          accessibilityState={{ selected: active }}
+          onPress={() => {
+            setDate(key);
+            dateListRef.current?.scrollToIndex({
+              animated: true,
+              index,
+              viewPosition: 0.5,
+            });
+          }}
           style={[
             styles.dateCell,
             styles.dateListCell,
@@ -292,9 +330,21 @@ export function TodayScreen({ navigation }: Props) {
               .toLocaleDateString('en-US', { weekday: 'short' })
               .toUpperCase()}
           </Text>
-          <Text style={[styles.dayNumber, active && styles.activeText]}>
-            {date.getDate()}
-          </Text>
+          <View
+            style={[
+              styles.dateNumberCircle,
+              active && styles.dateNumberCircleActive,
+            ]}
+          >
+            <Text
+              style={[
+                styles.dayNumber,
+                active && styles.activeDayNumber,
+              ]}
+            >
+              {date.getDate()}
+            </Text>
+          </View>
           <View style={styles.dateProgressTrack}>
             <View
               style={[
@@ -339,20 +389,45 @@ export function TodayScreen({ navigation }: Props) {
     [navigation],
   );
   const renderHabit = useCallback(
-    (habit: HabitItem) => (
-      <HabitCard
-        habit={habit}
-        completed={habit.completedDates.includes(selectedDate)}
-        completionDisabled={getDateStatus(selectedDate) === 'future'}
-        selectedDate={selectedDate}
-        onToggle={(habitId, date) => {
-          toggle(habitId, date).catch(() => undefined);
-        }}
-        onMenu={openHabitMenu}
-        onPress={openHabit}
-      />
-    ),
-    [openHabit, openHabitMenu, selectedDate, toggle],
+    (habit: HabitItem) => {
+      const completed = isHabitCompleteOnDate(habit, selectedDate);
+      const toggleSelectedHabit = (habitId: string, date: string) => {
+        if (
+          normalizeHabitType(habit.habitType) === 'NEGATIVE' &&
+          !hasHabitRelapseOnDate(habit, date)
+        ) {
+          Alert.alert(
+            'Record a relapse?',
+            `This will mark ${habit.title} as not avoided on this date.`,
+            [
+              { text: 'Cancel', style: 'cancel' },
+              {
+                text: 'Record relapse',
+                style: 'destructive',
+                onPress: () => {
+                  toggle(habitId, date).catch(() => undefined);
+                },
+              },
+            ],
+          );
+          return;
+        }
+        toggle(habitId, date).catch(() => undefined);
+      };
+      return (
+        <HabitCard
+          habit={habit}
+          completed={completed}
+          completionDisabled={getDateStatus(selectedDate) === 'future'}
+          selectedDate={selectedDate}
+          weekStartsOn={weekStartsOn}
+          onToggle={toggleSelectedHabit}
+          onMenu={openHabitMenu}
+          onPress={openHabit}
+        />
+      );
+    },
+    [openHabit, openHabitMenu, selectedDate, toggle, weekStartsOn],
   );
   const renderHabitListItem = useCallback(
     ({ item }: { item: HabitListItem }) =>
@@ -370,10 +445,15 @@ export function TodayScreen({ navigation }: Props) {
           <Text style={styles.finishedSectionTitle}>FINISHED</Text>
           <Text style={styles.count}>{finishedHabits.length}</Text>
         </View>
+      ) : item.type === 'longTermHeader' ? (
+        <View style={styles.finishedSectionRow}>
+          <Text style={styles.finishedSectionTitle}>LONG-TERM</Text>
+          <Text style={styles.count}>{longTermHabits.length}</Text>
+        </View>
       ) : (
         renderHabit(item.habit)
       ),
-    [finishedHabits.length, renderHabit, styles],
+    [finishedHabits.length, longTermHabits.length, renderHabit, styles],
   );
   const listHeader = useMemo(
     () => (
@@ -416,6 +496,8 @@ export function TodayScreen({ navigation }: Props) {
             <Text style={styles.eyebrow}>{getRelativeDateLabel(selected)}</Text>
             <Text style={styles.dateTitle}>{formatShortDate(selected)}</Text>
             <Text style={styles.progressText}>
+              {selected.toLocaleDateString('en-US', { weekday: 'long' })}
+              {' • '}
               {selectedProgress.percentage}% Finished
             </Text>
           </View>
@@ -517,7 +599,6 @@ export function TodayScreen({ navigation }: Props) {
         menuAnchor={habitMenu?.anchor}
         noteHabit={noteHabit}
         note={note}
-        selectedDate={selectedDate}
         onCloseMenu={() => setHabitMenu(undefined)}
         onCloseNote={() => setNoteHabit(undefined)}
         onEdit={habit => {
@@ -542,10 +623,6 @@ export function TodayScreen({ navigation }: Props) {
           })().catch(() => undefined);
         }}
         onSetNote={setNote}
-        onUndo={habit => {
-          toggle(habit.id, selectedDate).catch(() => undefined);
-          setHabitMenu(undefined);
-        }}
       />
       <CelebrationModal
         celebration={celebration}
@@ -559,6 +636,17 @@ export function TodayScreen({ navigation }: Props) {
               tabRequestId: Date.now(),
             });
         }}
+      />
+      <ToastMessage
+        key={route.params?.toastRequestId}
+        visible={Boolean(route.params?.toastMessage)}
+        message={route.params?.toastMessage ?? ''}
+        onDismiss={() =>
+          navigation.setParams({
+            toastMessage: undefined,
+            toastRequestId: undefined,
+          })
+        }
       />
     </ScreenContainer>
   );

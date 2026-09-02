@@ -1,5 +1,5 @@
 import React from 'react';
-import { FlatList, StyleSheet } from 'react-native';
+import { FlatList, StyleSheet, Text } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TodayScreen } from '../src/screens/today/TodayScreen';
@@ -7,6 +7,28 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 import { colors } from '../src/constants/theme';
 import { useAppStore } from '../src/store/useAppStore';
 import { addDays, fromDateKey, toDateKey } from '../src/utils/dates';
+
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    Easing: { cubic: jest.fn(), in: jest.fn(() => jest.fn()) },
+    cancelAnimation: jest.fn(),
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: unknown) => ({ value }),
+    withSpring: (value: unknown) => value,
+    withTiming: (
+      value: unknown,
+      _config: unknown,
+      callback?: (finished: boolean) => void,
+    ) => {
+      callback?.(true);
+      return value;
+    },
+  };
+});
 
 jest.mock('@shopify/flash-list', () => ({
   FlashList: require('react-native').FlatList,
@@ -49,6 +71,100 @@ function TodayTestScreen() {
 }
 
 describe('Today date strip', () => {
+  test('shows and clears a successful habit creation toast', () => {
+    jest.useFakeTimers();
+    const setParams = jest.fn();
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(
+        <SafeAreaProvider initialMetrics={initialMetrics}>
+          <ThemeProvider initialMode="dark">
+            <TodayScreen
+              navigation={{ setParams, navigate: jest.fn() } as never}
+              route={{
+                key: 'TodayHome',
+                name: 'TodayHome',
+                params: {
+                  toastMessage: 'Habit created successfully',
+                  toastRequestId: 1,
+                },
+              }}
+            />
+          </ThemeProvider>
+        </SafeAreaProvider>,
+      );
+    });
+
+    expect(
+      renderer!.root.findAllByType(Text).some(
+        node => node.props.children === 'Habit created successfully',
+      ),
+    ).toBe(true);
+    act(() => jest.advanceTimersByTime(2500));
+    expect(setParams).toHaveBeenCalledWith({
+      toastMessage: undefined,
+      toastRequestId: undefined,
+    });
+
+    act(() => renderer!.unmount());
+    jest.useRealTimers();
+  });
+
+  test('habit quick actions contain only Take a Note and Edit', () => {
+    const originalHabits = useAppStore.getState().habits;
+    useAppStore.setState({
+      isHydrated: true,
+      selectedFilter: 'ALL',
+      habits: [
+        {
+          id: 'quick-action-habit',
+          title: 'Quick action habit',
+          timeOfDay: 'ANYTIME',
+          completedDates: [],
+          streakCount: 0,
+          iconName: 'Check',
+          createdAt: toDateKey(new Date()),
+        },
+      ],
+    });
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(<TodayTestScreen />);
+    });
+
+    const habitCard = renderer!.root.findByProps({ testID: 'habit-card' });
+    act(() => {
+      habitCard.props.onMenu(habitCard.props.habit, {
+        x: 200,
+        y: 200,
+        width: 32,
+        height: 32,
+      });
+    });
+
+    expect(
+      renderer!.root.findAll(
+        node => node.props.accessibilityLabel === 'TAKE A NOTE',
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      renderer!.root.findAll(
+        node => node.props.accessibilityLabel === 'EDIT',
+      ).length,
+    ).toBeGreaterThan(0);
+    expect(
+      renderer!.root.findAll(
+        node => node.props.accessibilityLabel === 'Delete habit',
+      ),
+    ).toHaveLength(0);
+    expect(
+      renderer!.root.findAll(node => node.props.accessibilityLabel === 'UNDO'),
+    ).toHaveLength(0);
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({ habits: originalHabits });
+  });
+
   test('stays compact while supporting past, future, and date selection', () => {
     jest.useFakeTimers();
     const initialDate = '2026-08-19';
@@ -65,7 +181,7 @@ describe('Today date strip', () => {
 
     expect(dateList).toBeDefined();
     expect(StyleSheet.flatten(dateList!.props.style)).toMatchObject({
-      height: 56,
+      height: 68,
       flexGrow: 0,
       flexShrink: 0,
     });
@@ -81,7 +197,10 @@ describe('Today date strip', () => {
     );
 
     const nextDate = dateList!.props.data[centerIndex + 1] as Date;
-    const nextDateCell = dateList!.props.renderItem({ item: nextDate });
+    const nextDateCell = dateList!.props.renderItem({
+      item: nextDate,
+      index: centerIndex + 1,
+    });
     act(() => {
       nextDateCell.props.onPress();
       jest.runOnlyPendingTimers();
@@ -91,9 +210,21 @@ describe('Today date strip', () => {
     const updatedDateList = renderer!.root
       .findAllByType(FlatList)
       .find(list => list.props.horizontal && list.props.data.length > 7);
-    const selectedCell = updatedDateList!.props.renderItem({ item: nextDate });
+    const selectedCell = updatedDateList!.props.renderItem({
+      item: nextDate,
+      index: centerIndex + 1,
+    });
     expect(StyleSheet.flatten(selectedCell.props.style)).toMatchObject({
       borderBottomColor: colors.primary,
+    });
+    expect(
+      StyleSheet.flatten(selectedCell.props.children[1].props.style),
+    ).toMatchObject({
+      width: 28,
+      height: 28,
+      borderRadius: 999,
+      overflow: 'hidden',
+      backgroundColor: colors.primary,
     });
 
     act(() => renderer!.unmount());
@@ -119,7 +250,7 @@ describe('Today date strip', () => {
 
     expect(
       filterList!.props.data.map(({ key }: { key: string }) => key),
-    ).toEqual(['ALL', 'MORNING', 'AFTERNOON', 'EVENING']);
+    ).toEqual(['ALL', 'ANYTIME', 'MORNING', 'AFTERNOON', 'EVENING']);
 
     const allFilter = filterList!.props.renderItem({
       item: filterList!.props.data[0],
@@ -162,7 +293,7 @@ describe('Today date strip', () => {
     expect(activeAllFilter.props.children[0].props.color).toBe(colors.yellow);
 
     const inactiveMorningFilter = updatedFilterList!.props.renderItem({
-      item: updatedFilterList!.props.data[1],
+      item: updatedFilterList!.props.data[2],
     });
     expect(inactiveMorningFilter.props.children[0].props.color).toBe(
       colors.textSecondary,

@@ -9,11 +9,13 @@ import type {
 } from '../database/repositories/types';
 import { achievementStorage } from '../storage/achievementStorage';
 import { onboardingStorage } from '../storage/onboardingStorage';
+import { weekSettingsStorage } from '../storage/weekSettingsStorage';
 import type {
   Celebration,
   HabitItem,
   TodayFilter,
   UserStats,
+  WeekStartsOn,
 } from '../types/models';
 import type { OnboardingTarget } from '../types/onboarding';
 import { getDateStatus, toDateKey } from '../utils/dates';
@@ -21,7 +23,10 @@ import {
   calculateHabitStreak,
   calculateStats,
   getDailyProgress,
+  hasHabitRelapseOnDate,
+  isHabitCompleteOnDate,
 } from '../utils/habitAnalytics';
+import { normalizeGoalMode, normalizeHabitType } from '../utils/habitSchedule';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 
 const emptyStats = (unlockedAchievements: string[] = []): UserStats => ({
@@ -41,6 +46,7 @@ export interface AppState {
   isPremium: boolean;
   selectedDate: string;
   selectedFilter: TodayFilter;
+  weekStartsOn: WeekStartsOn;
   habits: HabitItem[];
   stats: UserStats;
   celebration?: Celebration;
@@ -61,9 +67,11 @@ export interface AppState {
   setPremium: (value: boolean) => void;
   setSelectedDate: (value: string) => void;
   setSelectedFilter: (value: TodayFilter) => void;
+  setWeekStartsOn: (value: WeekStartsOn) => boolean;
   toggleHabit: (id: string, date: string) => Promise<boolean>;
   addHabit: (habit: HabitCreateInput) => Promise<boolean>;
   updateHabit: (id: string, updates: HabitUpdateInput) => Promise<boolean>;
+  deleteHabit: (id: string) => Promise<boolean>;
   setHabitArchived: (id: string, archived: boolean) => Promise<boolean>;
   dismissCelebration: () => void;
 }
@@ -130,7 +138,8 @@ export function createAppStore(
     onboardingComplete: onboardingStorage.isCompleted(),
     isPremium: false,
     selectedDate: initialDateKey,
-    selectedFilter: 'MORNING',
+    selectedFilter: 'ALL',
+    weekStartsOn: weekSettingsStorage.getWeekStartsOn(),
     habits: [],
     stats: emptyStats(storedUnlockIds),
     isHydrating: false,
@@ -250,8 +259,17 @@ export function createAppStore(
     setPremium: isPremium => set({ isPremium }),
     setSelectedDate: selectedDate => set({ selectedDate }),
     setSelectedFilter: selectedFilter => set({ selectedFilter }),
+    setWeekStartsOn: weekStartsOn => {
+      if (!weekSettingsStorage.setWeekStartsOn(weekStartsOn)) return false;
+      set({ weekStartsOn });
+      return true;
+    },
     toggleHabit: async (id, date) => {
-      if (!get().isHydrated || getDateStatus(date) === 'future') return false;
+      if (
+        !get().isHydrated ||
+        getDateStatus(date, dependencies.now()) === 'future'
+      )
+        return false;
       const key = `${id}\u0000${date}`;
       const previous = toggleQueues.get(key) ?? Promise.resolve(true);
       const operation = previous
@@ -260,19 +278,76 @@ export function createAppStore(
           const state = get();
           const selectedHabit = state.habits.find(habit => habit.id === id);
           if (!selectedHabit) return false;
+          const isNegative =
+            normalizeHabitType(selectedHabit.habitType) === 'NEGATIVE';
+          const isGoal =
+            !isNegative && normalizeGoalMode(selectedHabit.goalMode) !== 'OFF';
+          const relapsed = hasHabitRelapseOnDate(selectedHabit, date);
           const completed = !selectedHabit.completedDates.includes(date);
+          const goalCompleted = isHabitCompleteOnDate(selectedHabit, date);
+          const becameSuccessful = isNegative
+            ? relapsed
+            : isGoal
+            ? !goalCompleted
+            : completed;
           try {
-            const persisted = await dependencies.repository.setHabitCompletion(
-              id,
-              date,
-              completed,
-            );
+            const persisted = isNegative
+              ? relapsed
+                ? await dependencies.repository.removeHabitAction(
+                    id,
+                    date,
+                    'RELAPSE',
+                  )
+                : await dependencies.repository.setHabitAction(
+                    id,
+                    date,
+                    'RELAPSE',
+                  )
+              : isGoal
+              ? goalCompleted
+                ? await dependencies.repository.removeHabitAction(
+                    id,
+                    date,
+                    'PROGRESS',
+                  )
+                : await dependencies.repository.setHabitAction(
+                    id,
+                    date,
+                    'PROGRESS',
+                    selectedHabit.goalTarget ?? 1,
+                  )
+              : await dependencies.repository.setHabitCompletion(
+                  id,
+                  date,
+                  completed,
+                );
             if (!persisted) return false;
 
             set(currentState => {
               const habits = currentState.habits.map(habit =>
                 habit.id !== id
                   ? habit
+                  : isNegative || isGoal
+                  ? {
+                      ...habit,
+                      progressEntries: (isNegative ? relapsed : goalCompleted)
+                        ? (habit.progressEntries ?? []).filter(
+                            entry =>
+                              entry.dateKey !== date ||
+                              entry.actionType !==
+                                (isNegative ? 'RELAPSE' : 'PROGRESS'),
+                          )
+                        : [
+                            ...(habit.progressEntries ?? []),
+                            {
+                              dateKey: date,
+                              actionType: isNegative
+                                ? ('RELAPSE' as const)
+                                : ('PROGRESS' as const),
+                              value: isNegative ? 1 : habit.goalTarget ?? 1,
+                            },
+                          ],
+                    }
                   : {
                       ...habit,
                       completedDates: completed
@@ -301,7 +376,8 @@ export function createAppStore(
                 unlockedIds,
               );
               const perfect =
-                completed && getDailyProgress(streakHabits, date).isPerfect;
+                becameSuccessful &&
+                getDailyProgress(streakHabits, date).isPerfect;
               const newlyUnlocked = achievementResult.newlyUnlocked[0];
               const definition = newlyUnlocked
                 ? ACHIEVEMENTS.find(item => item.id === newlyUnlocked.id)
@@ -389,17 +465,45 @@ export function createAppStore(
         return false;
       }
     },
+    deleteHabit: async id => {
+      if (!get().isHydrated || !get().habits.some(habit => habit.id === id)) {
+        return false;
+      }
+      try {
+        if (!(await dependencies.repository.deleteHabit(id))) {
+          set({ persistenceError: 'The habit is no longer available.' });
+          return false;
+        }
+        set(state => {
+          const habits = state.habits.filter(habit => habit.id !== id);
+          return {
+            ...derivedState(habits, state.stats.unlockedAchievements),
+            persistenceError: undefined,
+          };
+        });
+        return true;
+      } catch (error) {
+        logPersistenceError('delete habit', error);
+        set({ persistenceError: 'The habit could not be deleted.' });
+        return false;
+      }
+    },
     setHabitArchived: async (id, archived) => {
       if (!get().isHydrated || !get().habits.some(habit => habit.id === id)) {
         return false;
       }
       try {
-        if (!(await dependencies.repository.setArchived(id, archived))) {
+        const archivedAt = archived
+          ? toDateKey(dependencies.now())
+          : undefined;
+        if (
+          !(await dependencies.repository.setArchived(id, archived, archivedAt))
+        ) {
           return false;
         }
         set(state => {
           const habits = state.habits.map(habit =>
-            habit.id === id ? { ...habit, archived } : habit,
+            habit.id === id ? { ...habit, archived, archivedAt } : habit,
           );
           return {
             ...derivedState(habits, state.stats.unlockedAchievements),

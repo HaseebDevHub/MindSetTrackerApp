@@ -4,11 +4,13 @@ import type {
   HabitUpdateInput,
 } from '../src/database/repositories/types';
 import type { HabitItem } from '../src/types/models';
+import type { HabitActionType } from '../src/types/models';
 import { getDateStatus, isDateKey, toDateKey } from '../src/utils/dates';
 
 const cloneHabit = (habit: HabitItem): HabitItem => ({
   ...habit,
   completedDates: [...habit.completedDates],
+  progressEntries: habit.progressEntries?.map(entry => ({ ...entry })),
 });
 
 export class InMemoryHabitRepository implements HabitRepository {
@@ -18,12 +20,14 @@ export class InMemoryHabitRepository implements HabitRepository {
   failImport = false;
   failCreate = false;
   failUpdate = false;
+  failDelete = false;
   failCompletion = false;
   failOnboarding = false;
   loadCalls = 0;
   importCalls = 0;
   createCalls = 0;
   updateCalls = 0;
+  deleteCalls = 0;
   completionCalls = 0;
   onboardingCalls = 0;
 
@@ -72,8 +76,17 @@ export class InMemoryHabitRepository implements HabitRepository {
     return true;
   }
 
-  async setArchived(id: string, archived: boolean) {
-    return this.updateHabit(id, { archived });
+  async deleteHabit(id: string) {
+    this.deleteCalls += 1;
+    if (this.failDelete) throw new Error('delete failed');
+    return this.habits.delete(id);
+  }
+
+  async setArchived(id: string, archived: boolean, archivedAt?: string) {
+    return this.updateHabit(id, {
+      archived,
+      archivedAt: archived ? archivedAt : undefined,
+    });
   }
 
   async setHabitCompletion(
@@ -95,6 +108,34 @@ export class InMemoryHabitRepository implements HabitRepository {
 
   async isHabitCompleted(habitId: string, dateKey: string) {
     return this.habits.get(habitId)?.completedDates.includes(dateKey) ?? false;
+  }
+
+  async setHabitAction(
+    habitId: string,
+    dateKey: string,
+    actionType: HabitActionType,
+    value = 1,
+  ) {
+    const habit = this.habits.get(habitId);
+    if (!habit) return false;
+    const entries = (habit.progressEntries ?? []).filter(
+      entry => entry.dateKey !== dateKey || entry.actionType !== actionType,
+    );
+    habit.progressEntries = [...entries, { dateKey, actionType, value }];
+    return true;
+  }
+
+  async removeHabitAction(
+    habitId: string,
+    dateKey: string,
+    actionType: HabitActionType,
+  ) {
+    const habit = this.habits.get(habitId);
+    if (!habit) return false;
+    habit.progressEntries = (habit.progressEntries ?? []).filter(
+      entry => entry.dateKey !== dateKey || entry.actionType !== actionType,
+    );
+    return true;
   }
 
   async importLegacyHabits(habits: HabitItem[]) {

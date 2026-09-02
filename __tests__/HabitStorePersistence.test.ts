@@ -41,6 +41,11 @@ describe('async WatermelonDB store orchestration', () => {
   beforeEach(resetPreferenceState);
   afterAll(resetPreferenceState);
 
+  test('starts Today with the All filter selected', () => {
+    const store = makeStore(new InMemoryHabitRepository());
+    expect(store.getState().selectedFilter).toBe('ALL');
+  });
+
   test('hydrates canonical habits and completions from the repository', async () => {
     const repository = new InMemoryHabitRepository([habit]);
     const store = makeStore(repository);
@@ -126,8 +131,12 @@ describe('async WatermelonDB store orchestration', () => {
       title: 'Drink more water',
       reminderTime: '09:00',
       archived: true,
+      archivedAt: '2026-08-30',
     });
-    expect((await repository.loadAllHabits())[0].archived).toBe(true);
+    expect((await repository.loadAllHabits())[0]).toMatchObject({
+      archived: true,
+      archivedAt: '2026-08-30',
+    });
   });
 
   test('inserts and removes exactly one completion row', async () => {
@@ -199,6 +208,28 @@ describe('async WatermelonDB store orchestration', () => {
       }),
     ).toBe(false);
     expect(store.getState().habits).toHaveLength(1);
+  });
+
+  test('deletes the habit and its completion data before updating Zustand', async () => {
+    const repository = new InMemoryHabitRepository([habit]);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+
+    expect(await store.getState().deleteHabit(habit.id)).toBe(true);
+    expect(repository.deleteCalls).toBe(1);
+    expect(await repository.loadAllHabits()).toEqual([]);
+    expect(store.getState().habits).toEqual([]);
+  });
+
+  test('keeps Zustand unchanged when deleting from persistence fails', async () => {
+    const repository = new InMemoryHabitRepository([habit]);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+    repository.failDelete = true;
+
+    expect(await store.getState().deleteHabit(habit.id)).toBe(false);
+    expect(store.getState().habits).toHaveLength(1);
+    expect((await repository.loadAllHabits())[0].id).toBe(habit.id);
   });
 
   test('a completion failure does not change Zustand completion state', async () => {

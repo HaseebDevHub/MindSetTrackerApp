@@ -12,6 +12,7 @@ import {
 import { SettingRow } from '../../components/common/SettingRow';
 import type { ThemeMode } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useAppStore } from '../../store/useAppStore';
 import type { MeStackParamList } from '../../types/models';
 import { keyByValue } from '../../utils/lists';
 import { SettingsShell } from './components/SettingsShell';
@@ -26,7 +27,8 @@ export function GeneralSettingsScreen({ navigation }: Props) {
   const [sound, setSound] = useState(true);
   const [haptic, setHaptic] = useState(true);
   const [confirm, setConfirm] = useState(false);
-  const [week, setWeek] = useState<'Sunday' | 'Monday'>('Sunday');
+  const weekStartsOn = useAppStore(state => state.weekStartsOn);
+  const setWeekStartsOn = useAppStore(state => state.setWeekStartsOn);
   return (
     <SettingsShell title="GENERAL SETTINGS" onBack={navigation.goBack}>
       <Text style={styles.sectionNoMargin}>APPEARANCE</Text>
@@ -41,17 +43,27 @@ export function GeneralSettingsScreen({ navigation }: Props) {
         data={['Sunday', 'Monday'] as const}
         numColumns={2}
         keyExtractor={keyByValue}
-        extraData={week}
+        extraData={weekStartsOn}
         renderItem={({ item: day }) => (
           <View style={styles.choiceCell}>
             <Pressable
-              onPress={() => setWeek(day)}
-              style={[styles.choice, week === day && styles.choiceActive]}
+              accessibilityLabel={`${day} week start`}
+              accessibilityRole="radio"
+              accessibilityState={{
+                checked: weekStartsOn === (day === 'Sunday' ? 0 : 1),
+              }}
+              onPress={() => setWeekStartsOn(day === 'Sunday' ? 0 : 1)}
+              style={[
+                styles.choice,
+                weekStartsOn === (day === 'Sunday' ? 0 : 1) &&
+                  styles.choiceActive,
+              ]}
             >
               <Text
                 style={[
                   styles.choiceText,
-                  week === day && styles.choiceTextActive,
+                  weekStartsOn === (day === 'Sunday' ? 0 : 1) &&
+                    styles.choiceTextActive,
                 ]}
               >
                 {day} start

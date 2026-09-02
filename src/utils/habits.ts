@@ -1,6 +1,9 @@
 import type { HabitItem, TodayFilter } from '../types/models';
 import { getDateStatus } from './dates';
-import { isHabitApplicableToDate } from './habitAnalytics';
+import {
+  isHabitApplicableToDate,
+  isHabitCompleteOnDate,
+} from './habitAnalytics';
 
 export const isHabitVisibleForTodayFilter = (
   habit: HabitItem,
@@ -22,7 +25,7 @@ export function partitionHabitsByCompletion(habits: HabitItem[], date: string) {
   const finished: HabitItem[] = [];
 
   habits.forEach(habit => {
-    if (habit.completedDates.includes(date)) finished.push(habit);
+    if (isHabitCompleteOnDate(habit, date)) finished.push(habit);
     else active.push(habit);
   });
 

@@ -6,6 +6,7 @@ export const STORAGE_KEYS = {
   ONBOARDING_TARGETS: 'onboarding.targets',
   ONBOARDING_FIRST_HABIT: 'onboarding.firstHabit',
   NOTIFICATION_REMINDER_TIME: 'notifications.reminderTime',
+  GENERAL_WEEK_START: 'general.weekStartsOn',
   HABITS: 'habits.items',
   LEGACY_DEMO_HABITS_REMOVED: 'migrations.legacyDemoHabitsRemoved',
   COMPLETION_DATES: 'habits.completionDates',
@@ -26,6 +27,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.ONBOARDING_TARGETS]: string;
   [STORAGE_KEYS.ONBOARDING_FIRST_HABIT]: string;
   [STORAGE_KEYS.NOTIFICATION_REMINDER_TIME]: string;
+  [STORAGE_KEYS.GENERAL_WEEK_START]: number;
   [STORAGE_KEYS.HABITS]: string;
   [STORAGE_KEYS.LEGACY_DEMO_HABITS_REMOVED]: boolean;
   [STORAGE_KEYS.COMPLETION_DATES]: string;
