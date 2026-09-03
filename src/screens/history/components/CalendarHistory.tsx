@@ -1,7 +1,8 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { Pressable, Text, View, useWindowDimensions } from 'react-native';
 import { FlashList } from '@shopify/flash-list';
 import { ChevronLeft, ChevronRight } from 'lucide-react-native';
+import Svg, { Circle } from 'react-native-svg';
 import { HorizontalListSeparator } from '../../../components/common/ListSeparator';
 import { useTheme } from '../../../context/ThemeContext';
 import { useAppStore } from '../../../store/useAppStore';
@@ -19,6 +20,12 @@ import {
 import { keyByTitle, keyByValue } from '../../../utils/lists';
 import useStyles from '../HistoryScreenStyle';
 import { WeeklyProgress } from './WeeklyProgress';
+
+const PROGRESS_RING_SIZE = 38;
+const PROGRESS_RING_STROKE = 4;
+const PROGRESS_RING_RADIUS =
+  (PROGRESS_RING_SIZE - PROGRESS_RING_STROKE) / 2;
+const PROGRESS_RING_CIRCUMFERENCE = 2 * Math.PI * PROGRESS_RING_RADIUS;
 
 export function CalendarHistory({
   onDateSelected,
@@ -76,41 +83,132 @@ export function CalendarHistory({
     },
   ];
   const weekLabels = getWeekdayLabels(weekStartsOn);
-  const days = getCalendarDays(month, weekStartsOn);
+  const days = useMemo(
+    () => getCalendarDays(month, weekStartsOn),
+    [month, weekStartsOn],
+  );
+  const progressByDate = useMemo(
+    () =>
+      new Map(
+        days.flatMap(date => {
+          if (!date) return [];
+          const key = toDateKey(date);
+          return [[key, getDailyProgress(habits, key)] as const];
+        }),
+      ),
+    [days, habits],
+  );
   const calendarCellSize = (width - 72) / 7;
-  const renderDay = ({ item: date }: { item: Date | null }) => {
+  const renderDay = ({
+    item: date,
+    index,
+  }: {
+    item: Date | null;
+    index: number;
+  }) => {
     if (!date)
       return <View style={[styles.day, { width: calendarCellSize }]} />;
     const key = toDateKey(date);
     const selected = selectedDate === key;
-    const progress = getDailyProgress(habits, key);
+    const progress = progressByDate.get(key)!;
+    const previousDate = index % 7 === 0 ? null : days[index - 1];
+    const nextDate = index % 7 === 6 ? null : days[index + 1];
+    const connectsLeft = Boolean(
+      progress.isPerfect &&
+        previousDate &&
+        progressByDate.get(toDateKey(previousDate))?.isPerfect,
+    );
+    const connectsRight = Boolean(
+      progress.isPerfect &&
+        nextDate &&
+        progressByDate.get(toDateKey(nextDate))?.isPerfect,
+    );
+    const isPartial = progress.percentage > 0 && !progress.isPerfect;
+    const progressOffset =
+      PROGRESS_RING_CIRCUMFERENCE * (1 - progress.percentage / 100);
     return (
       <Pressable
         accessibilityLabel={date.toDateString()}
+        accessibilityRole="button"
+        accessibilityState={{ selected }}
+        accessibilityValue={{
+          min: 0,
+          max: 100,
+          now: progress.percentage,
+          text: `${progress.percentage}% complete`,
+        }}
         onPress={() => {
           setSelectedDate(key);
           onDateSelected?.(key);
         }}
-        style={[
-          styles.day,
-          { width: calendarCellSize },
-          progress.percentage > 0 && styles.partialDay,
-          progress.isPerfect && styles.perfectDay,
-          selected && styles.selectedDay,
-        ]}
+        style={[styles.day, { width: calendarCellSize }]}
+        testID={`calendar-day-${key}`}
       >
-        <Text style={[styles.dayText, selected && styles.selectedDayText]}>
-          {date.getDate()}
-        </Text>
-        {progress.percentage > 0 ? (
+        {connectsLeft ? (
           <View
-            style={[
-              styles.dot,
-              progress.isPerfect && styles.dotPerfect,
-              selected && styles.dotSelected,
-            ]}
+            pointerEvents="none"
+            style={[styles.streakConnector, styles.streakConnectorLeft]}
+            testID={`calendar-streak-left-${key}`}
           />
         ) : null}
+        {connectsRight ? (
+          <View
+            pointerEvents="none"
+            style={[styles.streakConnector, styles.streakConnectorRight]}
+            testID={`calendar-streak-right-${key}`}
+          />
+        ) : null}
+        <View
+          pointerEvents="none"
+          style={[
+            styles.dayMarker,
+            progress.isPerfect && styles.perfectDayMarker,
+            selected && styles.selectedDayOutline,
+          ]}
+          testID={`calendar-marker-${key}`}
+        >
+          {isPartial ? (
+            <Svg
+              pointerEvents="none"
+              width={PROGRESS_RING_SIZE}
+              height={PROGRESS_RING_SIZE}
+              viewBox={`0 0 ${PROGRESS_RING_SIZE} ${PROGRESS_RING_SIZE}`}
+              style={styles.progressRing}
+              testID={`calendar-partial-${key}`}
+            >
+              <Circle
+                cx={PROGRESS_RING_SIZE / 2}
+                cy={PROGRESS_RING_SIZE / 2}
+                r={PROGRESS_RING_RADIUS}
+                fill="none"
+                stroke={colors.divider}
+                strokeWidth={PROGRESS_RING_STROKE}
+              />
+              <Circle
+                cx={PROGRESS_RING_SIZE / 2}
+                cy={PROGRESS_RING_SIZE / 2}
+                r={PROGRESS_RING_RADIUS}
+                fill="none"
+                rotation="-90"
+                origin={`${PROGRESS_RING_SIZE / 2}, ${PROGRESS_RING_SIZE / 2}`}
+                stroke={colors.primary}
+                strokeDasharray={`${PROGRESS_RING_CIRCUMFERENCE} ${PROGRESS_RING_CIRCUMFERENCE}`}
+                strokeDashoffset={progressOffset}
+                strokeLinecap="round"
+                strokeWidth={PROGRESS_RING_STROKE}
+              />
+            </Svg>
+          ) : null}
+          <Text
+            style={[
+              styles.dayText,
+              isPartial && styles.progressDayText,
+              progress.isPerfect && styles.perfectDayText,
+            ]}
+          >
+            {date.getDate()}
+          </Text>
+        </View>
       </Pressable>
     );
   };
@@ -189,7 +287,7 @@ export function CalendarHistory({
       ListFooterComponent={
         <>
           <Text style={styles.legend}>
-            Yellow marks partial progress. Green marks a perfect day.
+            Rings show daily progress. Connected blue days are perfect streaks.
           </Text>
           <WeeklyProgress
             selectedDate={selectedDate}

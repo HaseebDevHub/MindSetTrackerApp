@@ -1,9 +1,10 @@
 import React from 'react';
 import TestRenderer, { act } from 'react-test-renderer';
-import { FlatList, Text } from 'react-native';
+import { FlatList, StyleSheet, Text } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { getSwipeTargetIndex } from '../src/components/common/SwipeableTabView';
 import { ThemeProvider } from '../src/context/ThemeContext';
+import { colors, lightColors } from '../src/constants/theme';
 import { HistoryScreen } from '../src/screens/history/HistoryScreen';
 import { useAppStore } from '../src/store/useAppStore';
 import { addDays, toDateKey } from '../src/utils/dates';
@@ -242,6 +243,157 @@ describe('History tabs', () => {
     act(() => renderer!.unmount());
     useAppStore.setState({ habits: originalHabits });
     jest.useRealTimers();
+  });
+
+  test('renders exact partial progress and row-safe perfect-day streaks', () => {
+    jest.useFakeTimers();
+    jest.setSystemTime(new Date(2026, 8, 10, 12));
+    const originalState = useAppStore.getState();
+    useAppStore.setState({
+      selectedDate: '2026-09-03',
+      weekStartsOn: 0,
+      habits: [
+        {
+          id: 'calendar-progress-1',
+          title: 'First calendar habit',
+          timeOfDay: 'MORNING',
+          frequency: 'EVERYDAY',
+          createdAt: '2026-09-01',
+          completedDates: [
+            '2026-09-01',
+            '2026-09-02',
+            '2026-09-03',
+            '2026-09-05',
+            '2026-09-06',
+          ],
+          streakCount: 0,
+          iconName: 'Check',
+        },
+        {
+          id: 'calendar-progress-2',
+          title: 'Second calendar habit',
+          timeOfDay: 'EVENING',
+          frequency: 'EVERYDAY',
+          createdAt: '2026-09-01',
+          completedDates: [
+            '2026-09-01',
+            '2026-09-02',
+            '2026-09-05',
+            '2026-09-06',
+          ],
+          streakCount: 0,
+          iconName: 'Check',
+        },
+      ],
+    });
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(
+        <GestureHandlerRootView>
+          <ThemeProvider initialMode="dark">
+            <HistoryScreen />
+          </ThemeProvider>
+        </GestureHandlerRootView>,
+      );
+    });
+
+    const partialDay = renderer!.root.findByProps({
+      testID: 'calendar-day-2026-09-03',
+    });
+    expect(partialDay.props.accessibilityValue).toEqual({
+      min: 0,
+      max: 100,
+      now: 50,
+      text: '50% complete',
+    });
+    expect(
+      renderer!.root.findByProps({
+        testID: 'calendar-partial-2026-09-03',
+      }),
+    ).toBeDefined();
+    expect(
+      StyleSheet.flatten(
+        renderer!.root.findByProps({
+          testID: 'calendar-marker-2026-09-03',
+        }).props.style,
+      ),
+    ).toMatchObject({ borderColor: colors.onPrimary });
+
+    expect(
+      StyleSheet.flatten(
+        renderer!.root.findByProps({
+          testID: 'calendar-marker-2026-09-01',
+        }).props.style,
+      ),
+    ).toMatchObject({ backgroundColor: colors.primary });
+    expect(
+      renderer!.root.findByProps({
+        testID: 'calendar-streak-right-2026-09-01',
+      }),
+    ).toBeDefined();
+    expect(
+      renderer!.root.findByProps({
+        testID: 'calendar-streak-left-2026-09-02',
+      }),
+    ).toBeDefined();
+    expect(
+      renderer!.root.findAllByProps({
+        testID: 'calendar-streak-right-2026-09-02',
+      }),
+    ).toHaveLength(0);
+    expect(
+      renderer!.root.findAllByProps({
+        testID: 'calendar-streak-right-2026-09-05',
+      }),
+    ).toHaveLength(0);
+    expect(
+      renderer!.root.findAllByProps({
+        testID: 'calendar-streak-left-2026-09-06',
+      }),
+    ).toHaveLength(0);
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({
+      habits: originalState.habits,
+      selectedDate: originalState.selectedDate,
+      weekStartsOn: originalState.weekStartsOn,
+    });
+    jest.useRealTimers();
+  });
+
+  test('uses a visible selected-date outline in light mode', () => {
+    const originalState = useAppStore.getState();
+    useAppStore.setState({
+      selectedDate: '2026-09-03',
+      weekStartsOn: 0,
+      habits: [],
+    });
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(
+        <GestureHandlerRootView>
+          <ThemeProvider initialMode="light">
+            <HistoryScreen />
+          </ThemeProvider>
+        </GestureHandlerRootView>,
+      );
+    });
+
+    const selectedMarker = renderer!.root.findByProps({
+      testID: 'calendar-marker-2026-09-03',
+    });
+    expect(StyleSheet.flatten(selectedMarker.props.style)).toMatchObject({
+      borderColor: lightColors.text,
+    });
+    expect(lightColors.text).not.toBe(lightColors.surface);
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({
+      habits: originalState.habits,
+      selectedDate: originalState.selectedDate,
+      weekStartsOn: originalState.weekStartsOn,
+    });
   });
 
   test('resumes an archived habit from All Habits', async () => {
