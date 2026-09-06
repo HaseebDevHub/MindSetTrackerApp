@@ -6,6 +6,7 @@ import { getSwipeTargetIndex } from '../src/components/common/SwipeableTabView';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { colors, lightColors } from '../src/constants/theme';
 import { HistoryScreen } from '../src/screens/history/HistoryScreen';
+import { setSelectedLanguage } from '../src/localization';
 import { useAppStore } from '../src/store/useAppStore';
 import { addDays, toDateKey } from '../src/utils/dates';
 
@@ -56,6 +57,12 @@ jest.mock(
 );
 
 describe('History tabs', () => {
+  afterEach(() => {
+    act(() => {
+      setSelectedLanguage('English');
+    });
+  });
+
   test('renders all three tabs and switches the selected tab', () => {
     let renderer: TestRenderer.ReactTestRenderer;
     act(() => {
@@ -132,9 +139,9 @@ describe('History tabs', () => {
       );
     });
 
-    const targetDay = renderer!.root
-      .findAllByProps({ accessibilityLabel: target.toDateString() })
-      .find(node => typeof node.props.onPress === 'function');
+    const targetDay = renderer!.root.findByProps({
+      testID: `calendar-day-${toDateKey(target)}`,
+    });
     expect(targetDay).toBeDefined();
     act(() => targetDay!.props.onPress());
     expect(useAppStore.getState().selectedDate).toBe(toDateKey(target));
@@ -167,28 +174,30 @@ describe('History tabs', () => {
             list.props.data?.length === 7 &&
             list.props.data.every((day: { long?: string }) => day.long),
         );
-    expect(getWeekdayList()!.props.data.map((day: { long: string }) => day.long))
-      .toEqual([
-        'Sunday',
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-      ]);
+    expect(
+      getWeekdayList()!.props.data.map((day: { long: string }) => day.long),
+    ).toEqual([
+      'Sunday',
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+    ]);
 
     act(() => useAppStore.setState({ weekStartsOn: 1 }));
-    expect(getWeekdayList()!.props.data.map((day: { long: string }) => day.long))
-      .toEqual([
-        'Monday',
-        'Tuesday',
-        'Wednesday',
-        'Thursday',
-        'Friday',
-        'Saturday',
-        'Sunday',
-      ]);
+    expect(
+      getWeekdayList()!.props.data.map((day: { long: string }) => day.long),
+    ).toEqual([
+      'Monday',
+      'Tuesday',
+      'Wednesday',
+      'Thursday',
+      'Friday',
+      'Saturday',
+      'Sunday',
+    ]);
     expect(useAppStore.getState().selectedDate).toBe('2026-09-01');
 
     act(() => renderer!.unmount());
@@ -451,5 +460,95 @@ describe('History tabs', () => {
 
     act(() => renderer!.unmount());
     useAppStore.setState({ habits: originalHabits });
+  });
+
+  test('mirrors the complete History layout when Urdu is selected', () => {
+    const originalState = useAppStore.getState();
+    setSelectedLanguage('Urdu');
+    useAppStore.setState({
+      selectedDate: '2026-09-03',
+      weekStartsOn: 0,
+      habits: [
+        {
+          id: 'rtl-history-habit',
+          title: 'صبح کی سیر',
+          timeOfDay: 'MORNING',
+          frequency: 'EVERYDAY',
+          createdAt: '2026-09-01',
+          completedDates: [],
+          streakCount: 0,
+          iconName: 'Check',
+        },
+      ],
+    });
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(
+        <GestureHandlerRootView>
+          <ThemeProvider initialMode="dark">
+            <HistoryScreen />
+          </ThemeProvider>
+        </GestureHandlerRootView>,
+      );
+    });
+
+    const historyTitle = renderer!.root
+      .findAllByType(Text)
+      .find(node => node.props.children === 'تاریخ');
+    expect(StyleSheet.flatten(historyTitle!.props.style)).toMatchObject({
+      textAlign: 'right',
+      writingDirection: 'rtl',
+    });
+
+    const tabList = renderer!.root.find(
+      node => node.props.accessibilityRole === 'tablist',
+    );
+    expect(StyleSheet.flatten(tabList.props.style)).toMatchObject({
+      flexDirection: 'row-reverse',
+    });
+
+    const weekdayList = renderer!.root
+      .findAllByType(FlatList)
+      .find(
+        list =>
+          list.props.data?.length === 7 &&
+          list.props.data.every((day: { long?: string }) => day.long),
+      );
+    expect(
+      weekdayList!.props.data.map((day: { id: number }) => day.id),
+    ).toEqual([6, 5, 4, 3, 2, 1, 0]);
+
+    const completionMetricTitle = renderer!.root
+      .findAllByType(Text)
+      .find(node => node.props.children === 'تکمیل کی شرح');
+    expect(
+      StyleSheet.flatten(completionMetricTitle!.parent!.props.style),
+    ).toMatchObject({ marginHorizontal: 8 });
+
+    const allHabitsTab = renderer!.root.find(
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        node.props.accessibilityLabel === 'تمام عادتیں',
+    );
+    act(() => allHabitsTab.props.onPress());
+
+    const habitTitle = renderer!.root
+      .findAllByType(Text)
+      .find(node => node.props.children === 'صبح کی سیر');
+    expect(StyleSheet.flatten(habitTitle!.props.style)).toMatchObject({
+      textAlign: 'right',
+      writingDirection: 'rtl',
+    });
+    expect(
+      StyleSheet.flatten(habitTitle!.parent!.parent!.parent!.props.style),
+    ).toMatchObject({ flexDirection: 'row-reverse' });
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({
+      habits: originalState.habits,
+      selectedDate: originalState.selectedDate,
+      weekStartsOn: originalState.weekStartsOn,
+    });
   });
 });

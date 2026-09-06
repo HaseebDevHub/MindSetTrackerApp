@@ -12,24 +12,26 @@ import Animated, {
 import Svg, { Circle } from 'react-native-svg';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation, type TranslationKey } from '../../localization';
 import type { OnboardingStackParamList } from '../../types/models';
 import useStyles from './OnboardingScreenStyle';
 
 type Props = NativeStackScreenProps<OnboardingStackParamList, 'PlanGenerator'>;
 const AnimatedCircle = Animated.createAnimatedComponent(Circle);
-const progressSteps = [
-  { at: 0, value: 0, text: '' },
-  { at: 450, value: 20, text: 'Analyzing your time schedule...' },
-  { at: 1350, value: 60, text: 'Selecting habits for your target...' },
-  { at: 2250, value: 71, text: 'Preparing your first habit...' },
-  { at: 3200, value: 100, text: 'Finished!' },
+const progressSteps: { at: number; value: number; text?: TranslationKey }[] = [
+  { at: 0, value: 0 },
+  { at: 450, value: 20, text: 'onboarding_analyzing' },
+  { at: 1350, value: 60, text: 'onboarding_selecting' },
+  { at: 2250, value: 71, text: 'onboarding_preparing' },
+  { at: 3200, value: 100, text: 'onboarding_finished' },
 ];
 
 export function PlanGeneratorScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useStyles();
   const [progress, setProgress] = useState(0);
-  const [message, setMessage] = useState('Getting things ready...');
+  const [message, setMessage] = useState<TranslationKey>('onboarding_getting_ready');
   const animated = useSharedValue(0);
   const radius = 88;
   const circumference = 2 * Math.PI * radius;
@@ -57,8 +59,8 @@ export function PlanGeneratorScreen({ navigation }: Props) {
     <ScreenContainer style={styles.generator}>
       <Text style={styles.heading}>
         {progress === 100
-          ? 'Everything is done!'
-          : 'Generating your habit plan...'}
+          ? t('onboarding_everything_done')
+          : t('onboarding_generating')}
       </Text>
       <View style={styles.progressWrap}>
         <Svg width={200} height={200} viewBox="0 0 200 200">
@@ -92,7 +94,7 @@ export function PlanGeneratorScreen({ navigation }: Props) {
         exiting={FadeOut.duration(150)}
         style={styles.generatorMessage}
       >
-        {message}
+        {t(message)}
       </Animated.Text>
     </ScreenContainer>
   );

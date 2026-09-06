@@ -18,6 +18,7 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: radii.button,
       backgroundColor: colors.surface,
     },
+    rowRTL: { flexDirection: 'row-reverse' },
     icon: {
       width: 38,
       height: 38,
@@ -33,6 +34,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
       marginTop: 2,
     },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
     pressed: { opacity: 0.75 },
   });
 

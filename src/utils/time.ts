@@ -8,11 +8,17 @@ export function isValidLocalTime(value: unknown): value is string {
   return typeof value === 'string' && LOCAL_TIME_PATTERN.test(value);
 }
 
-export function formatLocalTime(value: string) {
+export function formatLocalTime(value: string, locale?: string) {
   if (!isValidLocalTime(value)) return '';
 
   const [hourText, minute] = value.split(':');
   const hour = Number(hourText);
+  if (locale) {
+    return new Date(2000, 0, 1, hour, Number(minute)).toLocaleTimeString(
+      locale,
+      { hour: 'numeric', minute: '2-digit' },
+    );
+  }
   const period: DayPeriod = hour >= 12 ? 'PM' : 'AM';
   const displayHour = hour % 12 || 12;
   return `${displayHour}:${minute} ${period}`;

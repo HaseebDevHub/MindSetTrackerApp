@@ -5,6 +5,7 @@ import { Bell, Clock, Moon, Zap } from 'lucide-react-native';
 import { ReminderTimeModal } from '../../components/common/ReminderTimeModal';
 import { SettingRow } from '../../components/common/SettingRow';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../localization';
 import { reminderSettingsStorage } from '../../storage/reminderSettingsStorage';
 import type { MeStackParamList } from '../../types/models';
 import { formatLocalTime } from '../../utils/time';
@@ -15,6 +16,7 @@ type Props = NativeStackScreenProps<MeStackParamList, 'Notifications'>;
 
 export function NotificationSettingsScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { isRTL, locale, t } = useTranslation();
   const styles = useStyles();
   const [enabled, setEnabled] = useState(true);
   const [daily, setDaily] = useState(true);
@@ -26,8 +28,8 @@ export function NotificationSettingsScreen({ navigation }: Props) {
   const saveReminderTime = (value: string) => {
     if (!reminderSettingsStorage.setNotificationReminderTime(value)) {
       Alert.alert(
-        'Unable to save',
-        'Please check the selected time and try again.',
+        t('notification_save_error'),
+        t('notification_save_error_message'),
       );
       return;
     }
@@ -36,18 +38,18 @@ export function NotificationSettingsScreen({ navigation }: Props) {
     setTimeEditorVisible(false);
   };
   return (
-    <SettingsShell title="NOTIFICATION" onBack={navigation.goBack}>
-      <View style={styles.notice}>
+    <SettingsShell title={t('notification_title')} onBack={navigation.goBack}>
+      <View style={[styles.notice, isRTL && styles.rowRTL]}>
         <Bell color={colors.primary} size={21} />
-        <Text style={styles.noticeText}>
-          These preferences are a UI preview. No notification permissions are
-          requested and nothing is scheduled.
+        <Text style={[styles.noticeText, isRTL && styles.textRTL]}>
+          {t('notification_preview')}
         </Text>
       </View>
       <SettingRow
         icon={Zap}
-        title="Enable reminders"
-        subtitle="Master reminder preference"
+        title={t('notification_enable')}
+        subtitle={t('notification_enable_description')}
+        isRTL={isRTL}
         right={
           <Switch
             value={enabled}
@@ -58,8 +60,9 @@ export function NotificationSettingsScreen({ navigation }: Props) {
       />
       <SettingRow
         icon={Moon}
-        title="Daily reminder"
-        subtitle="Finish your checklist each evening"
+        title={t('notification_daily')}
+        subtitle={t('notification_daily_description')}
+        isRTL={isRTL}
         right={
           <Switch
             disabled={!enabled}
@@ -71,15 +74,17 @@ export function NotificationSettingsScreen({ navigation }: Props) {
       />
       <SettingRow
         icon={Clock}
-        title="Reminder time"
-        subtitle={formatLocalTime(reminderTime)}
+        title={t('notification_time')}
+        subtitle={formatLocalTime(reminderTime, locale)}
         onPress={() => setTimeEditorVisible(true)}
         showDisclosureIndicator={false}
+        isRTL={isRTL}
       />
       <SettingRow
         icon={Bell}
-        title="Habit reminders"
-        subtitle="Use preferences set on each habit"
+        title={t('notification_habit')}
+        subtitle={t('notification_habit_description')}
+        isRTL={isRTL}
         right={
           <Switch
             disabled={!enabled}
@@ -91,10 +96,11 @@ export function NotificationSettingsScreen({ navigation }: Props) {
       />
       <ReminderTimeModal
         visible={timeEditorVisible}
-        title="Select reminder time"
+        title={t('notification_select_time')}
         value={reminderTime}
         onCancel={() => setTimeEditorVisible(false)}
         onSave={saveReminderTime}
+        isRTL={isRTL}
       />
     </SettingsShell>
   );

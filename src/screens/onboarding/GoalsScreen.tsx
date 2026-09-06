@@ -14,6 +14,7 @@ import { AppButton } from '../../components/common/AppButton';
 import { VerticalListSeparator } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useAppStore } from '../../store/useAppStore';
+import { useTranslation } from '../../localization';
 import type { OnboardingStackParamList } from '../../types/models';
 import { ONBOARDING_TARGETS } from '../../types/onboarding';
 import { keyByTitle } from '../../utils/lists';
@@ -33,6 +34,7 @@ const goals = [
 
 export function GoalsScreen({ navigation }: Props) {
   const styles = useStyles();
+  const { t } = useTranslation();
   const selected = useAppStore(s => s.targets);
   const toggle = useAppStore(s => s.toggleTarget);
   const save = useAppStore(s => s.saveTargets);
@@ -40,8 +42,7 @@ export function GoalsScreen({ navigation }: Props) {
     if (save()) navigation.navigate('FirstHabit');
     else
       Alert.alert(
-        'Choose a target',
-        'Select at least one daily target to continue.',
+        t('onboarding_choose_target'), t('onboarding_choose_target_message'),
       );
   };
   return (
@@ -49,8 +50,7 @@ export function GoalsScreen({ navigation }: Props) {
       <OnboardingTitle
         step={3}
         back={navigation.goBack}
-        title="What's your target?"
-        subtitle="Help us understand your needs better"
+        title={t('onboarding_goals_title')} subtitle={t('onboarding_goals_subtitle')}
       />
       <FlashList
         data={goals}
@@ -71,9 +71,8 @@ export function GoalsScreen({ navigation }: Props) {
         scrollEnabled={false}
         style={styles.goalGrid}
       />
-      <View style={styles.spacer} />
       <AppButton
-        title="NEXT"
+        title={t('onboarding_next')}
         disabled={selected.length === 0}
         onPress={next}
       />

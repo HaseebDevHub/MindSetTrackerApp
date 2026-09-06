@@ -43,6 +43,7 @@ type Props = {
   animationDuration?: number;
   distanceThreshold?: number;
   velocityThreshold?: number;
+  isRTL?: boolean;
 };
 
 export function SwipeableTabView({
@@ -52,23 +53,25 @@ export function SwipeableTabView({
   animationDuration = DEFAULT_ANIMATION_DURATION,
   distanceThreshold = DEFAULT_DISTANCE_THRESHOLD,
   velocityThreshold = DEFAULT_VELOCITY_THRESHOLD,
+  isRTL = false,
 }: Props) {
   const { width } = useWindowDimensions();
   const pages = useMemo(() => React.Children.toArray(children), [children]);
   const itemCount = pages.length;
-  const translateX = useSharedValue(-currentIndex * width);
+  const physicalIndex = isRTL ? itemCount - 1 - currentIndex : currentIndex;
+  const translateX = useSharedValue(-physicalIndex * width);
   const gestureStartX = useSharedValue(translateX.value);
-  const animatedIndex = useSharedValue(currentIndex);
+  const animatedIndex = useSharedValue(physicalIndex);
 
   useEffect(() => {
-    animatedIndex.value = currentIndex;
-    translateX.value = withTiming(-currentIndex * width, {
+    animatedIndex.value = physicalIndex;
+    translateX.value = withTiming(-physicalIndex * width, {
       duration: animationDuration,
     });
   }, [
     animatedIndex,
     animationDuration,
-    currentIndex,
+    physicalIndex,
     itemCount,
     translateX,
     width,
@@ -117,7 +120,10 @@ export function SwipeableTabView({
             duration: animationDuration,
           });
           if (targetIndex !== previousIndex) {
-            runOnJS(updateIndex)(targetIndex);
+            const logicalIndex = isRTL
+              ? itemCount - 1 - targetIndex
+              : targetIndex;
+            runOnJS(updateIndex)(logicalIndex);
           }
         })
         .onFinalize((_, success) => {
@@ -133,6 +139,7 @@ export function SwipeableTabView({
       distanceThreshold,
       gestureStartX,
       itemCount,
+      isRTL,
       translateX,
       updateIndex,
       velocityThreshold,
@@ -149,22 +156,27 @@ export function SwipeableTabView({
         <Animated.View
           style={[styles.track, { width: width * itemCount }, animatedStyle]}
         >
-          {pages.map((page, logicalIndex) => {
-            const active = logicalIndex === currentIndex;
-            return (
-              <View
-                key={logicalIndex}
-                accessibilityElementsHidden={!active}
-                importantForAccessibility={
-                  active ? 'auto' : 'no-hide-descendants'
-                }
-                pointerEvents={active ? 'auto' : 'none'}
-                style={[styles.page, { width }]}
-              >
-                {page}
-              </View>
-            );
-          })}
+          {(isRTL ? [...pages].reverse() : pages).map(
+            (page, physicalPageIndex) => {
+              const logicalIndex = isRTL
+                ? itemCount - 1 - physicalPageIndex
+                : physicalPageIndex;
+              const active = logicalIndex === currentIndex;
+              return (
+                <View
+                  key={logicalIndex}
+                  accessibilityElementsHidden={!active}
+                  importantForAccessibility={
+                    active ? 'auto' : 'no-hide-descendants'
+                  }
+                  pointerEvents={active ? 'auto' : 'none'}
+                  style={[styles.page, { width }]}
+                >
+                  {page}
+                </View>
+              );
+            },
+          )}
         </Animated.View>
       </View>
     </GestureDetector>

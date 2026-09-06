@@ -12,6 +12,7 @@ import {
 import { SettingRow } from '../../components/common/SettingRow';
 import type { ThemeMode } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../localization';
 import { useAppStore } from '../../store/useAppStore';
 import type { MeStackParamList } from '../../types/models';
 import { keyByValue } from '../../utils/lists';
@@ -22,6 +23,7 @@ type Props = NativeStackScreenProps<MeStackParamList, 'GeneralSettings'>;
 
 export function GeneralSettingsScreen({ navigation }: Props) {
   const { colors, mode, setThemeMode } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const [appearanceOpen, setAppearanceOpen] = useState(false);
   const [sound, setSound] = useState(true);
@@ -30,24 +32,36 @@ export function GeneralSettingsScreen({ navigation }: Props) {
   const weekStartsOn = useAppStore(state => state.weekStartsOn);
   const setWeekStartsOn = useAppStore(state => state.setWeekStartsOn);
   return (
-    <SettingsShell title="GENERAL SETTINGS" onBack={navigation.goBack}>
-      <Text style={styles.sectionNoMargin}>APPEARANCE</Text>
+    <SettingsShell title={t('general_title')} onBack={navigation.goBack}>
+      <Text style={[styles.sectionNoMargin, isRTL && styles.textRTL]}>
+        {t('general_appearance_section')}
+      </Text>
       <SettingRow
         icon={mode === 'dark' ? Moon : Sun}
-        title="Appearance"
-        subtitle={mode === 'dark' ? 'Dark' : 'Light'}
+        title={t('general_appearance')}
+        subtitle={mode === 'dark' ? t('general_dark') : t('general_light')}
         onPress={() => setAppearanceOpen(true)}
+        isRTL={isRTL}
       />
-      <Text style={styles.section}>WEEK & INTERACTION</Text>
+      <Text style={[styles.section, isRTL && styles.textRTL]}>
+        {t('general_week_section')}
+      </Text>
       <FlashList
-        data={['Sunday', 'Monday'] as const}
+        data={
+          isRTL
+            ? (['Monday', 'Sunday'] as const)
+            : (['Sunday', 'Monday'] as const)
+        }
         numColumns={2}
         keyExtractor={keyByValue}
         extraData={weekStartsOn}
         renderItem={({ item: day }) => (
           <View style={styles.choiceCell}>
             <Pressable
-              accessibilityLabel={`${day} week start`}
+              accessibilityLabel={t('general_week_start_accessibility', {
+                day:
+                  day === 'Sunday' ? t('general_sunday') : t('general_monday'),
+              })}
               accessibilityRole="radio"
               accessibilityState={{
                 checked: weekStartsOn === (day === 'Sunday' ? 0 : 1),
@@ -62,11 +76,17 @@ export function GeneralSettingsScreen({ navigation }: Props) {
               <Text
                 style={[
                   styles.choiceText,
+                  isRTL && styles.centeredTextRTL,
                   weekStartsOn === (day === 'Sunday' ? 0 : 1) &&
                     styles.choiceTextActive,
                 ]}
               >
-                {day} start
+                {t('general_week_start', {
+                  day:
+                    day === 'Sunday'
+                      ? t('general_sunday')
+                      : t('general_monday'),
+                })}
               </Text>
             </Pressable>
           </View>
@@ -76,7 +96,8 @@ export function GeneralSettingsScreen({ navigation }: Props) {
       />
       <SettingRow
         icon={Volume2}
-        title="Sound"
+        title={t('general_sound')}
+        isRTL={isRTL}
         right={
           <Switch
             value={sound}
@@ -87,7 +108,8 @@ export function GeneralSettingsScreen({ navigation }: Props) {
       />
       <SettingRow
         icon={Smartphone}
-        title="Haptic feedback"
+        title={t('general_haptic')}
+        isRTL={isRTL}
         right={
           <Switch
             value={haptic}
@@ -98,8 +120,9 @@ export function GeneralSettingsScreen({ navigation }: Props) {
       />
       <SettingRow
         icon={CircleHelp}
-        title="Confirm completion"
-        subtitle="Ask before a habit is checked"
+        title={t('general_confirm')}
+        subtitle={t('general_confirm_description')}
+        isRTL={isRTL}
         right={
           <Switch
             value={confirm}
@@ -115,7 +138,7 @@ export function GeneralSettingsScreen({ navigation }: Props) {
         onRequestClose={() => setAppearanceOpen(false)}
       >
         <Pressable
-          accessibilityLabel="Close appearance options"
+          accessibilityLabel={t('general_close_appearance')}
           style={styles.appearanceBackdrop}
           onPress={() => setAppearanceOpen(false)}
         >
@@ -124,11 +147,21 @@ export function GeneralSettingsScreen({ navigation }: Props) {
             style={styles.appearanceSheet}
             onPress={event => event.stopPropagation()}
           >
-            <Text style={styles.appearanceTitle}>Appearance</Text>
+            <Text style={[styles.appearanceTitle, isRTL && styles.textRTL]}>
+              {t('general_appearance')}
+            </Text>
             {(
               [
-                { value: 'dark' as const, label: 'Dark', icon: Moon },
-                { value: 'light' as const, label: 'Light', icon: Sun },
+                {
+                  value: 'dark' as const,
+                  label: t('general_dark'),
+                  icon: Moon,
+                },
+                {
+                  value: 'light' as const,
+                  label: t('general_light'),
+                  icon: Sun,
+                },
               ] satisfies {
                 value: ThemeMode;
                 label: string;
@@ -140,7 +173,9 @@ export function GeneralSettingsScreen({ navigation }: Props) {
               return (
                 <Pressable
                   key={option.value}
-                  accessibilityLabel={`${option.label} theme`}
+                  accessibilityLabel={t('general_theme_accessibility', {
+                    theme: option.label,
+                  })}
                   accessibilityRole="radio"
                   accessibilityState={{ checked: selected }}
                   onPress={() => {
@@ -149,11 +184,17 @@ export function GeneralSettingsScreen({ navigation }: Props) {
                   }}
                   style={[
                     styles.appearanceOption,
+                    isRTL && styles.rowRTL,
                     selected && styles.appearanceOptionActive,
                   ]}
                 >
                   <Icon color={colors.primary} size={21} />
-                  <Text style={styles.appearanceOptionText}>
+                  <Text
+                    style={[
+                      styles.appearanceOptionText,
+                      isRTL && styles.textRTL,
+                    ]}
+                  >
                     {option.label}
                   </Text>
                   <View

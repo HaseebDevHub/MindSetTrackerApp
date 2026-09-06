@@ -1,6 +1,7 @@
 import React from 'react';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { JourneyDetailScreen } from '../screens/journey/JourneyDetailScreen';
+import { ActiveJourneyScreen } from '../screens/journey/ActiveJourneyScreen';
 import { JourneyScreen } from '../screens/journey/JourneyScreen';
 import type { JourneyStackParamList } from '../types/models';
 import { useStackOptions } from './useStackOptions';
@@ -16,6 +17,10 @@ export function JourneyNavigator() {
       <JourneyStack.Screen
         name="JourneyDetail"
         component={JourneyDetailScreen}
+      />
+      <JourneyStack.Screen
+        name="ActiveJourney"
+        component={ActiveJourneyScreen}
       />
     </JourneyStack.Navigator>
   );

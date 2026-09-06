@@ -55,8 +55,21 @@ export const habitCompletionColumns = [
   ...habitCompletionV3Columns,
 ];
 
+export const activeJourneyColumns = [
+  { name: 'journey_id', type: 'string' as const, isIndexed: true },
+  { name: 'started_date_key', type: 'string' as const },
+  { name: 'is_active', type: 'boolean' as const },
+  { name: 'removed_date_key', type: 'string' as const, isOptional: true },
+];
+
+export const journeyTaskCompletionColumns = [
+  { name: 'active_journey_id', type: 'string' as const, isIndexed: true },
+  { name: 'task_id', type: 'string' as const },
+  { name: 'date_key', type: 'string' as const },
+];
+
 const schema = appSchema({
-  version: 4,
+  version: 5,
   tables: [
     tableSchema({
       name: 'habits',
@@ -65,6 +78,14 @@ const schema = appSchema({
     tableSchema({
       name: 'habit_completions',
       columns: habitCompletionColumns,
+    }),
+    tableSchema({
+      name: 'active_journeys',
+      columns: activeJourneyColumns,
+    }),
+    tableSchema({
+      name: 'journey_task_completions',
+      columns: journeyTaskCompletionColumns,
     }),
   ],
 });

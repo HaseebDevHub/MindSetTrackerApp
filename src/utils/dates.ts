@@ -33,13 +33,16 @@ export const addDays = (date: Date, amount: number) => {
   return next;
 };
 
-export const formatShortDate = (date: Date) =>
-  date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+export const formatShortDate = (date: Date, locale = 'en-US') =>
+  date.toLocaleDateString(locale, { month: 'short', day: 'numeric' });
 
-export const monthTitle = (date: Date) =>
-  date.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+export const monthTitle = (date: Date, locale = 'en-US') =>
+  date.toLocaleDateString(locale, { month: 'long', year: 'numeric' });
 
-export const getCalendarDays = (month: Date, weekStartsOn: WeekStartsOn = 0) => {
+export const getCalendarDays = (
+  month: Date,
+  weekStartsOn: WeekStartsOn = 0,
+) => {
   const first = new Date(month.getFullYear(), month.getMonth(), 1);
   const days = new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate();
   const leadingBlanks = (first.getDay() - weekStartsOn + 7) % 7;
@@ -66,16 +69,19 @@ export function getWeekDateKeys(
   );
 }
 
-export function getWeekdayLabels(weekStartsOn: WeekStartsOn = 0) {
-  const labels = [
-    { id: 0, short: 'S', long: 'Sunday' },
-    { id: 1, short: 'M', long: 'Monday' },
-    { id: 2, short: 'T', long: 'Tuesday' },
-    { id: 3, short: 'W', long: 'Wednesday' },
-    { id: 4, short: 'T', long: 'Thursday' },
-    { id: 5, short: 'F', long: 'Friday' },
-    { id: 6, short: 'S', long: 'Saturday' },
-  ];
+export function getWeekdayLabels(
+  weekStartsOn: WeekStartsOn = 0,
+  locale = 'en-US',
+) {
+  const sunday = new Date(2021, 7, 1);
+  const labels = Array.from({ length: 7 }, (_, id) => {
+    const date = addDays(sunday, id);
+    return {
+      id,
+      short: date.toLocaleDateString(locale, { weekday: 'narrow' }),
+      long: date.toLocaleDateString(locale, { weekday: 'long' }),
+    };
+  });
   return [...labels.slice(weekStartsOn), ...labels.slice(0, weekStartsOn)];
 }
 

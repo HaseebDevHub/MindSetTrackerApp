@@ -10,6 +10,7 @@ import {
 import { Award, X } from 'lucide-react-native';
 import type { Celebration } from '../../types/models';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../localization';
 import { AppButton } from './AppButton';
 import useStyles from './CelebrationModalStyle';
 
@@ -23,6 +24,7 @@ export function CelebrationModal({
   onViewAchievements: () => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const { width } = useWindowDimensions();
   const progress = useRef(new Animated.Value(0)).current;
@@ -90,21 +92,35 @@ export function CelebrationModal({
         ))}
         <View style={styles.card}>
           <Pressable
-            accessibilityLabel="Close"
+            accessibilityLabel={t('common_close')}
             onPress={onClose}
-            style={styles.close}
+            style={[styles.close, isRTL && styles.closeRTL]}
           >
             <X color={colors.textSecondary} size={21} />
           </Pressable>
           <View style={styles.icon}>
             <Award color={colors.yellow} size={38} />
           </View>
-          <Text style={styles.congratulations}>Congratulations!</Text>
-          <Text style={styles.subtitle}>{celebration?.subtitle}</Text>
-          <Text style={styles.title}>{celebration?.title}</Text>
-          <AppButton title="CLOSE" onPress={onClose} style={styles.button} />
+          <Text
+            style={[styles.congratulations, isRTL && styles.centeredTextRTL]}
+          >
+            {t('celebration_congratulations')}
+          </Text>
+          <Text style={[styles.subtitle, isRTL && styles.centeredTextRTL]}>
+            {celebration?.subtitle}
+          </Text>
+          <Text style={[styles.title, isRTL && styles.centeredTextRTL]}>
+            {celebration?.title}
+          </Text>
+          <AppButton
+            title={t('common_close')}
+            onPress={onClose}
+            style={styles.button}
+          />
           <Pressable onPress={onViewAchievements}>
-            <Text style={styles.link}>My achievements</Text>
+            <Text style={[styles.link, isRTL && styles.centeredTextRTL]}>
+              {t('celebration_my_achievements')}
+            </Text>
           </Pressable>
         </View>
       </View>

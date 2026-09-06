@@ -1,5 +1,11 @@
 import React from 'react';
-import { FlatList, StyleSheet, Text } from 'react-native';
+import {
+  FlatList,
+  KeyboardAvoidingView,
+  Platform,
+  StyleSheet,
+  Text,
+} from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { TodayScreen } from '../src/screens/today/TodayScreen';
@@ -7,6 +13,7 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 import { colors } from '../src/constants/theme';
 import { useAppStore } from '../src/store/useAppStore';
 import { addDays, fromDateKey, toDateKey } from '../src/utils/dates';
+import { setSelectedLanguage, t } from '../src/localization';
 
 jest.mock('react-native-reanimated', () => {
   const { View } = require('react-native');
@@ -71,6 +78,53 @@ function TodayTestScreen() {
 }
 
 describe('Today date strip', () => {
+  afterEach(() => {
+    act(() => {
+      setSelectedLanguage('English');
+    });
+  });
+
+  test('mirrors the Today controls and horizontal lists for Urdu', () => {
+    const originalState = useAppStore.getState();
+    setSelectedLanguage('Urdu');
+    useAppStore.setState({ selectedFilter: 'ALL', habits: [] });
+
+    let renderer: TestRenderer.ReactTestRenderer;
+    act(() => {
+      renderer = TestRenderer.create(<TodayTestScreen />);
+    });
+
+    const horizontalLists = renderer!.root
+      .findAllByType(FlatList)
+      .filter(list => list.props.horizontal);
+    const dateList = horizontalLists.find(list => list.props.data.length > 7);
+    const filterList = horizontalLists.find(
+      list => list.props.data[0]?.key === 'ALL',
+    );
+    expect(dateList?.props.inverted).toBe(true);
+    expect(filterList?.props.inverted).toBe(true);
+
+    const allFilter = filterList!.props.renderItem({
+      item: filterList!.props.data[0],
+    });
+    expect(StyleSheet.flatten(allFilter.props.style)).toMatchObject({
+      flexDirection: 'row-reverse',
+    });
+    const allLabel = renderer!.root
+      .findAllByType(Text)
+      .find(node => node.props.children === t('filter_all', undefined, 'Urdu'));
+    expect(StyleSheet.flatten(allLabel!.props.style)).toMatchObject({
+      textAlign: 'right',
+      writingDirection: 'rtl',
+    });
+
+    act(() => renderer!.unmount());
+    useAppStore.setState({
+      selectedFilter: originalState.selectedFilter,
+      habits: originalState.habits,
+    });
+  });
+
   test('shows the relative date label only for nearby dates', () => {
     jest.useFakeTimers();
     jest.setSystemTime(new Date(2026, 8, 2, 12));
@@ -119,9 +173,9 @@ describe('Today date strip', () => {
     });
 
     expect(
-      renderer!.root.findAllByType(Text).some(
-        node => node.props.children === 'Habit created successfully',
-      ),
+      renderer!.root
+        .findAllByType(Text)
+        .some(node => node.props.children === 'Habit created successfully'),
     ).toBe(true);
     act(() => jest.advanceTimersByTime(2500));
     expect(setParams).toHaveBeenCalledWith({
@@ -171,9 +225,8 @@ describe('Today date strip', () => {
       ).length,
     ).toBeGreaterThan(0);
     expect(
-      renderer!.root.findAll(
-        node => node.props.accessibilityLabel === 'EDIT',
-      ).length,
+      renderer!.root.findAll(node => node.props.accessibilityLabel === 'EDIT')
+        .length,
     ).toBeGreaterThan(0);
     expect(
       renderer!.root.findAll(
@@ -183,6 +236,18 @@ describe('Today date strip', () => {
     expect(
       renderer!.root.findAll(node => node.props.accessibilityLabel === 'UNDO'),
     ).toHaveLength(0);
+
+    const takeNote = renderer!.root
+      .findAll(node => node.props.accessibilityLabel === 'TAKE A NOTE')
+      .find(node => typeof node.props.onPress === 'function');
+    act(() => takeNote!.props.onPress());
+    const keyboardAvoider = renderer!.root.findByType(KeyboardAvoidingView);
+    expect(keyboardAvoider.props.behavior).toBe(
+      Platform.OS === 'ios' ? 'padding' : 'height',
+    );
+    expect(StyleSheet.flatten(keyboardAvoider.props.style)).toMatchObject({
+      flex: 1,
+    });
 
     act(() => renderer!.unmount());
     useAppStore.setState({ habits: originalHabits });

@@ -7,6 +7,7 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { AppInput } from '../../components/common/AppInput';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../localization';
 import type { MeStackParamList } from '../../types/models';
 import useStyles from './MeScreenStyle';
 
@@ -14,24 +15,30 @@ type Props = NativeStackScreenProps<MeStackParamList, 'Feedback'>;
 
 export function FeedbackScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const [message, setMessage] = useState('');
   const [sent, setSent] = useState(false);
   if (sent) {
     return (
       <ScreenContainer>
-        <AppHeader title="FEEDBACK" onBack={navigation.goBack} />
+        <AppHeader
+          title={t('feedback_title')}
+          onBack={navigation.goBack}
+          isRTL={isRTL}
+        />
         <View style={styles.sent}>
           <View style={styles.sentIcon}>
             <Heart color={colors.onPrimary} fill={colors.onPrimary} size={34} />
           </View>
-          <Text style={styles.sentTitle}>Thank you!</Text>
-          <Text style={styles.sentText}>
-            Your feedback is saved for this preview. No data was sent to a
-            server.
+          <Text style={[styles.sentTitle, isRTL && styles.centeredTextRTL]}>
+            {t('feedback_thanks')}
+          </Text>
+          <Text style={[styles.sentText, isRTL && styles.centeredTextRTL]}>
+            {t('feedback_saved_preview')}
           </Text>
           <AppButton
-            title="DONE"
+            title={t('common_done')}
             onPress={navigation.goBack}
             style={styles.done}
           />
@@ -41,21 +48,30 @@ export function FeedbackScreen({ navigation }: Props) {
   }
   return (
     <ScreenContainer keyboard>
-      <AppHeader title="FEEDBACK" onBack={navigation.goBack} />
-      <Text style={styles.feedbackTitle}>Help us improve</Text>
-      <Text style={styles.settingsIntro}>
-        Tell us what feels great and what could be better.
+      <AppHeader
+        title={t('feedback_title')}
+        onBack={navigation.goBack}
+        isRTL={isRTL}
+      />
+      <Text style={[styles.feedbackTitle, isRTL && styles.textRTL]}>
+        {t('feedback_help')}
+      </Text>
+      <Text style={[styles.settingsIntro, isRTL && styles.textRTL]}>
+        {t('feedback_description')}
       </Text>
       <AppInput
         multiline
         value={message}
         onChangeText={setMessage}
-        placeholder="Write your feedback here..."
+        placeholder={t('feedback_placeholder')}
         maxLength={1000}
+        style={isRTL ? styles.textRTL : undefined}
       />
-      <Text style={styles.character}>{message.length}/1000</Text>
+      <Text style={[styles.character, isRTL && styles.characterRTL]}>
+        {message.length}/1000
+      </Text>
       <AppButton
-        title="SEND FEEDBACK"
+        title={t('feedback_send')}
         disabled={!message.trim()}
         onPress={() => setSent(true)}
         style={styles.send}

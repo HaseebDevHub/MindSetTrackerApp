@@ -1,6 +1,9 @@
 import React, { useState } from 'react';
 import {
+  Keyboard,
+  KeyboardAvoidingView,
   Modal,
+  Platform,
   Pressable,
   Text,
   View,
@@ -17,6 +20,7 @@ import type { HabitItem } from '../../../types/models';
 import useStyles from '../TodayScreenStyle';
 
 type Props = {
+  isRTL?: boolean;
   menuHabit?: HabitItem;
   menuAnchor?: HabitMenuAnchor;
   noteHabit?: HabitItem;
@@ -27,6 +31,14 @@ type Props = {
   onOpenNote: (habit: HabitItem) => void;
   onSaveNote: (habit: HabitItem, note: string) => void;
   onSetNote: (note: string) => void;
+  labels: {
+    takeNote: string;
+    edit: string;
+    habitNote: string;
+    notePlaceholder: string;
+    saveNote: string;
+    closeNote: string;
+  };
 };
 
 const MENU_WIDTH = 190;
@@ -37,10 +49,12 @@ function MenuItem({
   icon: Icon,
   text,
   onPress,
+  isRTL,
 }: {
   icon: typeof Pencil;
   text: string;
   onPress: () => void;
+  isRTL: boolean;
 }) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -49,15 +63,16 @@ function MenuItem({
       accessibilityLabel={text}
       accessibilityRole="button"
       onPress={onPress}
-      style={styles.menuItem}
+      style={[styles.menuItem, isRTL && styles.rowRTL]}
     >
       <Icon color={colors.textSecondary} size={18} />
-      <Text style={styles.menuText}>{text}</Text>
+      <Text style={[styles.menuText, isRTL && styles.textRTL]}>{text}</Text>
     </Pressable>
   );
 }
 
 export function HabitActionModals({
+  isRTL = false,
   menuHabit,
   menuAnchor,
   noteHabit,
@@ -68,6 +83,7 @@ export function HabitActionModals({
   onOpenNote,
   onSaveNote,
   onSetNote,
+  labels,
 }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -98,10 +114,10 @@ export function HabitActionModals({
   let menuLeft = minLeft;
   let menuTop = minTop;
   if (menuAnchor) {
-    menuLeft = Math.min(
-      Math.max(menuAnchor.x + menuAnchor.width - menuWidth, minLeft),
-      maxLeft,
-    );
+    const anchoredLeft = isRTL
+      ? menuAnchor.x
+      : menuAnchor.x + menuAnchor.width - menuWidth;
+    menuLeft = Math.min(Math.max(anchoredLeft, minLeft), maxLeft);
 
     const topAbove = menuAnchor.y - MENU_ANCHOR_GAP - menuHeight;
     const topBelow = menuAnchor.y + menuAnchor.height + MENU_ANCHOR_GAP;
@@ -118,6 +134,11 @@ export function HabitActionModals({
       menuTop = spaceAbove >= spaceBelow ? minTop : maxTop;
     }
   }
+
+  const closeNote = () => {
+    Keyboard.dismiss();
+    onCloseNote();
+  };
 
   return (
     <>
@@ -146,12 +167,14 @@ export function HabitActionModals({
           >
             <MenuItem
               icon={BookOpen}
-              text="TAKE A NOTE"
+              text={labels.takeNote}
+              isRTL={isRTL}
               onPress={() => menuHabit && onOpenNote(menuHabit)}
             />
             <MenuItem
               icon={Pencil}
-              text="EDIT"
+              text={labels.edit}
+              isRTL={isRTL}
               onPress={() => menuHabit && onEdit(menuHabit)}
             />
           </View>
@@ -161,32 +184,45 @@ export function HabitActionModals({
         transparent
         visible={Boolean(noteHabit)}
         animationType="slide"
-        onRequestClose={onCloseNote}
+        onRequestClose={closeNote}
       >
-        <Pressable style={styles.sheetBackdrop} onPress={onCloseNote}>
-          <Pressable
-            style={styles.sheet}
-            onPress={event => event.stopPropagation()}
-          >
-            <View style={styles.sheetHandle} />
-            <View style={styles.sheetTop}>
-              <Text style={styles.sheetTitle}>Habit note</Text>
-              <Pressable onPress={onCloseNote}>
-                <X color={colors.textSecondary} />
-              </Pressable>
-            </View>
-            <AppInput
-              multiline
-              value={note}
-              onChangeText={onSetNote}
-              placeholder="How did it go today?"
-            />
-            <AppButton
-              title="SAVE NOTE"
-              onPress={() => noteHabit && onSaveNote(noteHabit, note)}
-            />
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          keyboardVerticalOffset={0}
+          style={styles.keyboardAvoider}
+        >
+          <Pressable style={styles.sheetBackdrop} onPress={closeNote}>
+            <Pressable
+              style={styles.sheet}
+              onPress={event => event.stopPropagation()}
+            >
+              <View style={styles.sheetHandle} />
+              <View style={[styles.sheetTop, isRTL && styles.rowRTL]}>
+                <Text style={[styles.sheetTitle, isRTL && styles.textRTL]}>
+                  {labels.habitNote}
+                </Text>
+                <Pressable
+                  accessibilityLabel={labels.closeNote}
+                  accessibilityRole="button"
+                  onPress={closeNote}
+                >
+                  <X color={colors.textSecondary} />
+                </Pressable>
+              </View>
+              <AppInput
+                multiline
+                value={note}
+                onChangeText={onSetNote}
+                placeholder={labels.notePlaceholder}
+                isRTL={isRTL}
+              />
+              <AppButton
+                title={labels.saveNote}
+                onPress={() => noteHabit && onSaveNote(noteHabit, note)}
+              />
+            </Pressable>
           </Pressable>
-        </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </>
   );

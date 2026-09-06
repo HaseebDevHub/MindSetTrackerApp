@@ -4,6 +4,7 @@ import { storage } from '../src/storage/storage';
 import { STORAGE_KEYS } from '../src/storage/storageKeys';
 import type { HabitItem } from '../src/types/models';
 import { InMemoryHabitRepository } from '../test-utils/InMemoryHabitRepository';
+import { InMemoryJourneyRepository } from '../test-utils/InMemoryJourneyRepository';
 
 const today = new Date(2026, 7, 30, 12);
 const habit: HabitItem = {
@@ -23,6 +24,7 @@ const habit: HabitItem = {
 function makeStore(repository: InMemoryHabitRepository, migrate = jest.fn()) {
   return createAppStore({
     repository,
+    journeyRepository: new InMemoryJourneyRepository(),
     runLegacyMigration: async repo => migrate(repo),
     now: () => today,
   });
@@ -79,6 +81,7 @@ describe('async WatermelonDB store orchestration', () => {
     const repository = new InMemoryHabitRepository();
     const store = createAppStore({
       repository,
+      journeyRepository: new InMemoryJourneyRepository(),
       runLegacyMigration: async () => {
         throw new Error('database unavailable');
       },

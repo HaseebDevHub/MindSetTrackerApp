@@ -22,6 +22,7 @@ import { useShallow } from 'zustand/react/shallow';
 import {
   Check,
   ChevronLeft,
+  ChevronRight,
   Clock3,
   CloudSun,
   ListChecks,
@@ -41,6 +42,7 @@ import { HabitCard } from '../../components/habit/HabitCard';
 import type { HabitMenuAnchor } from '../../components/habit/HabitCard';
 import { spacing } from '../../constants/theme';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation, type TranslationKey } from '../../localization';
 import { useAppStore } from '../../store/useAppStore';
 import type {
   HabitItem,
@@ -78,6 +80,21 @@ const filters: { key: TodayFilter; icon: typeof Sun }[] = [
   { key: 'AFTERNOON', icon: CloudSun },
   { key: 'EVENING', icon: Moon },
 ];
+const filterTranslationKeys: Record<TodayFilter, TranslationKey> = {
+  ALL: 'filter_all',
+  ANYTIME: 'filter_anytime',
+  MORNING: 'filter_morning',
+  AFTERNOON: 'filter_afternoon',
+  EVENING: 'filter_evening',
+};
+const relativeDateTranslationKeys = {
+  YESTERDAY: 'yesterday',
+  TODAY: 'today',
+  TOMORROW: 'tomorrow',
+} as const satisfies Record<string, TranslationKey>;
+type RelativeDateLabel = keyof typeof relativeDateTranslationKeys;
+const isRelativeDateLabel = (value: string): value is RelativeDateLabel =>
+  Object.prototype.hasOwnProperty.call(relativeDateTranslationKeys, value);
 const DATE_RANGE_DAYS = 365 * 10;
 
 type HabitListItem =
@@ -98,6 +115,7 @@ const getHabitListItemType = (item: HabitListItem) => item.type;
 
 export function TodayScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
+  const { isRTL, locale, t } = useTranslation();
   const styles = useStyles();
   const { width } = useWindowDimensions();
   const {
@@ -147,10 +165,21 @@ export function TodayScreen({ navigation, route }: Props) {
   const [isReturningToToday, setIsReturningToToday] = useState(false);
   const selected = fromDateKey(selectedDate);
   const relativeDateLabel = getRelativeDateLabel(selected);
-  const showRelativeDateLabel =
-    relativeDateLabel === 'YESTERDAY' ||
-    relativeDateLabel === 'TODAY' ||
-    relativeDateLabel === 'TOMORROW';
+  const showRelativeDateLabel = isRelativeDateLabel(relativeDateLabel);
+  const displayedRelativeDateLabel = showRelativeDateLabel
+    ? t(relativeDateTranslationKeys[relativeDateLabel])
+    : relativeDateLabel;
+  const habitActionLabels = useMemo(
+    () => ({
+      takeNote: t('take_note'),
+      edit: t('edit'),
+      habitNote: t('habit_note'),
+      notePlaceholder: t('note_placeholder'),
+      saveNote: t('save_note'),
+      closeNote: t('close_note'),
+    }),
+    [t],
+  );
   const dateRangeCenter = useRef(todayDate).current;
   const dateCellWidth = (width - spacing.small * 2) / 7;
   const dates = useMemo(() => {
@@ -328,7 +357,9 @@ export function TodayScreen({ navigation, route }: Props) {
       const progress = getDailyProgress(habits, key);
       return (
         <Pressable
-          accessibilityLabel={date.toDateString()}
+          accessibilityLabel={date.toLocaleDateString(locale, {
+            dateStyle: 'full',
+          })}
           accessibilityRole="button"
           accessibilityState={{ selected: active }}
           onPress={() => setDate(key)}
@@ -341,7 +372,7 @@ export function TodayScreen({ navigation, route }: Props) {
         >
           <Text style={[styles.dayName, active && styles.activeText]}>
             {date
-              .toLocaleDateString('en-US', { weekday: 'short' })
+              .toLocaleDateString(locale, { weekday: 'short' })
               .toUpperCase()}
           </Text>
           <View
@@ -350,12 +381,7 @@ export function TodayScreen({ navigation, route }: Props) {
               active && styles.dateNumberCircleActive,
             ]}
           >
-            <Text
-              style={[
-                styles.dayNumber,
-                active && styles.activeDayNumber,
-              ]}
-            >
+            <Text style={[styles.dayNumber, active && styles.activeDayNumber]}>
               {date.getDate()}
             </Text>
           </View>
@@ -371,7 +397,7 @@ export function TodayScreen({ navigation, route }: Props) {
         </Pressable>
       );
     },
-    [dateCellWidth, habits, selectedDate, setDate, styles],
+    [dateCellWidth, habits, locale, selectedDate, setDate, styles],
   );
   const renderFilter = useCallback(
     ({ item: { key, icon: Icon } }: { item: (typeof filters)[number] }) => {
@@ -379,19 +405,29 @@ export function TodayScreen({ navigation, route }: Props) {
       return (
         <Pressable
           onPress={() => selectFilter(key)}
-          style={[styles.filter, active && styles.filterActive]}
+          style={[
+            styles.filter,
+            isRTL && styles.rowRTL,
+            active && styles.filterActive,
+          ]}
         >
           <Icon
             color={active ? colors.yellow : colors.textSecondary}
             size={17}
           />
-          <Text style={[styles.filterText, active && styles.accentActiveText]}>
-            {key}
+          <Text
+            style={[
+              styles.filterText,
+              isRTL && styles.textRTL,
+              active && styles.accentActiveText,
+            ]}
+          >
+            {t(filterTranslationKeys[key])}
           </Text>
         </Pressable>
       );
     },
-    [activeFilter, colors, selectFilter, styles],
+    [activeFilter, colors, isRTL, selectFilter, styles, t],
   );
   const openHabitMenu = useCallback(
     (habit: HabitItem, anchor: HabitMenuAnchor) =>
@@ -411,12 +447,12 @@ export function TodayScreen({ navigation, route }: Props) {
           !hasHabitRelapseOnDate(habit, date)
         ) {
           Alert.alert(
-            'Record a relapse?',
-            `This will mark ${habit.title} as not avoided on this date.`,
+            t('record_relapse_title'),
+            t('record_relapse_message', { habitTitle: habit.title }),
             [
-              { text: 'Cancel', style: 'cancel' },
+              { text: t('cancel'), style: 'cancel' },
               {
-                text: 'Record relapse',
+                text: t('record_relapse'),
                 style: 'destructive',
                 onPress: () => {
                   toggle(habitId, date).catch(() => undefined);
@@ -441,12 +477,12 @@ export function TodayScreen({ navigation, route }: Props) {
         />
       );
     },
-    [openHabit, openHabitMenu, selectedDate, toggle, weekStartsOn],
+    [openHabit, openHabitMenu, selectedDate, t, toggle, weekStartsOn],
   );
   const renderHabitListItem = useCallback(
     ({ item }: { item: HabitListItem }) =>
       item.type === 'skeleton' ? (
-        <View style={styles.skeletonCard}>
+        <View style={[styles.skeletonCard, isRTL && styles.rowRTL]}>
           <View style={styles.skeletonCheckbox} />
           <View style={styles.skeletonCopy}>
             <View style={styles.skeletonTitle} />
@@ -455,25 +491,37 @@ export function TodayScreen({ navigation, route }: Props) {
           <View style={styles.skeletonMenu} />
         </View>
       ) : item.type === 'finishedHeader' ? (
-        <View style={styles.finishedSectionRow}>
-          <Text style={styles.finishedSectionTitle}>FINISHED</Text>
+        <View style={[styles.finishedSectionRow, isRTL && styles.rowRTL]}>
+          <Text style={[styles.finishedSectionTitle, isRTL && styles.textRTL]}>
+            {t('finished_section')}
+          </Text>
           <Text style={styles.count}>{finishedHabits.length}</Text>
         </View>
       ) : item.type === 'longTermHeader' ? (
-        <View style={styles.finishedSectionRow}>
-          <Text style={styles.finishedSectionTitle}>LONG-TERM</Text>
+        <View style={[styles.finishedSectionRow, isRTL && styles.rowRTL]}>
+          <Text style={[styles.finishedSectionTitle, isRTL && styles.textRTL]}>
+            {t('long_term_section')}
+          </Text>
           <Text style={styles.count}>{longTermHabits.length}</Text>
         </View>
       ) : (
         renderHabit(item.habit)
       ),
-    [finishedHabits.length, longTermHabits.length, renderHabit, styles],
+    [
+      finishedHabits.length,
+      isRTL,
+      longTermHabits.length,
+      renderHabit,
+      styles,
+      t,
+    ],
   );
   const listHeader = useMemo(
     () => (
       <>
         <FlashList
           horizontal
+          inverted={isRTL}
           data={filters}
           extraData={activeFilter}
           renderItem={renderFilter}
@@ -483,12 +531,17 @@ export function TodayScreen({ navigation, route }: Props) {
           style={styles.filterList}
           contentContainerStyle={styles.filters}
         />
-        <View style={styles.sectionRow}>
-          <Text style={styles.sectionTitle}>{activeFilter}</Text>
+        <View style={[styles.sectionRow, isRTL && styles.rowRTL]}>
+          <Text style={[styles.sectionTitle, isRTL && styles.textRTL]}>
+            {t(filterTranslationKeys[activeFilter])}
+          </Text>
           <Text style={styles.count}>
             {isFilterLoading
-              ? 'Loading…'
-              : `${finishedHabits.length}/${visible.length} finished`}
+              ? t('loading')
+              : t('habits_finished_count', {
+                  finished: finishedHabits.length,
+                  total: visible.length,
+                })}
           </Text>
         </View>
       </>
@@ -497,28 +550,36 @@ export function TodayScreen({ navigation, route }: Props) {
       activeFilter,
       finishedHabits.length,
       isFilterLoading,
+      isRTL,
       renderFilter,
       styles,
+      t,
       visible.length,
     ],
   );
   return (
     <ScreenContainer padded={false}>
       <View style={styles.headerPad}>
-        <View style={styles.todayTop}>
+        <View style={[styles.todayTop, isRTL && styles.rowRTL]}>
           <View>
             {showRelativeDateLabel ? (
-              <Text style={styles.eyebrow}>{relativeDateLabel}</Text>
+              <Text style={[styles.eyebrow, isRTL && styles.textRTL]}>
+                {displayedRelativeDateLabel}
+              </Text>
             ) : null}
-            <Text style={styles.dateTitle}>{formatShortDate(selected)}</Text>
-            <Text style={styles.progressText}>
-              {selected.toLocaleDateString('en-US', { weekday: 'long' })}
+            <Text style={[styles.dateTitle, isRTL && styles.textRTL]}>
+              {formatShortDate(selected, locale)}
+            </Text>
+            <Text style={[styles.progressText, isRTL && styles.textRTL]}>
+              {selected.toLocaleDateString(locale, { weekday: 'long' })}
               {' • '}
-              {selectedProgress.percentage}% Finished
+              {t('percent_finished', {
+                percentage: selectedProgress.percentage,
+              })}
             </Text>
           </View>
           <Pressable
-            accessibilityLabel="Create a new habit"
+            accessibilityLabel={t('create_new_habit_accessibility')}
             onPress={() => navigation.navigate('CreateHabit')}
             style={styles.plus}
           >
@@ -529,6 +590,7 @@ export function TodayScreen({ navigation, route }: Props) {
       <FlatList
         ref={dateListRef}
         horizontal
+        inverted={isRTL}
         data={dates}
         renderItem={renderDate}
         keyExtractor={date => toDateKey(date)}
@@ -558,15 +620,17 @@ export function TodayScreen({ navigation, route }: Props) {
         ListEmptyComponent={
           <View style={styles.empty}>
             <Check color={colors.muted} size={38} />
-            <Text style={styles.emptyTitle}>A clear schedule</Text>
-            <Text style={styles.emptyText}>
-              No habits match this time of day yet.
+            <Text style={[styles.emptyTitle, isRTL && styles.textRTL]}>
+              {t('A_clear_schedule')}
+            </Text>
+            <Text style={[styles.emptyText, isRTL && styles.centeredTextRTL]}>
+              {t('No_habits_match_time_of_day')}
             </Text>
           </View>
         }
         ListFooterComponent={
           <AppButton
-            title="CREATE A NEW HABIT"
+            title={t('create_new_habit')}
             variant="secondary"
             onPress={() => navigation.navigate('CreateHabit')}
             style={styles.create}
@@ -584,6 +648,7 @@ export function TodayScreen({ navigation, route }: Props) {
         pointerEvents={isTodayButtonVisible ? 'auto' : 'none'}
         style={[
           styles.todayButtonContainer,
+          isRTL && styles.todayButtonContainerRTL,
           {
             opacity: todayButtonProgress,
             transform: [
@@ -598,19 +663,32 @@ export function TodayScreen({ navigation, route }: Props) {
         ]}
       >
         <Pressable
-          accessibilityLabel="Return to today"
+          accessibilityLabel={t('return_to_today')}
           accessibilityRole="button"
           onPress={returnToToday}
           style={({ pressed }) => [
             styles.todayButton,
+            isRTL && styles.rowRTL,
             pressed && styles.todayButtonPressed,
           ]}
         >
-          <ChevronLeft color={colors.onPrimary} size={18} strokeWidth={2.5} />
-          <Text style={styles.todayButtonText}>Today</Text>
+          {isRTL ? (
+            <ChevronRight
+              color={colors.onPrimary}
+              size={18}
+              strokeWidth={2.5}
+            />
+          ) : (
+            <ChevronLeft color={colors.onPrimary} size={18} strokeWidth={2.5} />
+          )}
+          <Text style={[styles.todayButtonText, isRTL && styles.textRTL]}>
+            {t('today_button')}
+          </Text>
         </Pressable>
       </Animated.View>
       <HabitActionModals
+        isRTL={isRTL}
+        labels={habitActionLabels}
         menuHabit={habitMenu?.habit}
         menuAnchor={habitMenu?.anchor}
         noteHabit={noteHabit}
@@ -632,8 +710,8 @@ export function TodayScreen({ navigation, route }: Props) {
               setNoteHabit(undefined);
             } else {
               Alert.alert(
-                'Unable to save note',
-                'Your note could not be saved. Please try again.',
+                t('unable_save_note_title'),
+                t('unable_save_note_message'),
               );
             }
           })().catch(() => undefined);
@@ -654,6 +732,7 @@ export function TodayScreen({ navigation, route }: Props) {
         }}
       />
       <ToastMessage
+        isRTL={isRTL}
         key={route.params?.toastRequestId}
         visible={Boolean(route.params?.toastMessage)}
         message={route.params?.toastMessage ?? ''}

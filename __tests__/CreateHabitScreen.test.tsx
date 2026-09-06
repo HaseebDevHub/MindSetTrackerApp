@@ -1,10 +1,11 @@
 import React from 'react';
-import { Text, TextInput } from 'react-native';
+import { StyleSheet, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TestRenderer, { act } from 'react-test-renderer';
 import { CreateHabitScreen } from '../src/screens/today/CreateHabitScreen';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { useAppStore } from '../src/store/useAppStore';
+import { setSelectedLanguage } from '../src/localization';
 
 jest.mock(
   'lucide-react-native',
@@ -58,6 +59,7 @@ function pressByLabel(renderer: TestRenderer.ReactTestRenderer, label: string) {
 
 describe('Create Habit custom workflow', () => {
   beforeEach(() => {
+    setSelectedLanguage('English');
     act(() => {
       useAppStore.setState({
         isHydrated: true,
@@ -65,6 +67,51 @@ describe('Create Habit custom workflow', () => {
         persistenceError: undefined,
       });
     });
+  });
+
+  afterEach(() => {
+    act(() => {
+      setSelectedLanguage('English');
+    });
+  });
+
+  test('rerenders the complete entry flow in the selected language', () => {
+    setSelectedLanguage('Spanish');
+    const { renderer } = renderCreateHabit();
+    const copy = renderer.root
+      .findAllByType(Text)
+      .map(node => node.props.children)
+      .flat(Infinity);
+
+    expect(copy).toContain('Crear un nuevo hábito');
+    expect(copy).toContain('NEGATIVO');
+    expect(copy).toContain('＋  CREA EL TUYO');
+    act(() => renderer.unmount());
+  });
+
+  test('mirrors creation copy and input direction for Urdu', () => {
+    setSelectedLanguage('Urdu');
+    const { renderer } = renderCreateHabit();
+    const createOwn = renderer.root.findAll(
+      item => item.props.accessibilityLabel === '＋  اپنی عادت بنائیں',
+    )[0];
+    expect(createOwn).toBeDefined();
+    act(() => createOwn.props.onPress());
+
+    const input = renderer.root.findByType(TextInput);
+    expect(StyleSheet.flatten(input.props.style)).toMatchObject({
+      textAlign: 'right',
+      writingDirection: 'rtl',
+    });
+    const inputLabel = renderer.root
+      .findAllByType(Text)
+      .find(node => node.props.children === 'عادت کا نام');
+    expect(StyleSheet.flatten(inputLabel!.props.style)).toMatchObject({
+      textAlign: 'right',
+      writingDirection: 'rtl',
+    });
+
+    act(() => renderer.unmount());
   });
 
   test('offers all three types without rendering the omitted presets list', () => {

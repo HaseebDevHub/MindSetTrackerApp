@@ -3,6 +3,7 @@ import { Modal, Pressable, Text, View } from 'react-native';
 import { TimeWheelPicker } from '../onboarding/TimeWheelPicker';
 import { AppButton } from './AppButton';
 import useStyles from './ReminderTimeModalStyle';
+import { useTranslation } from '../../localization';
 
 type Props = {
   visible: boolean;
@@ -10,6 +11,7 @@ type Props = {
   value: string;
   onCancel: () => void;
   onSave: (value: string) => void;
+  isRTL?: boolean;
 };
 
 export function ReminderTimeModal({
@@ -18,8 +20,10 @@ export function ReminderTimeModal({
   value,
   onCancel,
   onSave,
+  isRTL = false,
 }: Props) {
   const styles = useStyles();
+  const { t } = useTranslation();
   const [draft, setDraft] = useState(value);
 
   useLayoutEffect(() => {
@@ -36,24 +40,24 @@ export function ReminderTimeModal({
     >
       <View style={styles.backdrop}>
         <Pressable
-          accessibilityLabel="Close reminder time picker"
+          accessibilityLabel={t('reminder_close_picker')}
           accessibilityRole="button"
           style={styles.backdropDismissArea}
           onPress={onCancel}
         />
         <View accessibilityViewIsModal style={styles.sheet}>
           <View style={styles.handle} />
-          <Text style={styles.title}>{title}</Text>
+          <Text style={[styles.title, isRTL && styles.titleRTL]}>{title}</Text>
           <TimeWheelPicker use12Hour value={draft} onChange={setDraft} />
-          <View style={styles.actions}>
+          <View style={[styles.actions, isRTL && styles.actionsRTL]}>
             <AppButton
-              title="CANCEL"
+              title={t('common_cancel')}
               variant="secondary"
               onPress={onCancel}
               style={styles.action}
             />
             <AppButton
-              title="SAVE"
+              title={t('common_save')}
               onPress={() => onSave(draft)}
               style={styles.action}
             />

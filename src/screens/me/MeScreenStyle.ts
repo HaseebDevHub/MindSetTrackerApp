@@ -20,6 +20,10 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       letterSpacing: 1.3,
     },
+    rowRTL: { flexDirection: 'row-reverse' },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
+    centeredTextRTL: { writingDirection: 'rtl' },
+    characterRTL: { textAlign: 'left', writingDirection: 'rtl' },
     page: { paddingHorizontal: spacing.screen, paddingBottom: 120 },
     backup: {
       minHeight: 82,

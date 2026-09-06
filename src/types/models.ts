@@ -1,4 +1,5 @@
 import type { NavigatorScreenParams } from '@react-navigation/native';
+import type { TranslationKey } from '../localization/languages/english';
 
 export type TimeOfDay = 'MORNING' | 'AFTERNOON' | 'EVENING' | 'ANYTIME';
 export type TodayFilter = 'ALL' | TimeOfDay;
@@ -75,14 +76,51 @@ export type Celebration = {
   subtitle: string;
 };
 
-export interface Journey {
+export type JourneyId =
+  | 'walk'
+  | 'sleep'
+  | 'sugar'
+  | 'meditation'
+  | 'confidence'
+  | 'fasting'
+  | 'phone'
+  | 'morning'
+  | 'office';
+
+export type JourneyTask = {
   id: string;
   title: string;
+  titleKey: TranslationKey;
+  subtitle: string;
+  subtitleKey: TranslationKey;
+  iconName: string;
+};
+
+export interface Journey {
+  id: JourneyId;
+  title: string;
+  titleKey: TranslationKey;
   duration: string;
+  durationDays: number;
   description: string;
-  habits: string[];
+  descriptionKey: TranslationKey;
+  habits: JourneyTask[];
   colors: [string, string];
 }
+
+export type JourneyTaskCompletion = {
+  taskId: string;
+  dateKey: string;
+};
+
+export type ActiveJourneyItem = {
+  id: string;
+  journeyId: JourneyId;
+  startedDateKey: string;
+  isActive: boolean;
+  removedDateKey?: string;
+  taskCompletions: JourneyTaskCompletion[];
+};
 
 export type RootStackParamList = {
   Onboarding: undefined;
@@ -118,8 +156,9 @@ export type TodayStackParamList = {
 };
 
 export type JourneyStackParamList = {
-  JourneyHome: undefined;
-  JourneyDetail: { journeyId: string };
+  JourneyHome: { toastMessage?: string; toastRequestId?: number } | undefined;
+  JourneyDetail: { journeyId: JourneyId };
+  ActiveJourney: { activeJourneyId: string };
 };
 
 export type MeStackParamList = {

@@ -10,6 +10,7 @@ import { Check, MoreHorizontal } from 'lucide-react-native';
 import { getHabitIcon } from '../../constants/habitIcons';
 import { normalizeHabitColor } from '../../constants/habitColors';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation, type TranslationKey } from '../../localization';
 import type { HabitItem, WeekStartsOn } from '../../types/models';
 import {
   getHabitProgressForDate,
@@ -27,6 +28,14 @@ export type HabitMenuAnchor = {
   width: number;
   height: number;
 };
+
+const timeOfDayTranslationKeys: Record<HabitItem['timeOfDay'], TranslationKey> =
+  {
+    ANYTIME: 'habit_time_anytime',
+    MORNING: 'habit_time_morning',
+    AFTERNOON: 'habit_time_afternoon',
+    EVENING: 'habit_time_evening',
+  };
 
 export const HabitCard = React.memo(function HabitCardComponent({
   habit,
@@ -48,6 +57,7 @@ export const HabitCard = React.memo(function HabitCardComponent({
   onPress?: (habitId: string) => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const menuButtonRef = useRef<View>(null);
   const progress = useSharedValue(completed ? 1 : 0);
@@ -91,24 +101,39 @@ export const HabitCard = React.memo(function HabitCardComponent({
   const goalMode = normalizeGoalMode(habit.goalMode);
   const progressValue = getHabitProgressForDate(habit, selectedDate);
   const progressLabel = quotaProgress
-    ? `${quotaProgress.completed}/${quotaProgress.target} days this ${quotaProgress.periodLabel}`
+    ? t('habit_progress_days', {
+        completed: quotaProgress.completed,
+        target: quotaProgress.target,
+        period: quotaProgress.periodLabel,
+      })
     : goalMode === 'DURATION'
-    ? `${progressValue}/${habit.goalTarget ?? 1} min`
+    ? t('habit_progress_minutes', {
+        completed: progressValue,
+        target: habit.goalTarget ?? 1,
+      })
     : goalMode === 'REPEAT'
-    ? `${progressValue}/${habit.goalTarget ?? 1} reps`
+    ? t('habit_progress_reps', {
+        completed: progressValue,
+        target: habit.goalTarget ?? 1,
+      })
     : undefined;
   return (
-    <Animated.View style={[styles.card, animated]}>
+    <Animated.View style={[styles.card, isRTL && styles.rowRTL, animated]}>
       <Pressable
         accessibilityRole="checkbox"
         accessibilityLabel={
           completionDisabled
-            ? `Completion unavailable for ${habit.title} on a future date`
+            ? t('habit_completion_future', { title: habit.title })
             : habitType === 'NEGATIVE'
-            ? `${completed ? 'Record relapse for' : 'Undo relapse for'} ${
-                habit.title
-              }`
-            : `${completed ? 'Mark incomplete' : 'Complete'} ${habit.title}`
+            ? t(
+                completed
+                  ? 'habit_record_relapse_for'
+                  : 'habit_undo_relapse_for',
+                { title: habit.title },
+              )
+            : t(completed ? 'habit_mark_incomplete' : 'habit_complete', {
+                title: habit.title,
+              })
         }
         accessibilityState={{
           checked: completed,
@@ -126,7 +151,7 @@ export const HabitCard = React.memo(function HabitCardComponent({
         ) : null}
       </Pressable>
       <Pressable onPress={() => onPress?.(habit.id)} style={styles.copy}>
-        <View style={styles.titleRow}>
+        <View style={[styles.titleRow, isRTL && styles.rowRTL]}>
           <Icon
             color={
               completed ? colors.completedHabitForeground : colors.onPrimary
@@ -135,35 +160,43 @@ export const HabitCard = React.memo(function HabitCardComponent({
           />
           <Text
             numberOfLines={2}
-            style={[styles.title, completed && styles.completedTitle]}
+            style={[
+              styles.title,
+              isRTL && styles.textRTL,
+              completed && styles.completedTitle,
+            ]}
           >
             {habit.title}
           </Text>
         </View>
         {completed ? (
-          <View style={styles.finished}>
+          <View style={[styles.finished, isRTL && styles.rowRTL]}>
             <Check color={colors.completedHabitStatus} size={13} />
-            <Text style={styles.finishedText}>
-              {habitType === 'NEGATIVE' ? 'Avoided' : 'Finished'}
+            <Text style={[styles.finishedText, isRTL && styles.textRTL]}>
+              {t(
+                habitType === 'NEGATIVE'
+                  ? 'habit_status_avoided'
+                  : 'habit_status_finished',
+              )}
             </Text>
           </View>
         ) : (
-          <Text style={styles.time}>
+          <Text style={[styles.time, isRTL && styles.textRTL]}>
             {progressLabel ??
               (habitType === 'NEGATIVE'
-                ? 'Relapse recorded'
+                ? t('habit_status_relapse')
                 : habitType === 'ONE_TIME'
-                ? 'One-time todo'
-                : habit.timeOfDay)}
+                ? t('habit_status_one_time')
+                : t(timeOfDayTranslationKeys[habit.timeOfDay]))}
           </Text>
         )}
       </Pressable>
       <Pressable
         ref={menuButtonRef}
-        accessibilityLabel={`Options for ${habit.title}`}
+        accessibilityLabel={t('habit_options', { title: habit.title })}
         hitSlop={10}
         onPress={openMenu}
-        style={styles.menu}
+        style={[styles.menu, isRTL && styles.menuRTL]}
       >
         <MoreHorizontal
           color={completed ? colors.completedHabitForeground : colors.onPrimary}

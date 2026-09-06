@@ -15,6 +15,7 @@ export type ThemeColors = {
   red: string;
   yellow: string;
   green: string;
+  successSurface: string;
   overlay: string;
   transparent: string;
   onPrimary: string;
@@ -53,6 +54,7 @@ export const darkColors: ThemeColors = {
   red: '#EF4444',
   yellow: '#F59E0B',
   green: '#10B981',
+  successSurface: '#12372F',
   overlay: 'rgba(5, 8, 13, 0.78)',
   transparent: 'transparent',
   onPrimary: '#FFFFFF',
@@ -91,6 +93,7 @@ export const lightColors: ThemeColors = {
   red: '#DC2626',
   yellow: '#B45309',
   green: '#047857',
+  successSurface: '#DCFCE7',
   overlay: 'rgba(15, 23, 42, 0.46)',
   transparent: 'transparent',
   onPrimary: '#FFFFFF',

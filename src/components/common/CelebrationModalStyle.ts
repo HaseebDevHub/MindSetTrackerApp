@@ -28,6 +28,7 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.surface,
     },
     close: { alignSelf: 'flex-end' },
+    closeRTL: { alignSelf: 'flex-start' },
     icon: {
       width: 78,
       height: 78,
@@ -43,6 +44,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       marginTop: spacing.xl,
     },
+    centeredTextRTL: { writingDirection: 'rtl', textAlign: 'center' },
     subtitle: {
       ...typography.caption,
       color: colors.primary,

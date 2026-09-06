@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react-native';
 import Svg, { Circle } from 'react-native-svg';
 import { HorizontalListSeparator } from '../../../components/common/ListSeparator';
 import { useTheme } from '../../../context/ThemeContext';
+import { useTranslation } from '../../../localization';
 import { useAppStore } from '../../../store/useAppStore';
 import {
   fromDateKey,
@@ -23,8 +24,7 @@ import { WeeklyProgress } from './WeeklyProgress';
 
 const PROGRESS_RING_SIZE = 38;
 const PROGRESS_RING_STROKE = 4;
-const PROGRESS_RING_RADIUS =
-  (PROGRESS_RING_SIZE - PROGRESS_RING_STROKE) / 2;
+const PROGRESS_RING_RADIUS = (PROGRESS_RING_SIZE - PROGRESS_RING_STROKE) / 2;
 const PROGRESS_RING_CIRCUMFERENCE = 2 * Math.PI * PROGRESS_RING_RADIUS;
 
 export function CalendarHistory({
@@ -33,6 +33,7 @@ export function CalendarHistory({
   onDateSelected?: (dateKey: string) => void;
 }) {
   const { colors } = useTheme();
+  const { isRTL, locale, t } = useTranslation();
   const styles = useStyles();
   const { width } = useWindowDimensions();
   const habits = useAppStore(s => s.habits);
@@ -58,35 +59,51 @@ export function CalendarHistory({
   );
   const metrics = [
     {
-      title: 'CURRENT STREAK',
+      title: t('history_current_streak'),
       value: String(stats.currentStreak),
-      caption: `Best Streak: ${stats.bestStreak}`,
+      caption: t('history_best_streak_value', { value: stats.bestStreak }),
       color: colors.selectedBlue,
     },
     {
-      title: 'HABITS FINISHED',
+      title: t('history_habits_finished'),
       value: String(stats.habitsFinishedTotal),
-      caption: `Selected week: ${selectedWeek.achieved}`,
+      caption: t('history_selected_week_value', {
+        value: selectedWeek.achieved,
+      }),
       color: colors.red,
     },
     {
-      title: 'COMPLETION RATE',
+      title: t('history_completion_rate'),
       value: `${selectedWeek.percentage}%`,
-      caption: `${selectedWeek.achieved}/${selectedWeek.target} progress`,
+      caption: t('history_progress_fraction', {
+        achieved: selectedWeek.achieved,
+        target: selectedWeek.target,
+      }),
       color: colors.yellow,
     },
     {
-      title: 'PERFECT DAYS',
+      title: t('history_perfect_days'),
       value: String(stats.perfectDays),
-      caption: `Selected week: ${selectedWeek.days.filter(day => day.isPerfect).length}`,
+      caption: t('history_selected_week_value', {
+        value: selectedWeek.days.filter(day => day.isPerfect).length,
+      }),
       color: colors.green,
     },
   ];
-  const weekLabels = getWeekdayLabels(weekStartsOn);
+  const weekLabels = getWeekdayLabels(weekStartsOn, locale);
   const days = useMemo(
     () => getCalendarDays(month, weekStartsOn),
     [month, weekStartsOn],
   );
+  const displayedWeekLabels = isRTL ? [...weekLabels].reverse() : weekLabels;
+  const displayedDays = useMemo(() => {
+    if (!isRTL) return days;
+    const rows: (Date | null)[][] = [];
+    for (let index = 0; index < days.length; index += 7) {
+      rows.push(days.slice(index, index + 7).reverse());
+    }
+    return rows.flat();
+  }, [days, isRTL]);
   const progressByDate = useMemo(
     () =>
       new Map(
@@ -111,8 +128,8 @@ export function CalendarHistory({
     const key = toDateKey(date);
     const selected = selectedDate === key;
     const progress = progressByDate.get(key)!;
-    const previousDate = index % 7 === 0 ? null : days[index - 1];
-    const nextDate = index % 7 === 6 ? null : days[index + 1];
+    const previousDate = index % 7 === 0 ? null : displayedDays[index - 1];
+    const nextDate = index % 7 === 6 ? null : displayedDays[index + 1];
     const connectsLeft = Boolean(
       progress.isPerfect &&
         previousDate &&
@@ -128,14 +145,21 @@ export function CalendarHistory({
       PROGRESS_RING_CIRCUMFERENCE * (1 - progress.percentage / 100);
     return (
       <Pressable
-        accessibilityLabel={date.toDateString()}
+        accessibilityLabel={date.toLocaleDateString(locale, {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric',
+        })}
         accessibilityRole="button"
         accessibilityState={{ selected }}
         accessibilityValue={{
           min: 0,
           max: 100,
           now: progress.percentage,
-          text: `${progress.percentage}% complete`,
+          text: t('history_percent_complete', {
+            percentage: progress.percentage,
+          }),
         }}
         onPress={() => {
           setSelectedDate(key);
@@ -214,7 +238,7 @@ export function CalendarHistory({
   };
   return (
     <FlashList
-      data={[monthTitle(month)]}
+      data={[monthTitle(month, locale)]}
       keyExtractor={keyByValue}
       showsVerticalScrollIndicator={false}
       contentContainerStyle={styles.scroll}
@@ -222,15 +246,28 @@ export function CalendarHistory({
         <FlashList
           horizontal
           data={metrics}
+          inverted={isRTL}
           renderItem={({ item: metric }) => (
-            <View style={[styles.metric, { backgroundColor: metric.color }]}>
-              <Text style={styles.metricTitle}>{metric.title}</Text>
-              <Text style={styles.metricValue}>{metric.value}</Text>
-              <Text style={styles.metricCaption}>{metric.caption}</Text>
+            <View
+              style={[
+                styles.metric,
+                isRTL && styles.metricRTLSpacing,
+                { backgroundColor: metric.color },
+              ]}
+            >
+              <Text style={[styles.metricTitle, isRTL && styles.textRTL]}>
+                {metric.title}
+              </Text>
+              <Text style={[styles.metricValue, isRTL && styles.numericRTL]}>
+                {metric.value}
+              </Text>
+              <Text style={[styles.metricCaption, isRTL && styles.textRTL]}>
+                {metric.caption}
+              </Text>
             </View>
           )}
           keyExtractor={keyByTitle}
-          ItemSeparatorComponent={HorizontalListSeparator}
+          ItemSeparatorComponent={isRTL ? undefined : HorizontalListSeparator}
           showsHorizontalScrollIndicator={false}
           contentContainerStyle={styles.metricRow}
           style={styles.metricList}
@@ -238,28 +275,38 @@ export function CalendarHistory({
       }
       renderItem={() => (
         <View style={styles.calendar}>
-          <View style={styles.calendarTop}>
+          <View style={[styles.calendarTop, isRTL && styles.rowRTL]}>
             <Pressable
-              accessibilityLabel="Previous month"
+              accessibilityLabel={t('history_previous_month')}
               onPress={() =>
                 setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))
               }
             >
-              <ChevronLeft color={colors.text} />
+              {isRTL ? (
+                <ChevronRight color={colors.text} />
+              ) : (
+                <ChevronLeft color={colors.text} />
+              )}
             </Pressable>
-            <Text style={styles.month}>{monthTitle(month)}</Text>
+            <Text style={[styles.month, isRTL && styles.centeredTextRTL]}>
+              {monthTitle(month, locale)}
+            </Text>
             <Pressable
-              accessibilityLabel="Next month"
+              accessibilityLabel={t('history_next_month')}
               onPress={() =>
                 setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1))
               }
             >
-              <ChevronRight color={colors.text} />
+              {isRTL ? (
+                <ChevronLeft color={colors.text} />
+              ) : (
+                <ChevronRight color={colors.text} />
+              )}
             </Pressable>
           </View>
           <FlashList
             horizontal
-            data={weekLabels}
+            data={displayedWeekLabels}
             keyExtractor={item => String(item.id)}
             renderItem={({ item }) => (
               <Text
@@ -273,7 +320,7 @@ export function CalendarHistory({
             style={styles.week}
           />
           <FlashList
-            data={days}
+            data={displayedDays}
             numColumns={7}
             keyExtractor={(date, index) =>
               date ? toDateKey(date) : `blank-${index}`
@@ -286,8 +333,8 @@ export function CalendarHistory({
       )}
       ListFooterComponent={
         <>
-          <Text style={styles.legend}>
-            Rings show daily progress. Connected blue days are perfect streaks.
+          <Text style={[styles.legend, isRTL && styles.centeredTextRTL]}>
+            {t('history_calendar_legend')}
           </Text>
           <WeeklyProgress
             selectedDate={selectedDate}

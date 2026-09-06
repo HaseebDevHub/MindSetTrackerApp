@@ -19,6 +19,10 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       justifyContent: 'space-between',
     },
+    rowRTL: { flexDirection: 'row-reverse' },
+    wrapRowRTL: { flexDirection: 'row-reverse' },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
+    centeredTextRTL: { writingDirection: 'rtl' },
     eyebrow: {
       ...typography.caption,
       color: colors.primary,
@@ -189,6 +193,7 @@ const createStyles = (colors: ThemeColors) =>
       bottom: spacing.large,
       zIndex: 10,
     },
+    todayButtonContainerRTL: { right: undefined, left: spacing.screen },
     todayButton: {
       height: 44,
       flexDirection: 'row',
@@ -235,6 +240,7 @@ const createStyles = (colors: ThemeColors) =>
       fontWeight: '700',
       letterSpacing: 0.7,
     },
+    keyboardAvoider: { flex: 1 },
     sheetBackdrop: {
       flex: 1,
       backgroundColor: colors.overlay,
@@ -286,6 +292,7 @@ const createStyles = (colors: ThemeColors) =>
       shadowRadius: 12,
       elevation: 12,
     },
+    editActionsMenuRTL: { right: undefined, left: spacing.screen },
     editActionItem: {
       minHeight: 54,
       flexDirection: 'row',
@@ -392,6 +399,10 @@ const createStyles = (colors: ThemeColors) =>
       backgroundColor: colors.divider,
       marginLeft: 68,
       marginRight: spacing.large,
+    },
+    appearanceDividerRTL: {
+      marginLeft: spacing.large,
+      marginRight: 68,
     },
     colorPreview: { width: 28, height: 28, borderRadius: 14 },
     formRowCard: {
@@ -564,6 +575,8 @@ const createStyles = (colors: ThemeColors) =>
     },
     createSheetAction: { flex: 1 },
     datePickerRow: { gap: spacing.small, paddingVertical: spacing.small },
+    horizontalMirror: { transform: [{ scaleX: -1 }] },
+    horizontalUnmirror: { transform: [{ scaleX: -1 }] },
     datePickerOption: {
       width: 96,
       minHeight: 86,
@@ -687,6 +700,7 @@ const createStyles = (colors: ThemeColors) =>
       marginTop: spacing.small,
     },
     detailMetric: { marginTop: 48 },
+    detailMetricRTL: { alignItems: 'flex-end' },
     metricNumber: { ...typography.metric, color: colors.onPrimary },
     metricLabel: {
       ...typography.caption,

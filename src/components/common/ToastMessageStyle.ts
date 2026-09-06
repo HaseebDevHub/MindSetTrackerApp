@@ -33,6 +33,7 @@ const createStyles = (colors: ThemeColors) =>
       shadowRadius: 10,
       elevation: 12,
     },
+    toastRTL: { flexDirection: 'row-reverse' },
     success: { backgroundColor: colors.green },
     error: { backgroundColor: colors.red },
     info: { backgroundColor: colors.primary },
@@ -42,6 +43,7 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.onPrimary,
       fontWeight: '700',
     },
+    messageRTL: { textAlign: 'right', writingDirection: 'rtl' },
   });
 
 export default function useStyles() {

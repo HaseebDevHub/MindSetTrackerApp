@@ -14,6 +14,7 @@ import { AppButton } from '../../components/common/AppButton';
 import { SmallVerticalListSeparator } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation } from '../../localization';
 import { useAppStore } from '../../store/useAppStore';
 import type { OnboardingStackParamList } from '../../types/models';
 import { keyByTitle } from '../../utils/lists';
@@ -31,6 +32,7 @@ const presets = [
 
 export function FirstHabitScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useStyles();
   const stored = useAppStore(s => s.firstHabit);
   const setStored = useAppStore(s => s.setFirstHabit);
@@ -46,8 +48,7 @@ export function FirstHabitScreen({ navigation }: Props) {
     if (save(candidate)) navigation.navigate('PlanGenerator');
     else
       Alert.alert(
-        'Choose a habit',
-        'Select a suggested habit or enter your own to continue.',
+        t('onboarding_choose_habit'), t('onboarding_choose_habit_message'),
       );
   };
   return (
@@ -55,8 +56,7 @@ export function FirstHabitScreen({ navigation }: Props) {
       <OnboardingTitle
         step={4}
         back={navigation.goBack}
-        title="Choose the first habit that you'd like to build"
-        subtitle="Start small. You can always add more later."
+        title={t('onboarding_first_title')} subtitle={t('onboarding_first_subtitle')}
       />
       <FlashList
         data={presets}
@@ -94,23 +94,23 @@ export function FirstHabitScreen({ navigation }: Props) {
         scrollEnabled={false}
         style={styles.presetList}
       />
-      <Text style={styles.or}>Or type your own</Text>
+      <Text style={styles.or}>{t('onboarding_or_custom')}</Text>
       <View style={styles.customRow}>
         <TextInput
-          accessibilityLabel="Custom habit"
+          accessibilityLabel={t('onboarding_custom_accessibility')}
           value={custom}
           onChangeText={text => {
             setCustom(text);
             if (!text) setStored(undefined);
           }}
           onSubmitEditing={chooseCustom}
-          placeholder="Drink 8 glasses of water a day"
+          placeholder={t('onboarding_custom_placeholder')}
           placeholderTextColor={colors.muted}
           style={styles.customInput}
         />
         {custom.trim() ? (
           <Pressable
-            accessibilityLabel="Confirm custom habit"
+            accessibilityLabel={t('onboarding_confirm_custom')}
             onPress={chooseCustom}
             style={styles.confirm}
           >
@@ -120,7 +120,7 @@ export function FirstHabitScreen({ navigation }: Props) {
       </View>
       <View style={styles.firstActions}>
         <AppButton
-          title="NEXT"
+          title={t('onboarding_next')}
           disabled={!candidate}
           onPress={next}
           style={styles.flexButton}

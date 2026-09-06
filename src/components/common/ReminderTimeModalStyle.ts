@@ -37,10 +37,12 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       textAlign: 'center',
     },
+    titleRTL: { writingDirection: 'rtl' },
     actions: {
       flexDirection: 'row',
       gap: spacing.medium,
     },
+    actionsRTL: { flexDirection: 'row-reverse' },
     action: { flex: 1 },
   });
 

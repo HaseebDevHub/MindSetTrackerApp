@@ -4,11 +4,13 @@ import {
   schemaMigrations,
 } from '@nozbe/watermelondb/Schema/migrations';
 import {
+  activeJourneyColumns,
   habitCompletionV2Columns,
   habitCompletionV3Columns,
   habitV2Columns,
   habitV3Columns,
   habitV4Columns,
+  journeyTaskCompletionColumns,
 } from './schema';
 
 const migrations = schemaMigrations({
@@ -39,6 +41,19 @@ const migrations = schemaMigrations({
     {
       toVersion: 4,
       steps: [addColumns({ table: 'habits', columns: habitV4Columns })],
+    },
+    {
+      toVersion: 5,
+      steps: [
+        createTable({
+          name: 'active_journeys',
+          columns: activeJourneyColumns,
+        }),
+        createTable({
+          name: 'journey_task_completions',
+          columns: journeyTaskCompletionColumns,
+        }),
+      ],
     },
   ],
 });

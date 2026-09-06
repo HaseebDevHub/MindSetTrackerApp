@@ -3,8 +3,10 @@ import SQLiteAdapter from '@nozbe/watermelondb/adapters/sqlite';
 import { Platform } from 'react-native';
 
 import migrations from './migrations';
+import ActiveJourney from './models/ActiveJourney';
 import Habit from './models/Habit';
 import HabitCompletion from './models/HabitCompletion';
+import JourneyTaskCompletion from './models/JourneyTaskCompletion';
 import schema from './schema';
 
 const adapter = new SQLiteAdapter({
@@ -19,7 +21,12 @@ const adapter = new SQLiteAdapter({
 
 export const database = new Database({
   adapter,
-  modelClasses: [Habit, HabitCompletion],
+  modelClasses: [
+    Habit,
+    HabitCompletion,
+    ActiveJourney,
+    JourneyTaskCompletion,
+  ],
 });
 
 export default database;

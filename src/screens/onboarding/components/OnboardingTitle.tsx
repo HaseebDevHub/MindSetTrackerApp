@@ -3,6 +3,7 @@ import { Pressable, Text, View } from 'react-native';
 import { ChevronLeft } from 'lucide-react-native';
 import { OnboardingProgress } from '../../../components/onboarding/OnboardingProgress';
 import { useTheme } from '../../../context/ThemeContext';
+import { useTranslation } from '../../../localization';
 import useStyles from '../OnboardingScreenStyle';
 
 export function OnboardingTitle({
@@ -17,12 +18,13 @@ export function OnboardingTitle({
   back?: () => void;
 }) {
   const { colors } = useTheme();
+  const { t } = useTranslation();
   const styles = useStyles();
   return (
     <>
       <View style={styles.top}>
         {back ? (
-          <Pressable accessibilityLabel="Go back" hitSlop={12} onPress={back}>
+          <Pressable accessibilityLabel={t('common_back')} hitSlop={12} onPress={back}>
             <ChevronLeft color={colors.text} size={28} />
           </Pressable>
         ) : (

@@ -7,6 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useIsInsideTabNavigator } from '../../context/TabScreenContext';
 import useStyles from './ScreenContainerStyle';
 
 interface Props {
@@ -25,6 +26,7 @@ export function ScreenContainer({
   keyboard = false,
 }: Props) {
   const styles = useStyles();
+  const isInsideTabNavigator = useIsInsideTabNavigator();
   const body = scroll ? (
     <ScrollView
       keyboardShouldPersistTaps="handled"
@@ -40,7 +42,11 @@ export function ScreenContainer({
   );
   return (
     <SafeAreaView
-      edges={['top', 'left', 'right', 'bottom']}
+      edges={
+        isInsideTabNavigator
+          ? ['top', 'left', 'right']
+          : ['top', 'left', 'right', 'bottom']
+      }
       style={styles.safe}
     >
       {keyboard ? (

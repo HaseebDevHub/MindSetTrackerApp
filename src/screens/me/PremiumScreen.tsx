@@ -8,45 +8,57 @@ import { AppHeader } from '../../components/common/AppHeader';
 import { VerticalListSeparator } from '../../components/common/ListSeparator';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { useTheme } from '../../context/ThemeContext';
+import { useTranslation, type TranslationKey } from '../../localization';
 import { useAppStore } from '../../store/useAppStore';
 import type { MeStackParamList } from '../../types/models';
 import { keyByValue } from '../../utils/lists';
 import useStyles from './MeScreenStyle';
 
 type Props = NativeStackScreenProps<MeStackParamList, 'Premium'>;
-const premiumBenefits = [
-  'Unlimited habits and journeys',
-  'Deeper progress insights',
-  'Premium themes and icons',
-  'Support future development',
+const premiumBenefits: TranslationKey[] = [
+  'premium_benefit_unlimited',
+  'premium_benefit_insights',
+  'premium_benefit_themes',
+  'premium_benefit_support',
 ];
 
 export function PremiumScreen({ navigation }: Props) {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const premium = useAppStore(s => s.isPremium);
   const setPremium = useAppStore(s => s.setPremium);
   return (
     <ScreenContainer scroll style={styles.premiumPage}>
-      <AppHeader title="PREMIUM" onBack={navigation.goBack} />
+      <AppHeader
+        title={t('premium_title')}
+        onBack={navigation.goBack}
+        isRTL={isRTL}
+      />
       <View style={styles.premiumHero}>
         <View style={styles.crownCircle}>
           <Crown color={colors.yellow} size={52} />
         </View>
-        <Text style={styles.premiumHeroTitle}>Make every day count</Text>
-        <Text style={styles.premiumHeroText}>
-          Explore the full Mindset Tracker experience.
+        <Text
+          style={[styles.premiumHeroTitle, isRTL && styles.centeredTextRTL]}
+        >
+          {t('premium_hero')}
+        </Text>
+        <Text style={[styles.premiumHeroText, isRTL && styles.centeredTextRTL]}>
+          {t('premium_description')}
         </Text>
       </View>
       <FlashList
         data={premiumBenefits}
         keyExtractor={keyByValue}
         renderItem={({ item }) => (
-          <View style={styles.benefit}>
+          <View style={[styles.benefit, isRTL && styles.rowRTL]}>
             <View style={styles.benefitCheck}>
               <Check color={colors.onPrimary} size={15} strokeWidth={3} />
             </View>
-            <Text style={styles.benefitText}>{item}</Text>
+            <Text style={[styles.benefitText, isRTL && styles.textRTL]}>
+              {t(item)}
+            </Text>
           </View>
         )}
         ItemSeparatorComponent={VerticalListSeparator}
@@ -54,18 +66,21 @@ export function PremiumScreen({ navigation }: Props) {
         style={styles.benefits}
       />
       <View style={styles.priceNotice}>
-        <Text style={styles.priceNoticeTitle}>UI preview</Text>
-        <Text style={styles.priceNoticeText}>
-          No pricing, subscription, or payment is configured. The button below
-          only changes local preview state.
+        <Text style={[styles.priceNoticeTitle, isRTL && styles.textRTL]}>
+          {t('premium_preview_title')}
+        </Text>
+        <Text style={[styles.priceNoticeText, isRTL && styles.textRTL]}>
+          {t('premium_preview_description')}
         </Text>
       </View>
       <AppButton
-        title={premium ? 'PREMIUM IS ACTIVE' : 'PREVIEW PREMIUM'}
+        title={premium ? t('premium_is_active') : t('premium_preview')}
         disabled={premium}
         onPress={() => setPremium(true)}
       />
-      <Text style={styles.legal}>No purchase will be made.</Text>
+      <Text style={[styles.legal, isRTL && styles.centeredTextRTL]}>
+        {t('premium_no_purchase')}
+      </Text>
     </ScreenContainer>
   );
 }

@@ -1,4 +1,9 @@
-import type { HabitActionType, HabitItem } from '../../types/models';
+import type {
+  ActiveJourneyItem,
+  HabitActionType,
+  HabitItem,
+  JourneyId,
+} from '../../types/models';
 
 export type HabitCreateInput = Omit<
   HabitItem,
@@ -36,4 +41,22 @@ export interface HabitRepository {
   ): Promise<boolean>;
   importLegacyHabits(habits: HabitItem[]): Promise<void>;
   ensureOnboardingHabit(habit: HabitItem): Promise<string>;
+}
+
+export interface JourneyRepository {
+  loadActiveJourneys(): Promise<ActiveJourneyItem[]>;
+  startJourney(
+    journeyId: JourneyId,
+    startedDateKey: string,
+  ): Promise<ActiveJourneyItem>;
+  setTaskCompletion(
+    activeJourneyId: string,
+    taskId: string,
+    dateKey: string,
+    completed: boolean,
+  ): Promise<boolean>;
+  removeActiveJourney(
+    activeJourneyId: string,
+    removedDateKey: string,
+  ): Promise<boolean>;
 }

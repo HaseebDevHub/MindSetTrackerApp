@@ -1,5 +1,6 @@
 export const STORAGE_KEYS = {
   THEME_MODE: 'themeMode',
+  APP_LANGUAGE: 'preferences.language',
   ONBOARDING_COMPLETED: 'onboarding.completed',
   ONBOARDING_WAKE_UP_TIME: 'onboarding.wakeUpTime',
   ONBOARDING_DAY_END_TIME: 'onboarding.dayEndTime',
@@ -21,6 +22,7 @@ export type StorageKey = StaticStorageKey | CompletionStorageKey;
 
 export type StorageSchema = {
   [STORAGE_KEYS.THEME_MODE]: string;
+  [STORAGE_KEYS.APP_LANGUAGE]: string;
   [STORAGE_KEYS.ONBOARDING_COMPLETED]: boolean;
   [STORAGE_KEYS.ONBOARDING_WAKE_UP_TIME]: string;
   [STORAGE_KEYS.ONBOARDING_DAY_END_TIME]: string;

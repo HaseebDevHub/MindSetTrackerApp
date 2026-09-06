@@ -10,15 +10,16 @@ import {
 } from '../../../constants/achievements';
 import { SmallVerticalListSeparator } from '../../../components/common/ListSeparator';
 import { useTheme } from '../../../context/ThemeContext';
+import { useTranslation, type TranslationKey } from '../../../localization';
 import { achievementStorage } from '../../../storage/achievementStorage';
 import { useAppStore } from '../../../store/useAppStore';
 import type { AchievementCategory } from '../../../types/models';
 import useStyles from '../HistoryScreenStyle';
 
-const categoryTitles: Record<AchievementCategory, string> = {
-  HABITS_FINISHED: 'HABITS FINISHED',
-  PERFECT_DAYS: 'PERFECT DAYS',
-  BEST_STREAK: 'BEST STREAK',
+const categoryTitleKeys: Record<AchievementCategory, TranslationKey> = {
+  HABITS_FINISHED: 'history_habits_finished',
+  PERFECT_DAYS: 'history_perfect_days',
+  BEST_STREAK: 'history_best_streak',
 };
 
 function AchievementBadge({
@@ -29,6 +30,7 @@ function AchievementBadge({
   unlocked: boolean;
 }) {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const Icon =
     definition.category === 'HABITS_FINISHED'
@@ -47,16 +49,25 @@ function AchievementBadge({
           <Lock color={colors.muted} size={22} />
         )}
       </View>
-      <Text style={[styles.badgeName, !unlocked && styles.lockedText]}>
+      <Text
+        style={[
+          styles.badgeName,
+          isRTL && styles.centeredTextRTL,
+          !unlocked && styles.lockedText,
+        ]}
+      >
         {definition.threshold}
       </Text>
-      <Text style={styles.badgeState}>{unlocked ? 'UNLOCKED' : 'LOCKED'}</Text>
+      <Text style={[styles.badgeState, isRTL && styles.centeredTextRTL]}>
+        {unlocked ? t('history_unlocked') : t('history_locked')}
+      </Text>
     </View>
   );
 }
 
 export function Achievements() {
   const { colors } = useTheme();
+  const { isRTL, t } = useTranslation();
   const styles = useStyles();
   const stats = useAppStore(state => state.stats);
   const unlockedIds = stats.unlockedAchievements;
@@ -80,11 +91,20 @@ export function Achievements() {
       ItemSeparatorComponent={SmallVerticalListSeparator}
       ListHeaderComponent={
         <View style={styles.achievementHeader}>
-          <Text style={styles.achievementTitle}>My achievements</Text>
-          <Text style={styles.noAchievements}>
-            You've earned {earnedPercentage}% of all achievements.
+          <Text style={[styles.achievementTitle, isRTL && styles.textRTL]}>
+            {t('history_my_achievements')}
           </Text>
-          <View style={styles.achievementProgressTrack}>
+          <Text style={[styles.noAchievements, isRTL && styles.textRTL]}>
+            {t('history_achievements_earned', {
+              percentage: earnedPercentage,
+            })}
+          </Text>
+          <View
+            style={[
+              styles.achievementProgressTrack,
+              isRTL && styles.achievementProgressTrackRTL,
+            ]}
+          >
             <View
               style={[
                 styles.achievementProgressFill,
@@ -94,20 +114,28 @@ export function Achievements() {
           </View>
           {recent.length ? (
             <>
-              <Text style={styles.recentTitle}>RECENT ACHIEVEMENTS</Text>
+              <Text style={[styles.recentTitle, isRTL && styles.textRTL]}>
+                {t('history_recent_achievements')}
+              </Text>
               <FlashList
                 horizontal
                 data={recent}
+                inverted={isRTL}
                 keyExtractor={item => item.id}
                 showsHorizontalScrollIndicator={false}
                 renderItem={({ item }) => (
-                  <View style={styles.recentAchievement}>
+                  <View
+                    style={[styles.recentAchievement, isRTL && styles.rowRTL]}
+                  >
                     <Award color={colors.yellow} size={20} />
                     <Text
                       numberOfLines={2}
-                      style={styles.recentAchievementText}
+                      style={[
+                        styles.recentAchievementText,
+                        isRTL && styles.textRTL,
+                      ]}
                     >
-                      {item.title}
+                      {t(item.titleKey, { count: item.threshold })}
                     </Text>
                   </View>
                 )}
@@ -125,18 +153,28 @@ export function Achievements() {
         ).length;
         return (
           <View style={styles.achievementCategory}>
-            <View style={styles.achievementCategoryHeader}>
-              <Text style={styles.groupTitle}>{categoryTitles[category]}</Text>
-              <Text style={styles.achievementCount}>
-                {unlockedCount}/{definitions.length} Unlocked
+            <View
+              style={[styles.achievementCategoryHeader, isRTL && styles.rowRTL]}
+            >
+              <Text style={[styles.groupTitle, isRTL && styles.textRTL]}>
+                {t(categoryTitleKeys[category])}
+              </Text>
+              <Text style={[styles.achievementCount, isRTL && styles.textRTL]}>
+                {t('history_unlocked_count', {
+                  unlocked: unlockedCount,
+                  total: definitions.length,
+                })}
               </Text>
             </View>
-            <Text style={styles.categoryProgress}>
-              Current progress: {achievementMetric(stats, category)}
+            <Text style={[styles.categoryProgress, isRTL && styles.textRTL]}>
+              {t('history_current_progress', {
+                value: achievementMetric(stats, category),
+              })}
             </Text>
             <FlashList
               horizontal
               data={definitions}
+              inverted={isRTL}
               keyExtractor={definition => definition.id}
               showsHorizontalScrollIndicator={false}
               renderItem={({ item: definition }) => (

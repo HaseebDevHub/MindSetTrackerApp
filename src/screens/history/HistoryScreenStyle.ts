@@ -19,6 +19,10 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       letterSpacing: 1.3,
     },
+    rowRTL: { flexDirection: 'row-reverse' },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
+    centeredTextRTL: { writingDirection: 'rtl' },
+    numericRTL: { textAlign: 'right' },
     tabs: {
       height: 48,
       flexDirection: 'row',
@@ -51,6 +55,7 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: radii.card,
       padding: spacing.large,
     },
+    metricRTLSpacing: { marginHorizontal: spacing.small },
     metricTitle: {
       ...typography.caption,
       color: colors.onPrimary,
@@ -166,6 +171,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'flex-end',
       flexShrink: 1,
     },
+    weeklyRateGroupRTL: { alignItems: 'flex-start' },
     weeklyRate: {
       ...typography.headingM,
       color: colors.text,
@@ -264,6 +270,10 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.text,
       marginRight: spacing.medium,
     },
+    longTermSummaryLabelRTL: {
+      marginRight: 0,
+      marginLeft: spacing.medium,
+    },
     allHabits: { padding: spacing.screen, paddingBottom: 120 },
     activeLabel: {
       ...typography.caption,
@@ -335,6 +345,7 @@ const createStyles = (colors: ThemeColors) =>
       padding: spacing.xl,
     },
     modalClose: { alignSelf: 'flex-end' },
+    modalCloseRTL: { alignSelf: 'flex-start' },
     detailLabel: {
       ...typography.caption,
       color: colors.primary,
@@ -376,6 +387,7 @@ const createStyles = (colors: ThemeColors) =>
       borderRadius: 4,
       backgroundColor: colors.primary,
     },
+    achievementProgressTrackRTL: { alignItems: 'flex-end' },
     recentTitle: {
       ...typography.caption,
       color: colors.textSecondary,

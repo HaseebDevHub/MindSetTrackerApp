@@ -17,6 +17,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'center',
       gap: spacing.medium,
     },
+    rowRTL: { flexDirection: 'row-reverse' },
     checkbox: {
       width: 30,
       height: 30,
@@ -35,6 +36,7 @@ const createStyles = (colors: ThemeColors) =>
       gap: spacing.small,
     },
     title: { ...typography.bodyLarge, color: colors.onPrimary, flex: 1 },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
     completedTitle: {
       textDecorationLine: 'line-through',
       color: colors.completedHabitText,
@@ -61,6 +63,7 @@ const createStyles = (colors: ThemeColors) =>
       alignItems: 'flex-end',
       justifyContent: 'center',
     },
+    menuRTL: { alignItems: 'flex-start' },
   });
 
 export default function useStyles() {

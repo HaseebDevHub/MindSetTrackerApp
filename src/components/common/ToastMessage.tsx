@@ -21,6 +21,7 @@ type Props = {
   onDismiss: () => void;
   duration?: number;
   type?: ToastMessageType;
+  isRTL?: boolean;
 };
 
 export function ToastMessage({
@@ -29,6 +30,7 @@ export function ToastMessage({
   onDismiss,
   duration = 2500,
   type = 'success',
+  isRTL = false,
 }: Props) {
   const { colors } = useTheme();
   const styles = useStyles();
@@ -81,11 +83,7 @@ export function ToastMessage({
   if (!visible || !message) return null;
 
   const Icon =
-    type === 'success'
-      ? CheckCircle2
-      : type === 'error'
-      ? CircleAlert
-      : Info;
+    type === 'success' ? CheckCircle2 : type === 'error' ? CircleAlert : Info;
   const iconColor = colors.onPrimary;
 
   return (
@@ -93,10 +91,17 @@ export function ToastMessage({
       <Animated.View
         accessibilityLiveRegion="polite"
         accessibilityRole="alert"
-        style={[styles.toast, styles[type], animatedStyle]}
+        style={[
+          styles.toast,
+          isRTL && styles.toastRTL,
+          styles[type],
+          animatedStyle,
+        ]}
       >
         <Icon color={iconColor} size={22} />
-        <Text style={styles.message}>{message}</Text>
+        <Text style={[styles.message, isRTL && styles.messageRTL]}>
+          {message}
+        </Text>
       </Animated.View>
     </View>
   );

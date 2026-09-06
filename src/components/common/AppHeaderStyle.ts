@@ -5,6 +5,7 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
     row: { minHeight: 52, flexDirection: 'row', alignItems: 'center' },
+    rowRTL: { flexDirection: 'row-reverse' },
     side: { width: 44, minHeight: 44, justifyContent: 'center' },
     right: { alignItems: 'flex-end' },
     title: {
@@ -14,6 +15,7 @@ const createStyles = (colors: ThemeColors) =>
       textAlign: 'center',
       letterSpacing: 1,
     },
+    titleRTL: { writingDirection: 'rtl' },
   });
 
 export default function useStyles() {

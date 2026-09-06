@@ -16,6 +16,7 @@ const createStyles = (colors: ThemeColors) =>
       textTransform: 'uppercase',
       letterSpacing: 0.8,
     },
+    textRTL: { textAlign: 'right', writingDirection: 'rtl' },
     input: {
       ...typography.bodyLarge,
       minHeight: 52,

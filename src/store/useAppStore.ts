@@ -2,17 +2,23 @@ import { create } from 'zustand';
 import { ACHIEVEMENTS } from '../constants/achievements';
 import { migrateLegacyHabitData } from '../database/migrateLegacyHabitData';
 import { habitRepository } from '../database/repositories/habitRepository';
+import { journeyRepository } from '../database/repositories/journeyRepository';
 import type {
   HabitCreateInput,
   HabitRepository,
   HabitUpdateInput,
+  JourneyRepository,
 } from '../database/repositories/types';
+import { journeys } from '../data/mockData';
+import { t } from '../localization';
 import { achievementStorage } from '../storage/achievementStorage';
 import { onboardingStorage } from '../storage/onboardingStorage';
 import { weekSettingsStorage } from '../storage/weekSettingsStorage';
 import type {
   Celebration,
+  ActiveJourneyItem,
   HabitItem,
+  JourneyId,
   TodayFilter,
   UserStats,
   WeekStartsOn,
@@ -27,6 +33,7 @@ import {
   isHabitCompleteOnDate,
 } from '../utils/habitAnalytics';
 import { normalizeGoalMode, normalizeHabitType } from '../utils/habitSchedule';
+import { getJourneyMetrics } from '../utils/journeyAnalytics';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 
 const emptyStats = (unlockedAchievements: string[] = []): UserStats => ({
@@ -48,6 +55,7 @@ export interface AppState {
   selectedFilter: TodayFilter;
   weekStartsOn: WeekStartsOn;
   habits: HabitItem[];
+  activeJourneys: ActiveJourneyItem[];
   stats: UserStats;
   celebration?: Celebration;
   isHydrating: boolean;
@@ -73,17 +81,27 @@ export interface AppState {
   updateHabit: (id: string, updates: HabitUpdateInput) => Promise<boolean>;
   deleteHabit: (id: string) => Promise<boolean>;
   setHabitArchived: (id: string, archived: boolean) => Promise<boolean>;
+  startJourney: (
+    journeyId: JourneyId,
+  ) => Promise<ActiveJourneyItem | undefined>;
+  toggleJourneyTask: (
+    activeJourneyId: string,
+    taskId: string,
+  ) => Promise<boolean>;
+  removeActiveJourney: (activeJourneyId: string) => Promise<boolean>;
   dismissCelebration: () => void;
 }
 
 type StoreDependencies = {
   repository: HabitRepository;
+  journeyRepository: JourneyRepository;
   runLegacyMigration: (repository: HabitRepository) => Promise<unknown>;
   now: () => Date;
 };
 
 const defaultDependencies: StoreDependencies = {
   repository: habitRepository,
+  journeyRepository,
   runLegacyMigration: repository => migrateLegacyHabitData({ repository }),
   now: () => new Date(),
 };
@@ -105,6 +123,7 @@ export function createAppStore(
   let initializationPromise: Promise<boolean> | undefined;
   let finishOnboardingPromise: Promise<boolean> | undefined;
   const toggleQueues = new Map<string, Promise<boolean>>();
+  const journeyToggleQueues = new Map<string, Promise<boolean>>();
 
   function withDerivedStreaks(habits: HabitItem[]) {
     const todayKey = toDateKey(dependencies.now());
@@ -141,6 +160,7 @@ export function createAppStore(
     selectedFilter: 'ALL',
     weekStartsOn: weekSettingsStorage.getWeekStartsOn(),
     habits: [],
+    activeJourneys: [],
     stats: emptyStats(storedUnlockIds),
     isHydrating: false,
     isHydrated: false,
@@ -156,7 +176,10 @@ export function createAppStore(
         });
         try {
           await dependencies.runLegacyMigration(dependencies.repository);
-          const loadedHabits = await dependencies.repository.loadAllHabits();
+          const [loadedHabits, loadedActiveJourneys] = await Promise.all([
+            dependencies.repository.loadAllHabits(),
+            dependencies.journeyRepository.loadActiveJourneys(),
+          ]);
           const streakHabits = withDerivedStreaks(loadedHabits);
           const statsCandidate = calculateStats(
             streakHabits,
@@ -175,6 +198,9 @@ export function createAppStore(
             isHydrating: false,
             isHydrated: true,
             hydrationError: undefined,
+            activeJourneys: loadedActiveJourneys.filter(enrollment =>
+              journeys.some(journey => journey.id === enrollment.journeyId),
+            ),
           });
           return true;
         } catch (error) {
@@ -388,14 +414,16 @@ export function createAppStore(
               const celebration = definition
                 ? {
                     id: newlyUnlocked!.id,
-                    title: definition.title,
-                    subtitle: 'NEW ACHIEVEMENT',
+                    title: t(definition.titleKey, {
+                      count: definition.threshold,
+                    }),
+                    subtitle: t('history_new_achievement'),
                   }
                 : isNewPerfectDay
                 ? {
                     id: `perfect-day-${date}`,
-                    title: 'Perfect Day',
-                    subtitle: 'ALL HABITS FINISHED',
+                    title: t('history_perfect_day_title'),
+                    subtitle: t('history_all_habits_finished'),
                   }
                 : currentState.celebration;
               return {
@@ -493,9 +521,7 @@ export function createAppStore(
         return false;
       }
       try {
-        const archivedAt = archived
-          ? toDateKey(dependencies.now())
-          : undefined;
+        const archivedAt = archived ? toDateKey(dependencies.now()) : undefined;
         if (
           !(await dependencies.repository.setArchived(id, archived, archivedAt))
         ) {
@@ -514,6 +540,122 @@ export function createAppStore(
       } catch (error) {
         logPersistenceError('archive habit', error);
         set({ persistenceError: 'The habit could not be archived.' });
+        return false;
+      }
+    },
+    startJourney: async journeyId => {
+      if (
+        !get().isHydrated ||
+        !journeys.some(journey => journey.id === journeyId)
+      ) {
+        return undefined;
+      }
+      try {
+        const enrollment = await dependencies.journeyRepository.startJourney(
+          journeyId,
+          toDateKey(dependencies.now()),
+        );
+        set(state => ({
+          activeJourneys: [
+            ...state.activeJourneys.filter(
+              item => item.id !== enrollment.id && item.journeyId !== journeyId,
+            ),
+            enrollment,
+          ],
+          persistenceError: undefined,
+        }));
+        return enrollment;
+      } catch (error) {
+        logPersistenceError('start journey', error);
+        set({ persistenceError: 'The journey could not be started.' });
+        return undefined;
+      }
+    },
+    toggleJourneyTask: async (activeJourneyId, taskId) => {
+      if (!get().isHydrated) return false;
+      const todayKey = toDateKey(dependencies.now());
+      const queueKey = `${activeJourneyId}\u0000${taskId}\u0000${todayKey}`;
+      const previous =
+        journeyToggleQueues.get(queueKey) ?? Promise.resolve(true);
+      const operation = previous
+        .catch(() => false)
+        .then(async () => {
+          const enrollment = get().activeJourneys.find(
+            item => item.id === activeJourneyId,
+          );
+          const journey = enrollment
+            ? journeys.find(item => item.id === enrollment.journeyId)
+            : undefined;
+          if (!enrollment?.isActive || !journey) return false;
+          if (!journey.habits.some(task => task.id === taskId)) return false;
+          const metrics = getJourneyMetrics(enrollment, journey, todayKey);
+          if (metrics.isCompleted) return false;
+          const completed = !metrics.todayCompletedTaskIds.has(taskId);
+          try {
+            const persisted =
+              await dependencies.journeyRepository.setTaskCompletion(
+                activeJourneyId,
+                taskId,
+                todayKey,
+                completed,
+              );
+            if (!persisted) return false;
+            set(state => ({
+              activeJourneys: state.activeJourneys.map(item => {
+                if (item.id !== activeJourneyId) return item;
+                const remaining = item.taskCompletions.filter(
+                  completion =>
+                    completion.taskId !== taskId ||
+                    completion.dateKey !== todayKey,
+                );
+                return {
+                  ...item,
+                  taskCompletions: completed
+                    ? [...remaining, { taskId, dateKey: todayKey }]
+                    : remaining,
+                };
+              }),
+              persistenceError: undefined,
+            }));
+            return true;
+          } catch (error) {
+            logPersistenceError('toggle journey task', error);
+            set({ persistenceError: 'The journey task could not be saved.' });
+            return false;
+          }
+        });
+      journeyToggleQueues.set(queueKey, operation);
+      operation.finally(() => {
+        if (journeyToggleQueues.get(queueKey) === operation) {
+          journeyToggleQueues.delete(queueKey);
+        }
+      });
+      return operation;
+    },
+    removeActiveJourney: async activeJourneyId => {
+      if (
+        !get().isHydrated ||
+        !get().activeJourneys.some(item => item.id === activeJourneyId)
+      ) {
+        return false;
+      }
+      try {
+        const removed =
+          await dependencies.journeyRepository.removeActiveJourney(
+            activeJourneyId,
+            toDateKey(dependencies.now()),
+          );
+        if (!removed) return false;
+        set(state => ({
+          activeJourneys: state.activeJourneys.filter(
+            item => item.id !== activeJourneyId,
+          ),
+          persistenceError: undefined,
+        }));
+        return true;
+      } catch (error) {
+        logPersistenceError('remove active journey', error);
+        set({ persistenceError: 'The journey could not be removed.' });
         return false;
       }
     },
