@@ -76,6 +76,29 @@ export const spanish: TranslationDictionary = {
   settings_backup_description: 'Inicia sesión y sincroniza tus datos',
   settings_backup_unavailable:
     'La sincronización en la nube estará disponible en una futura actualización.',
+  settings_google_account: 'Cuenta de Google',
+  settings_google_connected_as: 'Conectada como {{email}}',
+  settings_google_not_connected: 'No conectada',
+  settings_google_restoring: 'Comprobando la cuenta…',
+  settings_google_connect: 'CONECTAR',
+  settings_google_disconnect: 'DESCONECTAR',
+  settings_google_connect_accessibility: 'Conectar cuenta de Google',
+  settings_google_disconnect_accessibility:
+    'Desconectar la cuenta de Google {{email}}',
+  settings_google_disconnect_title: '¿Desconectar la cuenta de Google?',
+  settings_google_disconnect_message:
+    'Esto cerrará la sesión de {{email}} en Mindset Tracker. Tus datos locales no se eliminarán.',
+  settings_google_error_title: 'Inicio de sesión de Google no disponible',
+  settings_google_error_play_services:
+    'Google Play Services no está disponible o está desactualizado. Actualízalo e inténtalo de nuevo.',
+  settings_google_error_network:
+    'Comprueba tu conexión a internet e inténtalo de nuevo.',
+  settings_google_error_configuration:
+    'El inicio de sesión de Google no está configurado correctamente para esta versión de la aplicación.',
+  settings_google_error_disconnect:
+    'No se pudo desconectar la cuenta de Google. Inténtalo de nuevo.',
+  settings_google_error_unexpected:
+    'No se pudo conectar la cuenta de Google. Inténtalo de nuevo.',
   settings_premium_active: 'PREMIUM ACTIVO',
   settings_go_premium: 'OBTENER PREMIUM',
   settings_premium_active_description:

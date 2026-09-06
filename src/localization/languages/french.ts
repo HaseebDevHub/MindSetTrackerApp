@@ -76,6 +76,29 @@ export const french: TranslationDictionary = {
   settings_backup_description: 'Connectez-vous et synchronisez vos données',
   settings_backup_unavailable:
     'La synchronisation cloud sera disponible dans une prochaine mise à jour.',
+  settings_google_account: 'Compte Google',
+  settings_google_connected_as: 'Connecté avec {{email}}',
+  settings_google_not_connected: 'Non connecté',
+  settings_google_restoring: 'Vérification du compte…',
+  settings_google_connect: 'CONNECTER',
+  settings_google_disconnect: 'DÉCONNECTER',
+  settings_google_connect_accessibility: 'Connecter un compte Google',
+  settings_google_disconnect_accessibility:
+    'Déconnecter le compte Google {{email}}',
+  settings_google_disconnect_title: 'Déconnecter le compte Google ?',
+  settings_google_disconnect_message:
+    'Cela déconnectera {{email}} de Mindset Tracker. Vos données locales ne seront pas supprimées.',
+  settings_google_error_title: 'Connexion Google indisponible',
+  settings_google_error_play_services:
+    'Les services Google Play sont indisponibles ou obsolètes. Mettez-les à jour puis réessayez.',
+  settings_google_error_network:
+    'Vérifiez votre connexion Internet puis réessayez.',
+  settings_google_error_configuration:
+    "La connexion Google n'est pas correctement configurée pour cette version de l'application.",
+  settings_google_error_disconnect:
+    'Le compte Google n’a pas pu être déconnecté. Veuillez réessayer.',
+  settings_google_error_unexpected:
+    'Le compte Google n’a pas pu être connecté. Veuillez réessayer.',
   settings_premium_active: 'PREMIUM ACTIF',
   settings_go_premium: 'PASSER À PREMIUM',
   settings_premium_active_description:

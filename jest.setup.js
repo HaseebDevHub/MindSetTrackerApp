@@ -29,6 +29,30 @@ jest.mock('react-native-mmkv', () => {
   };
 });
 
+jest.mock('@react-native-google-signin/google-signin', () => ({
+  GoogleSignin: {
+    configure: jest.fn(),
+    getCurrentUser: jest.fn(() => null),
+    getTokens: jest.fn(),
+    hasPlayServices: jest.fn(async () => true),
+    hasPreviousSignIn: jest.fn(() => false),
+    signIn: jest.fn(async () => ({ type: 'cancelled', data: null })),
+    signInSilently: jest.fn(async () => ({
+      type: 'noSavedCredentialFound',
+      data: null,
+    })),
+    signOut: jest.fn(async () => null),
+  },
+  isErrorWithCode: error =>
+    error instanceof Error && typeof error.code === 'string',
+  isSuccessResponse: response => response.type === 'success',
+  statusCodes: {
+    IN_PROGRESS: 'IN_PROGRESS',
+    NULL_PRESENTER: 'NULL_PRESENTER',
+    PLAY_SERVICES_NOT_AVAILABLE: 'PLAY_SERVICES_NOT_AVAILABLE',
+  },
+}));
+
 jest.mock('./src/database/repositories/habitRepository', () => {
   let nextId = 1;
   return {

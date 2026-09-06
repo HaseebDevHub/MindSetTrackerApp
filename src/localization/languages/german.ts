@@ -77,6 +77,28 @@ export const german: TranslationDictionary = {
   settings_backup_description: 'Anmelden und Daten synchronisieren',
   settings_backup_unavailable:
     'Cloud-Synchronisierung wird in einem zukünftigen Update verfügbar sein.',
+  settings_google_account: 'Google-Konto',
+  settings_google_connected_as: 'Verbunden als {{email}}',
+  settings_google_not_connected: 'Nicht verbunden',
+  settings_google_restoring: 'Konto wird geprüft…',
+  settings_google_connect: 'VERBINDEN',
+  settings_google_disconnect: 'TRENNEN',
+  settings_google_connect_accessibility: 'Google-Konto verbinden',
+  settings_google_disconnect_accessibility: 'Google-Konto {{email}} trennen',
+  settings_google_disconnect_title: 'Google-Konto trennen?',
+  settings_google_disconnect_message:
+    '{{email}} wird dadurch von Mindset Tracker abgemeldet. Deine lokalen Daten werden nicht gelöscht.',
+  settings_google_error_title: 'Google-Anmeldung nicht verfügbar',
+  settings_google_error_play_services:
+    'Google Play-Dienste sind nicht verfügbar oder veraltet. Aktualisiere sie und versuche es erneut.',
+  settings_google_error_network:
+    'Prüfe deine Internetverbindung und versuche es erneut.',
+  settings_google_error_configuration:
+    'Die Google-Anmeldung ist für diesen App-Build nicht richtig konfiguriert.',
+  settings_google_error_disconnect:
+    'Das Google-Konto konnte nicht getrennt werden. Bitte versuche es erneut.',
+  settings_google_error_unexpected:
+    'Das Google-Konto konnte nicht verbunden werden. Bitte versuche es erneut.',
   settings_premium_active: 'PREMIUM AKTIV',
   settings_go_premium: 'PREMIUM HOLEN',
   settings_premium_active_description:

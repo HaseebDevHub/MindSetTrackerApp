@@ -72,6 +72,29 @@ export const english = {
   settings_backup_description: 'Sign in and synchronize your data',
   settings_backup_unavailable:
     'Cloud synchronization will be available in a future update.',
+  settings_google_account: 'Google Account',
+  settings_google_connected_as: 'Connected as {{email}}',
+  settings_google_not_connected: 'Not connected',
+  settings_google_restoring: 'Checking account…',
+  settings_google_connect: 'CONNECT',
+  settings_google_disconnect: 'DISCONNECT',
+  settings_google_connect_accessibility: 'Connect Google Account',
+  settings_google_disconnect_accessibility:
+    'Disconnect Google Account {{email}}',
+  settings_google_disconnect_title: 'Disconnect Google Account?',
+  settings_google_disconnect_message:
+    'This will sign {{email}} out of Mindset Tracker. Your local data will not be deleted.',
+  settings_google_error_title: 'Google Sign-In unavailable',
+  settings_google_error_play_services:
+    'Google Play Services is unavailable or out of date. Update it and try again.',
+  settings_google_error_network:
+    'Check your internet connection and try again.',
+  settings_google_error_configuration:
+    'Google Sign-In is not configured correctly for this app build.',
+  settings_google_error_disconnect:
+    'The Google Account could not be disconnected. Please try again.',
+  settings_google_error_unexpected:
+    'The Google Account could not be connected. Please try again.',
   settings_premium_active: 'PREMIUM ACTIVE',
   settings_go_premium: 'GO PREMIUM',
   settings_premium_active_description: 'All mock premium features unlocked',

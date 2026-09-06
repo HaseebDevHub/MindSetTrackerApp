@@ -75,6 +75,28 @@ export const urdu: TranslationDictionary = {
   settings_backup: 'بیک اپ اور بحالی',
   settings_backup_description: 'سائن ان کریں اور اپنا ڈیٹا ہم آہنگ کریں',
   settings_backup_unavailable: 'کلاؤڈ ہم آہنگی آئندہ اپ ڈیٹ میں دستیاب ہوگی۔',
+  settings_google_account: 'گوگل اکاؤنٹ',
+  settings_google_connected_as: '{{email}} کے طور پر منسلک',
+  settings_google_not_connected: 'منسلک نہیں ہے',
+  settings_google_restoring: 'اکاؤنٹ چیک کیا جا رہا ہے…',
+  settings_google_connect: 'منسلک کریں',
+  settings_google_disconnect: 'منقطع کریں',
+  settings_google_connect_accessibility: 'گوگل اکاؤنٹ منسلک کریں',
+  settings_google_disconnect_accessibility: 'گوگل اکاؤنٹ {{email}} منقطع کریں',
+  settings_google_disconnect_title: 'گوگل اکاؤنٹ منقطع کریں؟',
+  settings_google_disconnect_message:
+    'اس سے {{email}} کو Mindset Tracker سے سائن آؤٹ کر دیا جائے گا۔ آپ کا مقامی ڈیٹا حذف نہیں ہوگا۔',
+  settings_google_error_title: 'گوگل سائن اِن دستیاب نہیں',
+  settings_google_error_play_services:
+    'گوگل پلے سروسز دستیاب نہیں یا پرانی ہیں۔ انہیں اپ ڈیٹ کر کے دوبارہ کوشش کریں۔',
+  settings_google_error_network:
+    'اپنا انٹرنیٹ کنکشن چیک کریں اور دوبارہ کوشش کریں۔',
+  settings_google_error_configuration:
+    'اس ایپ بلڈ کے لیے گوگل سائن اِن درست طریقے سے ترتیب نہیں دیا گیا۔',
+  settings_google_error_disconnect:
+    'گوگل اکاؤنٹ منقطع نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+  settings_google_error_unexpected:
+    'گوگل اکاؤنٹ منسلک نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
   settings_premium_active: 'پریمیم فعال',
   settings_go_premium: 'پریمیم حاصل کریں',
   settings_premium_active_description: 'تمام آزمائشی پریمیم خصوصیات دستیاب ہیں',
@@ -461,7 +483,7 @@ export const urdu: TranslationDictionary = {
   journey_sleep_task_prepare_subtitle: 'کپڑے اور منصوبہ • 10 منٹ',
   journey_sleep_task_bedtime_title: 'رات 11 بجے سے پہلے سوئیں',
   journey_sleep_task_bedtime_subtitle: 'ہدف 8 گھنٹے • باقاعدہ وقت',
-journey_sugar_title: 'شوگر کو الوداع کہیں',
+  journey_sugar_title: 'شوگر کو الوداع کہیں',
   journey_sugar_description:
     'روزمرہ کے عملی اور نرم انتخاب سے اپنے ذائقے کو دوبارہ بہتر بنائیں۔',
   journey_sugar_task_drinks_title: 'میٹھے مشروبات سے پرہیز کریں',

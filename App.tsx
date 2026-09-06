@@ -11,6 +11,7 @@ import { AppButton } from './src/components/common/AppButton';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useAppStore } from './src/store/useAppStore';
+import { useGoogleAuthStore } from './src/store/useGoogleAuthStore';
 import styles from './AppStyle';
 
 function ThemedApp() {
@@ -19,9 +20,11 @@ function ThemedApp() {
   const isHydrated = useAppStore(state => state.isHydrated);
   const hydrationError = useAppStore(state => state.hydrationError);
   const initialize = useAppStore(state => state.initialize);
+  const initializeGoogleAuth = useGoogleAuthStore(state => state.initialize);
   useEffect(() => {
     initialize().catch(() => undefined);
-  }, [initialize]);
+    initializeGoogleAuth().catch(() => undefined);
+  }, [initialize, initializeGoogleAuth]);
   const baseTheme = mode === 'dark' ? DarkTheme : DefaultTheme;
   const navigationTheme = {
     ...baseTheme,
