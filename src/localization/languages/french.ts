@@ -2,6 +2,12 @@ import { english, type TranslationDictionary } from './english';
 
 export const french: TranslationDictionary = {
   ...english,
+  splash_tagline: "SUIVI D'HABITUDES ET PLANIFICATEUR D'OBJECTIFS",
+  splash_logo: 'Mindset Tracker',
+  splash_day_in_app: 'Jour {{day}} avec Mindset Tracker',
+  splash_weekly_completed_one: '{{count}} habitude terminée cette semaine',
+  splash_weekly_completed_other:
+    '{{count}} habitudes terminées cette semaine',
   filter_all: 'TOUS',
   filter_anytime: 'À TOUT MOMENT',
   filter_morning: 'MATIN',
@@ -201,6 +207,7 @@ export const french: TranslationDictionary = {
   premium_preview: 'ESSAYER PREMIUM',
   premium_no_purchase: 'Aucun achat ne sera effectué.',
   onboarding_next: 'SUIVANT',
+  onboarding_skip: 'PASSER',
   onboarding_save_error: "Impossible d'enregistrer",
   onboarding_save_error_message: "Vérifiez l'heure sélectionnée et réessayez.",
   onboarding_wake_title: 'À quelle heure vous levez-vous habituellement ?',

@@ -275,6 +275,22 @@ describe('async WatermelonDB store orchestration', () => {
     expect(store.getState().onboardingComplete).toBe(true);
   });
 
+  test('finishes onboarding without creating a habit after it is skipped', async () => {
+    onboardingStorage.setWakeUpTime('07:00');
+    onboardingStorage.setDayEndTime('22:00');
+    onboardingStorage.setTargets(['Live healthier']);
+    const repository = new InMemoryHabitRepository();
+    const store = makeStore(repository);
+    await store.getState().initialize();
+
+    expect(store.getState().skipFirstHabit()).toBe(true);
+    expect(await store.getState().finishOnboarding()).toBe(true);
+    expect(repository.onboardingCalls).toBe(0);
+    expect(await repository.loadAllHabits()).toEqual([]);
+    expect(onboardingStorage.isCompleted()).toBe(true);
+    expect(store.getState().onboardingComplete).toBe(true);
+  });
+
   test('does not complete onboarding when its WatermelonDB write fails', async () => {
     onboardingStorage.setWakeUpTime('07:00');
     onboardingStorage.setDayEndTime('22:00');

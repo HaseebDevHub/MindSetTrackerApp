@@ -11,11 +11,15 @@ export function OnboardingTitle({
   subtitle,
   step,
   back,
+  actionLabel,
+  onAction,
 }: {
   title: string;
   subtitle: string;
   step: number;
   back?: () => void;
+  actionLabel?: string;
+  onAction?: () => void;
 }) {
   const { colors } = useTheme();
   const { t } = useTranslation();
@@ -30,6 +34,16 @@ export function OnboardingTitle({
         ) : (
           <View style={styles.backSpace} />
         )}
+        {actionLabel && onAction ? (
+          <Pressable
+            accessibilityLabel={actionLabel}
+            accessibilityRole="button"
+            hitSlop={12}
+            onPress={onAction}
+          >
+            <Text style={styles.topActionText}>{actionLabel}</Text>
+          </Pressable>
+        ) : null}
       </View>
       <OnboardingProgress step={step} />
       <Text style={styles.heading}>{title}</Text>

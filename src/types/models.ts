@@ -124,6 +124,7 @@ export type ActiveJourneyItem = {
 
 export type RootStackParamList = {
   Onboarding: undefined;
+  Splash: undefined;
   Main: undefined;
 };
 

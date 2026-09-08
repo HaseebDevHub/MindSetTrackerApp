@@ -14,6 +14,7 @@ import type {
 import { journeys } from '../data/mockData';
 import { t } from '../localization';
 import { achievementStorage } from '../storage/achievementStorage';
+import { appUsageStorage } from '../storage/appUsageStorage';
 import { onboardingStorage } from '../storage/onboardingStorage';
 import { weekSettingsStorage } from '../storage/weekSettingsStorage';
 import type {
@@ -74,6 +75,7 @@ export interface AppState {
   saveEndTime: () => boolean;
   saveTargets: () => boolean;
   saveFirstHabit: (title?: string) => boolean;
+  skipFirstHabit: () => boolean;
   finishOnboarding: () => Promise<boolean>;
   setPremium: (value: boolean) => void;
   setSelectedDate: (value: string) => void;
@@ -298,15 +300,25 @@ export function createAppStore(
       if (saved) notifyPersistentDataChanged();
       return saved;
     },
+    skipFirstHabit: () => {
+      if (isBackupRestoreInProgress()) return false;
+      const skipped = onboardingStorage.skipFirstHabit();
+      if (!skipped) return false;
+      set({ firstHabit: undefined });
+      notifyPersistentDataChanged();
+      return true;
+    },
     finishOnboarding: async () => {
       if (!get().isHydrated || isBackupRestoreInProgress()) return false;
       if (finishOnboardingPromise) return finishOnboardingPromise;
       finishOnboardingPromise = (async () => {
         const firstHabit = onboardingStorage.getFirstHabit();
-        if (!firstHabit) return false;
         try {
-          await dependencies.repository.ensureOnboardingHabit(firstHabit);
+          if (firstHabit) {
+            await dependencies.repository.ensureOnboardingHabit(firstHabit);
+          }
           if (!onboardingStorage.complete()) return false;
+          appUsageStorage.ensureStartedDate(dependencies.now());
           const habits = await dependencies.repository.loadAllHabits();
           set(state => ({
             onboardingComplete: true,

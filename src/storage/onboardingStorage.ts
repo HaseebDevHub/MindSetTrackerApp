@@ -69,13 +69,32 @@ function getFirstHabit(): HabitItem | undefined {
 }
 
 function setFirstHabit(value: HabitItem) {
-  return (
+  const saved =
     isValidHabit(value) &&
     storage.setString(
       STORAGE_KEYS.ONBOARDING_FIRST_HABIT,
       JSON.stringify(value),
-    )
+    );
+  if (saved) storage.remove(STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED);
+  return saved;
+}
+
+function hasSkippedFirstHabit() {
+  return (
+    storage.getBoolean(STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED) === true
   );
+}
+
+function skipFirstHabit() {
+  const skipped = storage.setBoolean(
+    STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED,
+    true,
+  );
+  if (!skipped) return false;
+  storage.remove(STORAGE_KEYS.ONBOARDING_FIRST_HABIT);
+  if (!storage.has(STORAGE_KEYS.ONBOARDING_FIRST_HABIT)) return true;
+  storage.remove(STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED);
+  return false;
 }
 
 function getDraft(): OnboardingDraft {
@@ -89,11 +108,14 @@ function getDraft(): OnboardingDraft {
 
 function getData(): OnboardingData | undefined {
   const draft = getDraft();
+  const mayOmitFirstHabit =
+    hasSkippedFirstHabit() ||
+    storage.getBoolean(STORAGE_KEYS.ONBOARDING_COMPLETED) === true;
   if (
     !draft.wakeUpTime ||
     !draft.dayEndTime ||
     !draft.targets ||
-    !draft.firstHabit
+    (!draft.firstHabit && !mayOmitFirstHabit)
   ) {
     return undefined;
   }
@@ -115,7 +137,7 @@ function getResumeStep(): OnboardingStep {
   if (!draft.wakeUpTime) return 'WakeTime';
   if (!draft.dayEndTime) return 'BedTime';
   if (!draft.targets) return 'Goals';
-  if (!draft.firstHabit) return 'FirstHabit';
+  if (!draft.firstHabit && !hasSkippedFirstHabit()) return 'FirstHabit';
   return 'ValueProposition';
 }
 
@@ -131,6 +153,7 @@ function resetOnboarding() {
     STORAGE_KEYS.ONBOARDING_DAY_END_TIME,
     STORAGE_KEYS.ONBOARDING_TARGETS,
     STORAGE_KEYS.ONBOARDING_FIRST_HABIT,
+    STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED,
   ];
   keys.forEach(key => storage.remove(key));
 }
@@ -144,6 +167,8 @@ export const onboardingStorage = {
   setTargets,
   getFirstHabit,
   setFirstHabit,
+  hasSkippedFirstHabit,
+  skipFirstHabit,
   getDraft,
   getData,
   getResumeStep,

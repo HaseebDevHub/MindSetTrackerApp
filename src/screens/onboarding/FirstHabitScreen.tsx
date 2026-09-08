@@ -37,6 +37,7 @@ export function FirstHabitScreen({ navigation }: Props) {
   const stored = useAppStore(s => s.firstHabit);
   const setStored = useAppStore(s => s.setFirstHabit);
   const save = useAppStore(s => s.saveFirstHabit);
+  const skip = useAppStore(s => s.skipFirstHabit);
   const [custom, setCustom] = useState(
     stored && !presets.some(p => p.title === stored) ? stored : '',
   );
@@ -51,12 +52,23 @@ export function FirstHabitScreen({ navigation }: Props) {
         t('onboarding_choose_habit'), t('onboarding_choose_habit_message'),
       );
   };
+  const skipFirstHabit = () => {
+    if (skip()) navigation.navigate('PlanGenerator');
+    else
+      Alert.alert(
+        t('onboarding_save_error'),
+        t('onboarding_save_error_message'),
+      );
+  };
   return (
     <ScreenContainer scroll keyboard>
       <OnboardingTitle
         step={4}
         back={navigation.goBack}
-        title={t('onboarding_first_title')} subtitle={t('onboarding_first_subtitle')}
+        actionLabel={t('onboarding_skip')}
+        onAction={skipFirstHabit}
+        title={t('onboarding_first_title')}
+        subtitle={t('onboarding_first_subtitle')}
       />
       <FlashList
         data={presets}

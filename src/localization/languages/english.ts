@@ -1,4 +1,9 @@
 export const english = {
+  splash_tagline: 'HABIT TRACKER & GOAL PLANNER',
+  splash_logo: 'Mindset Tracker',
+  splash_day_in_app: 'Your day {{day}} in Mindset Tracker',
+  splash_weekly_completed_one: '{{count}} habit finished this week',
+  splash_weekly_completed_other: '{{count}} habits finished this week',
   filter_all: 'ALL',
   filter_anytime: 'ANYTIME',
   filter_morning: 'MORNING',
@@ -195,6 +200,7 @@ export const english = {
   premium_preview: 'PREVIEW PREMIUM',
   premium_no_purchase: 'No purchase will be made.',
   onboarding_next: 'NEXT',
+  onboarding_skip: 'SKIP',
   onboarding_save_error: 'Unable to save',
   onboarding_save_error_message:
     'Please check the selected time and try again.',

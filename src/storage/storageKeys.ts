@@ -1,12 +1,14 @@
 export const STORAGE_KEYS = {
   THEME_MODE: 'themeMode',
   APP_LANGUAGE: 'preferences.language',
+  APP_STARTED_DATE: 'app.startedDate',
   GOOGLE_AUTH_USER: 'auth.googleUser',
   ONBOARDING_COMPLETED: 'onboarding.completed',
   ONBOARDING_WAKE_UP_TIME: 'onboarding.wakeUpTime',
   ONBOARDING_DAY_END_TIME: 'onboarding.dayEndTime',
   ONBOARDING_TARGETS: 'onboarding.targets',
   ONBOARDING_FIRST_HABIT: 'onboarding.firstHabit',
+  ONBOARDING_FIRST_HABIT_SKIPPED: 'onboarding.firstHabitSkipped',
   NOTIFICATION_REMINDER_TIME: 'notifications.reminderTime',
   GENERAL_WEEK_START: 'general.weekStartsOn',
   HABITS: 'habits.items',
@@ -27,12 +29,14 @@ export type StorageKey = StaticStorageKey | CompletionStorageKey;
 export type StorageSchema = {
   [STORAGE_KEYS.THEME_MODE]: string;
   [STORAGE_KEYS.APP_LANGUAGE]: string;
+  [STORAGE_KEYS.APP_STARTED_DATE]: string;
   [STORAGE_KEYS.GOOGLE_AUTH_USER]: string;
   [STORAGE_KEYS.ONBOARDING_COMPLETED]: boolean;
   [STORAGE_KEYS.ONBOARDING_WAKE_UP_TIME]: string;
   [STORAGE_KEYS.ONBOARDING_DAY_END_TIME]: string;
   [STORAGE_KEYS.ONBOARDING_TARGETS]: string;
   [STORAGE_KEYS.ONBOARDING_FIRST_HABIT]: string;
+  [STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED]: boolean;
   [STORAGE_KEYS.NOTIFICATION_REMINDER_TIME]: string;
   [STORAGE_KEYS.GENERAL_WEEK_START]: number;
   [STORAGE_KEYS.HABITS]: string;

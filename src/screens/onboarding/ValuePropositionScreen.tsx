@@ -39,7 +39,7 @@ export function ValuePropositionScreen({ navigation }: Props) {
       navigation
         .getParent()
         ?.dispatch(
-          CommonActions.reset({ index: 0, routes: [{ name: 'Main' }] }),
+          CommonActions.reset({ index: 0, routes: [{ name: 'Splash' }] }),
         );
       return;
     }

@@ -48,6 +48,20 @@ describe('onboarding storage', () => {
     });
   });
 
+  test('persists skipping the optional first habit and resumes afterward', () => {
+    onboardingStorage.setWakeUpTime('06:30');
+    onboardingStorage.setDayEndTime('22:30');
+    onboardingStorage.setTargets(targets);
+    onboardingStorage.setFirstHabit(firstHabit);
+
+    expect(onboardingStorage.skipFirstHabit()).toBe(true);
+    expect(onboardingStorage.hasSkippedFirstHabit()).toBe(true);
+    expect(onboardingStorage.getFirstHabit()).toBeUndefined();
+    expect(onboardingStorage.getResumeStep()).toBe('ValueProposition');
+    expect(onboardingStorage.complete()).toBe(true);
+    expect(onboardingStorage.isCompleted()).toBe(true);
+  });
+
   test('only completes after every required value has been saved', () => {
     expect(onboardingStorage.complete()).toBe(false);
     expect(onboardingStorage.isCompleted()).toBe(false);

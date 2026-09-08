@@ -2,6 +2,12 @@ import { english, type TranslationDictionary } from './english';
 
 export const german: TranslationDictionary = {
   ...english,
+  splash_tagline: 'HABIT-TRACKER & ZIELPLANER',
+  splash_logo: 'Mindset Tracker',
+  splash_day_in_app: 'Dein Tag {{day}} in Mindset Tracker',
+  splash_weekly_completed_one: '{{count}} Gewohnheit diese Woche abgeschlossen',
+  splash_weekly_completed_other:
+    '{{count}} Gewohnheiten diese Woche abgeschlossen',
   filter_all: 'ALLE',
   filter_anytime: 'JEDERZEIT',
   filter_morning: 'MORGENS',
@@ -202,6 +208,7 @@ export const german: TranslationDictionary = {
   premium_preview: 'PREMIUM TESTEN',
   premium_no_purchase: 'Es wird kein Kauf durchgeführt.',
   onboarding_next: 'WEITER',
+  onboarding_skip: 'ÜBERSPRINGEN',
   onboarding_save_error: 'Speichern nicht möglich',
   onboarding_save_error_message:
     'Prüfe die ausgewählte Zeit und versuche es erneut.',

@@ -2,6 +2,11 @@ import { english, type TranslationDictionary } from './english';
 
 export const urdu: TranslationDictionary = {
   ...english,
+  splash_tagline: 'عادت ٹریکر اور ہدف منصوبہ ساز',
+  splash_logo: 'مائنڈ سیٹ ٹریکر',
+  splash_day_in_app: 'Mindset Tracker میں آپ کا دن {{day}}',
+  splash_weekly_completed_one: 'اس ہفتے {{count}} عادت مکمل ہوئی',
+  splash_weekly_completed_other: 'اس ہفتے {{count}} عادتیں مکمل ہوئیں',
   filter_all: 'سب',
   filter_anytime: 'کسی بھی وقت',
   filter_morning: 'صبح',
@@ -196,6 +201,7 @@ export const urdu: TranslationDictionary = {
   premium_preview: 'پریمیم پیش منظر',
   premium_no_purchase: 'کوئی خریداری نہیں ہوگی۔',
   onboarding_next: 'اگلا',
+  onboarding_skip: 'چھوڑیں',
   onboarding_save_error: 'محفوظ نہیں ہو سکا',
   onboarding_save_error_message: 'منتخب وقت چیک کر کے دوبارہ کوشش کریں۔',
   onboarding_wake_title: 'آپ عام طور پر کب اٹھتے ہیں؟',

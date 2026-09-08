@@ -59,12 +59,14 @@ export type JourneyTaskCompletionBackupRecord = {
 };
 
 export type BackupPreferences = {
+  appStartedDateKey?: string;
   onboarding: {
     completed: boolean;
     wakeUpTime?: string;
     dayEndTime?: string;
     targets?: OnboardingTarget[];
     firstHabit?: HabitItem;
+    firstHabitSkipped?: boolean;
   };
   achievements: {
     unlocks: AchievementUnlock[];

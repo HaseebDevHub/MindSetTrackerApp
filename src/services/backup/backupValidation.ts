@@ -57,6 +57,8 @@ const isNullableFiniteNumber = (value: unknown): value is number | null =>
   value === null || (typeof value === 'number' && Number.isFinite(value));
 const isOptionalLocalTime = (value: unknown): value is string | undefined =>
   value === undefined || (isString(value) && isValidLocalTime(value));
+const isOptionalDateKey = (value: unknown): value is string | undefined =>
+  value === undefined || (isString(value) && isDateKey(value));
 
 function assertUniqueIds(records: Array<{ id: string }>, label: string) {
   const ids = new Set<string>();
@@ -157,12 +159,15 @@ function isPreferences(value: unknown): value is BackupPreferences {
   const firstHabit = onboarding.firstHabit;
   const targets = onboarding.targets;
   return (
+    isOptionalDateKey(value.appStartedDateKey) &&
     typeof onboarding.completed === 'boolean' &&
     isOptionalLocalTime(onboarding.wakeUpTime) &&
     isOptionalLocalTime(onboarding.dayEndTime) &&
     (targets === undefined ||
       (Array.isArray(targets) && targets.every(isOnboardingTarget))) &&
     (firstHabit === undefined || isValidHabit(firstHabit)) &&
+    (onboarding.firstHabitSkipped === undefined ||
+      typeof onboarding.firstHabitSkipped === 'boolean') &&
     Array.isArray(achievements.unlocks) &&
     achievements.unlocks.every(unlock => {
       if (!isObject(unlock)) return false;

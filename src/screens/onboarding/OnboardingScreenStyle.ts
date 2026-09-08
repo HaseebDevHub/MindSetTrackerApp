@@ -9,8 +9,17 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
-    top: { height: 30, justifyContent: 'center' },
+    top: {
+      height: 30,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
     backSpace: { width: 28 },
+    topActionText: {
+      ...typography.caption,
+      color: colors.primary,
+    },
     heading: {
       ...typography.headingXL,
       color: colors.text,

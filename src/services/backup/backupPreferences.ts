@@ -1,5 +1,6 @@
 import type { BackupPreferences } from './backupTypes';
 import { achievementStorage } from '../../storage/achievementStorage';
+import { appUsageStorage } from '../../storage/appUsageStorage';
 import { onboardingStorage } from '../../storage/onboardingStorage';
 import { storage } from '../../storage/storage';
 import { STORAGE_KEYS } from '../../storage/storageKeys';
@@ -8,9 +9,13 @@ import { weekSettingsStorage } from '../../storage/weekSettingsStorage';
 export function exportBackupPreferences(): BackupPreferences {
   const draft = onboardingStorage.getDraft();
   return {
+    appStartedDateKey: appUsageStorage.getStartedDate(),
     onboarding: {
       completed: onboardingStorage.isCompleted(),
       ...draft,
+      ...(onboardingStorage.hasSkippedFirstHabit()
+        ? { firstHabitSkipped: true }
+        : {}),
     },
     achievements: {
       unlocks: achievementStorage.getUnlocks(),
@@ -29,6 +34,7 @@ function setOptionalString(
     | typeof STORAGE_KEYS.ONBOARDING_DAY_END_TIME
     | typeof STORAGE_KEYS.ONBOARDING_TARGETS
     | typeof STORAGE_KEYS.ONBOARDING_FIRST_HABIT
+    | typeof STORAGE_KEYS.APP_STARTED_DATE
     | typeof STORAGE_KEYS.NOTIFICATION_REMINDER_TIME,
   value: string | undefined,
 ) {
@@ -36,9 +42,21 @@ function setOptionalString(
   return !storage.has(key) || storage.remove(key);
 }
 
+function setOptionalBoolean(
+  key: typeof STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED,
+  value: boolean | undefined,
+) {
+  if (value !== undefined) return storage.setBoolean(key, value);
+  return !storage.has(key) || storage.remove(key);
+}
+
 export function applyBackupPreferences(preferences: BackupPreferences) {
   const onboarding = preferences.onboarding;
   const writes = [
+    setOptionalString(
+      STORAGE_KEYS.APP_STARTED_DATE,
+      preferences.appStartedDateKey,
+    ),
     setOptionalString(
       STORAGE_KEYS.ONBOARDING_WAKE_UP_TIME,
       onboarding.wakeUpTime,
@@ -54,6 +72,10 @@ export function applyBackupPreferences(preferences: BackupPreferences) {
     setOptionalString(
       STORAGE_KEYS.ONBOARDING_FIRST_HABIT,
       onboarding.firstHabit ? JSON.stringify(onboarding.firstHabit) : undefined,
+    ),
+    setOptionalBoolean(
+      STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED,
+      onboarding.firstHabitSkipped,
     ),
     setOptionalString(
       STORAGE_KEYS.NOTIFICATION_REMINDER_TIME,

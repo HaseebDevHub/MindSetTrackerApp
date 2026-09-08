@@ -16,7 +16,7 @@ export interface OnboardingData {
   wakeUpTime: string;
   dayEndTime: string;
   targets: OnboardingTargets;
-  firstHabit: HabitItem;
+  firstHabit?: HabitItem;
 }
 
 export type OnboardingStep =
