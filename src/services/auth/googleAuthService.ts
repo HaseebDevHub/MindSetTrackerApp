@@ -5,6 +5,7 @@ import {
   statusCodes,
   type User,
 } from '@react-native-google-signin/google-signin';
+import { DRIVE_APP_DATA_SCOPE } from '../backup/backupConstants';
 
 const GOOGLE_WEB_CLIENT_ID =
   '677726781010-p2s7gq3mtcak1floke2rsf2penquivua.apps.googleusercontent.com';
@@ -94,6 +95,7 @@ export function configureGoogleSignIn() {
 
   GoogleSignin.configure({
     webClientId: GOOGLE_WEB_CLIENT_ID,
+    scopes: [DRIVE_APP_DATA_SCOPE],
   });
   isConfigured = true;
 }
@@ -165,6 +167,41 @@ export async function getGoogleAccessToken(): Promise<string> {
   }
 }
 
+export async function ensureGoogleDriveScope(): Promise<void> {
+  configureGoogleSignIn();
+  const current = GoogleSignin.getCurrentUser();
+  if (!current) throw new GoogleAuthError('not_signed_in');
+  if (current.scopes.includes(DRIVE_APP_DATA_SCOPE)) return;
+
+  try {
+    const response = await GoogleSignin.addScopes({
+      scopes: [DRIVE_APP_DATA_SCOPE],
+    });
+    if (!response || !isSuccessResponse(response)) {
+      throw new GoogleAuthError('cancelled');
+    }
+  } catch (error) {
+    throw normalizeGoogleAuthError(error);
+  }
+}
+
+export async function getGoogleDriveAccessToken(
+  requestScope = true,
+): Promise<string> {
+  if (requestScope) await ensureGoogleDriveScope();
+  return getGoogleAccessToken();
+}
+
+export async function refreshGoogleAccessToken(rejectedToken: string) {
+  configureGoogleSignIn();
+  try {
+    await GoogleSignin.clearCachedAccessToken(rejectedToken);
+    return getGoogleAccessToken();
+  } catch (error) {
+    throw normalizeGoogleAuthError(error);
+  }
+}
+
 export type GoogleAuthService = {
   configure: typeof configureGoogleSignIn;
   signIn: typeof signInWithGoogle;
@@ -172,6 +209,8 @@ export type GoogleAuthService = {
   getCurrentUser: typeof getCurrentGoogleUser;
   restoreSession: typeof restorePreviousGoogleSession;
   getAccessToken: typeof getGoogleAccessToken;
+  getDriveAccessToken: typeof getGoogleDriveAccessToken;
+  refreshAccessToken: typeof refreshGoogleAccessToken;
 };
 
 export const googleAuthService: GoogleAuthService = {
@@ -181,4 +220,6 @@ export const googleAuthService: GoogleAuthService = {
   getCurrentUser: getCurrentGoogleUser,
   restoreSession: restorePreviousGoogleSession,
   getAccessToken: getGoogleAccessToken,
+  getDriveAccessToken: getGoogleDriveAccessToken,
+  refreshAccessToken: refreshGoogleAccessToken,
 };

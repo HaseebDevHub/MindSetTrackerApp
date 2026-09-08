@@ -99,6 +99,36 @@ export const german: TranslationDictionary = {
     'Das Google-Konto konnte nicht getrennt werden. Bitte versuche es erneut.',
   settings_google_error_unexpected:
     'Das Google-Konto konnte nicht verbunden werden. Bitte versuche es erneut.',
+  settings_backup_manage_accessibility: 'Sicherung für {{email}} verwalten',
+  settings_backup_manage_title: 'Google-Drive-Sicherung',
+  settings_sync_data: 'DATEN SYNCHRONISIEREN',
+  settings_restore_backup: 'SICHERUNG WIEDERHERSTELLEN',
+  settings_backup_syncing: 'Daten werden synchronisiert…',
+  settings_backup_restoring: 'Daten werden wiederhergestellt…',
+  settings_backup_pending: 'Änderungen warten auf Synchronisierung',
+  settings_backup_offline: 'Offline — Sicherung ausstehend',
+  settings_backup_conflict: 'Synchronisieren oder Wiederherstellen wählen',
+  settings_backup_restore_available: 'Eine Drive-Sicherung ist verfügbar',
+  settings_backup_last_synced: 'Zuletzt synchronisiert: {{date}}',
+  settings_backup_not_synced: 'Noch nicht synchronisiert',
+  settings_backup_success: 'Deine Daten wurden erfolgreich gesichert.',
+  settings_backup_overwrite_title: 'Drive-Sicherung ersetzen?',
+  settings_backup_overwrite_message:
+    'Die vorhandene Drive-Sicherung wird durch die Daten auf diesem Gerät ersetzt.',
+  settings_restore_title: 'Drive-Sicherung wiederherstellen?',
+  settings_restore_message:
+    'Gewohnheiten, Verlauf, Reisen und unterstützte Einstellungen auf diesem Gerät werden ersetzt.',
+  settings_restore_success: 'Deine Daten wurden erfolgreich wiederhergestellt.',
+  settings_backup_error_title: 'Sicherung nicht verfügbar',
+  settings_backup_error_offline:
+    'Du bist offline. Änderungen bleiben auf diesem Gerät sicher und werden später synchronisiert.',
+  settings_backup_error_permission:
+    'Der Zugriff auf Google Drive wurde nicht erlaubt. Verbinde dich erneut und erlaube Sicherungen.',
+  settings_backup_error_invalid:
+    'Die Drive-Sicherung ist ungültig oder stammt aus einer nicht unterstützten App-Version.',
+  settings_backup_error_not_found: 'Keine Mindset-Tracker-Sicherung gefunden.',
+  settings_backup_error_generic:
+    'Die Sicherung konnte nicht abgeschlossen werden. Versuche es erneut.',
   settings_premium_active: 'PREMIUM AKTIV',
   settings_go_premium: 'PREMIUM HOLEN',
   settings_premium_active_description:

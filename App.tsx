@@ -8,6 +8,7 @@ import {
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { AppButton } from './src/components/common/AppButton';
+import { BackupSyncCoordinator } from './src/components/common/BackupSyncCoordinator';
 import { RootNavigator } from './src/navigation/RootNavigator';
 import { ThemeProvider, useTheme } from './src/context/ThemeContext';
 import { useAppStore } from './src/store/useAppStore';
@@ -42,6 +43,7 @@ function ThemedApp() {
 
   return (
     <SafeAreaProvider>
+      <BackupSyncCoordinator />
       <StatusBar
         barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
         backgroundColor={colors.background}

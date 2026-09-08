@@ -95,6 +95,36 @@ export const english = {
     'The Google Account could not be disconnected. Please try again.',
   settings_google_error_unexpected:
     'The Google Account could not be connected. Please try again.',
+  settings_backup_manage_accessibility: 'Manage backup for {{email}}',
+  settings_backup_manage_title: 'Google Drive Backup',
+  settings_sync_data: 'SYNC DATA',
+  settings_restore_backup: 'RESTORE BACKUP',
+  settings_backup_syncing: 'Syncing data…',
+  settings_backup_restoring: 'Restoring data…',
+  settings_backup_pending: 'Changes are waiting to sync',
+  settings_backup_offline: 'Offline — backup pending',
+  settings_backup_conflict: 'Choose Sync or Restore',
+  settings_backup_restore_available: 'A Drive backup is available',
+  settings_backup_last_synced: 'Last synced: {{date}}',
+  settings_backup_not_synced: 'Not synced yet',
+  settings_backup_success: 'Your data was backed up successfully.',
+  settings_backup_overwrite_title: 'Replace Drive backup?',
+  settings_backup_overwrite_message:
+    'This will replace the existing Drive backup with the data on this device.',
+  settings_restore_title: 'Restore Drive backup?',
+  settings_restore_message:
+    'This will replace habits, history, journeys, and supported settings on this device.',
+  settings_restore_success: 'Your data was restored successfully.',
+  settings_backup_error_title: 'Backup unavailable',
+  settings_backup_error_offline:
+    'You are offline. Your changes remain safe on this device and will sync later.',
+  settings_backup_error_permission:
+    'Google Drive access was not granted. Connect again and allow backup access.',
+  settings_backup_error_invalid:
+    'The Drive backup is invalid or was created by an unsupported app version.',
+  settings_backup_error_not_found: 'No Mindset Tracker backup was found.',
+  settings_backup_error_generic:
+    'The backup operation could not be completed. Please try again.',
   settings_premium_active: 'PREMIUM ACTIVE',
   settings_go_premium: 'GO PREMIUM',
   settings_premium_active_description: 'All mock premium features unlocked',

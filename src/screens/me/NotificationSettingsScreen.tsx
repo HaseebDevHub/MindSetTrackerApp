@@ -7,6 +7,7 @@ import { SettingRow } from '../../components/common/SettingRow';
 import { useTheme } from '../../context/ThemeContext';
 import { useTranslation } from '../../localization';
 import { reminderSettingsStorage } from '../../storage/reminderSettingsStorage';
+import { notifyPersistentDataChanged } from '../../services/backup/backupSyncEvents';
 import type { MeStackParamList } from '../../types/models';
 import { formatLocalTime } from '../../utils/time';
 import { SettingsShell } from './components/SettingsShell';
@@ -36,6 +37,7 @@ export function NotificationSettingsScreen({ navigation }: Props) {
 
     setReminderTime(value);
     setTimeEditorVisible(false);
+    notifyPersistentDataChanged();
   };
   return (
     <SettingsShell title={t('notification_title')} onBack={navigation.goBack}>

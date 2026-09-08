@@ -99,6 +99,36 @@ export const french: TranslationDictionary = {
     'Le compte Google n’a pas pu être déconnecté. Veuillez réessayer.',
   settings_google_error_unexpected:
     'Le compte Google n’a pas pu être connecté. Veuillez réessayer.',
+  settings_backup_manage_accessibility: 'Gérer la sauvegarde de {{email}}',
+  settings_backup_manage_title: 'Sauvegarde Google Drive',
+  settings_sync_data: 'SYNCHRONISER',
+  settings_restore_backup: 'RESTAURER',
+  settings_backup_syncing: 'Synchronisation des données…',
+  settings_backup_restoring: 'Restauration des données…',
+  settings_backup_pending: 'Des modifications attendent la synchronisation',
+  settings_backup_offline: 'Hors ligne — sauvegarde en attente',
+  settings_backup_conflict: 'Choisissez Synchroniser ou Restaurer',
+  settings_backup_restore_available: 'Une sauvegarde Drive est disponible',
+  settings_backup_last_synced: 'Dernière synchronisation : {{date}}',
+  settings_backup_not_synced: 'Pas encore synchronisé',
+  settings_backup_success: 'Vos données ont été sauvegardées.',
+  settings_backup_overwrite_title: 'Remplacer la sauvegarde Drive ?',
+  settings_backup_overwrite_message:
+    'La sauvegarde Drive existante sera remplacée par les données de cet appareil.',
+  settings_restore_title: 'Restaurer la sauvegarde Drive ?',
+  settings_restore_message:
+    'Les habitudes, l’historique, les parcours et les réglages pris en charge de cet appareil seront remplacés.',
+  settings_restore_success: 'Vos données ont été restaurées.',
+  settings_backup_error_title: 'Sauvegarde indisponible',
+  settings_backup_error_offline:
+    'Vous êtes hors ligne. Vos modifications restent sur cet appareil et seront synchronisées plus tard.',
+  settings_backup_error_permission:
+    'L’accès à Google Drive n’a pas été accordé. Reconnectez-vous et autorisez la sauvegarde.',
+  settings_backup_error_invalid:
+    'La sauvegarde Drive est invalide ou provient d’une version non prise en charge.',
+  settings_backup_error_not_found: 'Aucune sauvegarde Mindset Tracker trouvée.',
+  settings_backup_error_generic:
+    'La sauvegarde n’a pas pu être effectuée. Réessayez.',
   settings_premium_active: 'PREMIUM ACTIF',
   settings_go_premium: 'PASSER À PREMIUM',
   settings_premium_active_description:

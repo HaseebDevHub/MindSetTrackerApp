@@ -15,6 +15,9 @@ export const STORAGE_KEYS = {
   WATERMELON_HABIT_MIGRATION_V1: 'migrations.watermelonHabits.v1',
   ACHIEVEMENT_UNLOCKS: 'achievements.unlocks',
   CELEBRATED_PERFECT_DAYS: 'achievements.celebratedPerfectDays',
+  BACKUP_LOCAL_REVISION: 'backup.localRevision',
+  BACKUP_ACCOUNT_METADATA: 'backup.accountMetadata',
+  BACKUP_RESTORE_JOURNAL: 'backup.restoreJournal',
 } as const;
 
 type StaticStorageKey = (typeof STORAGE_KEYS)[keyof typeof STORAGE_KEYS];
@@ -38,6 +41,9 @@ export type StorageSchema = {
   [STORAGE_KEYS.WATERMELON_HABIT_MIGRATION_V1]: boolean;
   [STORAGE_KEYS.ACHIEVEMENT_UNLOCKS]: string;
   [STORAGE_KEYS.CELEBRATED_PERFECT_DAYS]: string;
+  [STORAGE_KEYS.BACKUP_LOCAL_REVISION]: number;
+  [STORAGE_KEYS.BACKUP_ACCOUNT_METADATA]: string;
+  [STORAGE_KEYS.BACKUP_RESTORE_JOURNAL]: string;
 };
 
 type KeysOfType<Value> = {

@@ -6,6 +6,21 @@ import { MeScreen } from '../src/screens/me/MeScreen';
 import type { GoogleAuthUser } from '../src/services/auth/googleAuthService';
 import { useGoogleAuthStore } from '../src/store/useGoogleAuthStore';
 
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    Easing: { cubic: jest.fn(), in: jest.fn(() => jest.fn()) },
+    cancelAnimation: jest.fn(),
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: unknown) => ({ value }),
+    withSpring: (value: unknown) => value,
+    withTiming: (value: unknown) => value,
+  };
+});
+
 jest.mock('@shopify/flash-list', () => ({
   FlashList: require('react-native').FlatList,
 }));
@@ -75,7 +90,7 @@ describe('Me Google Account card', () => {
     act(() => renderer!.unmount());
   });
 
-  test('shows restored profile details and confirms disconnect', () => {
+  test('shows restored profile details and opens backup management', () => {
     useGoogleAuthStore.setState({
       ...originalState,
       user: googleUser,
@@ -107,13 +122,13 @@ describe('Me Google Account card', () => {
         .find(
           node =>
             node.props.accessibilityLabel ===
-            'Disconnect Google Account person@example.com',
+            'Manage backup for person@example.com',
         )
         .props.onPress();
     });
     expect(alert).toHaveBeenCalledWith(
-      'Disconnect Google Account?',
-      expect.stringContaining('person@example.com'),
+      'Google Drive Backup',
+      'person@example.com',
       expect.any(Array),
     );
     act(() => renderer!.unmount());

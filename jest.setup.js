@@ -32,6 +32,8 @@ jest.mock('react-native-mmkv', () => {
 jest.mock('@react-native-google-signin/google-signin', () => ({
   GoogleSignin: {
     configure: jest.fn(),
+    addScopes: jest.fn(async () => ({ type: 'cancelled', data: null })),
+    clearCachedAccessToken: jest.fn(async () => null),
     getCurrentUser: jest.fn(() => null),
     getTokens: jest.fn(),
     hasPlayServices: jest.fn(async () => true),

@@ -97,6 +97,36 @@ export const urdu: TranslationDictionary = {
     'گوگل اکاؤنٹ منقطع نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
   settings_google_error_unexpected:
     'گوگل اکاؤنٹ منسلک نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
+  settings_backup_manage_accessibility: '{{email}} کے لیے بیک اپ منظم کریں',
+  settings_backup_manage_title: 'گوگل ڈرائیو بیک اپ',
+  settings_sync_data: 'ڈیٹا ہم آہنگ کریں',
+  settings_restore_backup: 'بیک اپ بحال کریں',
+  settings_backup_syncing: 'ڈیٹا ہم آہنگ ہو رہا ہے…',
+  settings_backup_restoring: 'ڈیٹا بحال ہو رہا ہے…',
+  settings_backup_pending: 'تبدیلیاں ہم آہنگ ہونے کی منتظر ہیں',
+  settings_backup_offline: 'آف لائن — بیک اپ زیر التوا ہے',
+  settings_backup_conflict: 'ہم آہنگی یا بحالی منتخب کریں',
+  settings_backup_restore_available: 'ڈرائیو بیک اپ دستیاب ہے',
+  settings_backup_last_synced: 'آخری ہم آہنگی: {{date}}',
+  settings_backup_not_synced: 'ابھی ہم آہنگ نہیں ہوا',
+  settings_backup_success: 'آپ کے ڈیٹا کا بیک اپ کامیابی سے بن گیا۔',
+  settings_backup_overwrite_title: 'ڈرائیو بیک اپ تبدیل کریں؟',
+  settings_backup_overwrite_message:
+    'یہ اس ڈیوائس کے ڈیٹا سے موجودہ ڈرائیو بیک اپ کو تبدیل کر دے گا۔',
+  settings_restore_title: 'ڈرائیو بیک اپ بحال کریں؟',
+  settings_restore_message:
+    'یہ اس ڈیوائس کی عادات، تاریخ، سفر اور معاون ترتیبات کو تبدیل کر دے گا۔',
+  settings_restore_success: 'آپ کا ڈیٹا کامیابی سے بحال ہو گیا۔',
+  settings_backup_error_title: 'بیک اپ دستیاب نہیں',
+  settings_backup_error_offline:
+    'آپ آف لائن ہیں۔ تبدیلیاں اس ڈیوائس پر محفوظ ہیں اور بعد میں ہم آہنگ ہوں گی۔',
+  settings_backup_error_permission:
+    'گوگل ڈرائیو کی اجازت نہیں ملی۔ دوبارہ منسلک ہو کر بیک اپ کی اجازت دیں۔',
+  settings_backup_error_invalid:
+    'ڈرائیو بیک اپ درست نہیں یا ایپ کے غیر معاون ورژن سے بنایا گیا ہے۔',
+  settings_backup_error_not_found: 'مائنڈ سیٹ ٹریکر کا کوئی بیک اپ نہیں ملا۔',
+  settings_backup_error_generic:
+    'بیک اپ کا عمل مکمل نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
   settings_premium_active: 'پریمیم فعال',
   settings_go_premium: 'پریمیم حاصل کریں',
   settings_premium_active_description: 'تمام آزمائشی پریمیم خصوصیات دستیاب ہیں',

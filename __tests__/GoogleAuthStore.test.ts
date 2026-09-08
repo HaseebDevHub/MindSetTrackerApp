@@ -22,6 +22,8 @@ const createDependencies = () => {
     getCurrentUser: jest.fn(() => null),
     restoreSession: jest.fn(async () => null),
     getAccessToken: jest.fn(async () => 'access-token'),
+    getDriveAccessToken: jest.fn(async () => 'access-token'),
+    refreshAccessToken: jest.fn(async () => 'refreshed-access-token'),
   };
   const persistence: GoogleAuthStorage = {
     getUser: jest.fn(() => null),

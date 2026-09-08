@@ -64,6 +64,11 @@ const createStyles = (colors: ThemeColors) =>
       color: colors.textSecondary,
       marginTop: 3,
     },
+    backupStatus: {
+      ...typography.caption,
+      color: colors.primary,
+      marginTop: 2,
+    },
     premium: {
       minHeight: 94,
       flexDirection: 'row',

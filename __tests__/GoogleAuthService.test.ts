@@ -1,7 +1,9 @@
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 import {
   configureGoogleSignIn,
+  ensureGoogleDriveScope,
   getGoogleAccessToken,
+  refreshGoogleAccessToken,
   restorePreviousGoogleSession,
   signInWithGoogle,
   signOutGoogle,
@@ -37,6 +39,7 @@ describe('googleAuthService', () => {
     expect(googleSignin.configure).toHaveBeenCalledWith({
       webClientId:
         '677726781010-p2s7gq3mtcak1floke2rsf2penquivua.apps.googleusercontent.com',
+      scopes: ['https://www.googleapis.com/auth/drive.appdata'],
     });
   });
 
@@ -88,5 +91,39 @@ describe('googleAuthService', () => {
     );
     await expect(signOutGoogle()).resolves.toBeUndefined();
     expect(googleSignin.signOut).toHaveBeenCalledTimes(1);
+  });
+
+  test('requests only the app-data scope for an existing account', async () => {
+    googleSignin.getCurrentUser.mockReturnValue(nativeUser);
+    googleSignin.addScopes.mockResolvedValue({
+      type: 'success',
+      data: {
+        ...nativeUser,
+        scopes: [
+          ...nativeUser.scopes,
+          'https://www.googleapis.com/auth/drive.appdata',
+        ],
+      },
+    });
+
+    await expect(ensureGoogleDriveScope()).resolves.toBeUndefined();
+    expect(googleSignin.addScopes).toHaveBeenCalledWith({
+      scopes: ['https://www.googleapis.com/auth/drive.appdata'],
+    });
+  });
+
+  test('clears a rejected cached token before getting a replacement', async () => {
+    googleSignin.getCurrentUser.mockReturnValue(nativeUser);
+    googleSignin.getTokens.mockResolvedValue({
+      accessToken: 'replacement-token',
+      idToken: 'unused',
+    });
+
+    await expect(refreshGoogleAccessToken('rejected-token')).resolves.toBe(
+      'replacement-token',
+    );
+    expect(googleSignin.clearCachedAccessToken).toHaveBeenCalledWith(
+      'rejected-token',
+    );
   });
 });

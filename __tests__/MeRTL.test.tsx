@@ -6,6 +6,21 @@ import { setSelectedLanguage } from '../src/localization';
 import { FeedbackScreen } from '../src/screens/me/FeedbackScreen';
 import { MeScreen } from '../src/screens/me/MeScreen';
 
+jest.mock('react-native-reanimated', () => {
+  const { View } = require('react-native');
+  return {
+    __esModule: true,
+    default: { View },
+    Easing: { cubic: jest.fn(), in: jest.fn(() => jest.fn()) },
+    cancelAnimation: jest.fn(),
+    runOnJS: (callback: (...args: unknown[]) => unknown) => callback,
+    useAnimatedStyle: (factory: () => object) => factory(),
+    useSharedValue: (value: unknown) => ({ value }),
+    withSpring: (value: unknown) => value,
+    withTiming: (value: unknown) => value,
+  };
+});
+
 jest.mock('@shopify/flash-list', () => ({
   FlashList: require('react-native').FlatList,
 }));

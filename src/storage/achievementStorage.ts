@@ -73,4 +73,9 @@ function claimPerfectDay(date: string) {
   );
 }
 
-export const achievementStorage = { getUnlocks, evaluate, claimPerfectDay };
+export const achievementStorage = {
+  getUnlocks,
+  getCelebratedPerfectDays,
+  evaluate,
+  claimPerfectDay,
+};

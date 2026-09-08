@@ -99,6 +99,36 @@ export const spanish: TranslationDictionary = {
     'No se pudo desconectar la cuenta de Google. Inténtalo de nuevo.',
   settings_google_error_unexpected:
     'No se pudo conectar la cuenta de Google. Inténtalo de nuevo.',
+  settings_backup_manage_accessibility: 'Gestionar copia de {{email}}',
+  settings_backup_manage_title: 'Copia en Google Drive',
+  settings_sync_data: 'SINCRONIZAR DATOS',
+  settings_restore_backup: 'RESTAURAR COPIA',
+  settings_backup_syncing: 'Sincronizando datos…',
+  settings_backup_restoring: 'Restaurando datos…',
+  settings_backup_pending: 'Hay cambios pendientes de sincronizar',
+  settings_backup_offline: 'Sin conexión — copia pendiente',
+  settings_backup_conflict: 'Elige sincronizar o restaurar',
+  settings_backup_restore_available: 'Hay una copia en Drive disponible',
+  settings_backup_last_synced: 'Última sincronización: {{date}}',
+  settings_backup_not_synced: 'Aún no sincronizado',
+  settings_backup_success: 'Tus datos se guardaron correctamente.',
+  settings_backup_overwrite_title: '¿Reemplazar la copia de Drive?',
+  settings_backup_overwrite_message:
+    'Esto reemplazará la copia existente de Drive con los datos de este dispositivo.',
+  settings_restore_title: '¿Restaurar la copia de Drive?',
+  settings_restore_message:
+    'Esto reemplazará los hábitos, el historial, los recorridos y los ajustes compatibles de este dispositivo.',
+  settings_restore_success: 'Tus datos se restauraron correctamente.',
+  settings_backup_error_title: 'Copia no disponible',
+  settings_backup_error_offline:
+    'No tienes conexión. Los cambios siguen seguros en este dispositivo y se sincronizarán después.',
+  settings_backup_error_permission:
+    'No se concedió acceso a Google Drive. Vuelve a conectar y permite el acceso a copias.',
+  settings_backup_error_invalid:
+    'La copia de Drive no es válida o pertenece a una versión no compatible.',
+  settings_backup_error_not_found: 'No se encontró una copia de Mindset Tracker.',
+  settings_backup_error_generic:
+    'No se pudo completar la operación. Inténtalo de nuevo.',
   settings_premium_active: 'PREMIUM ACTIVO',
   settings_go_premium: 'OBTENER PREMIUM',
   settings_premium_active_description:

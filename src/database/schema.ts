@@ -1,5 +1,7 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
+export const DATABASE_SCHEMA_VERSION = 5;
+
 export const habitV2Columns = [
   { name: 'title', type: 'string' as const },
   { name: 'time_of_day', type: 'string' as const },
@@ -69,7 +71,7 @@ export const journeyTaskCompletionColumns = [
 ];
 
 const schema = appSchema({
-  version: 5,
+  version: DATABASE_SCHEMA_VERSION,
   tables: [
     tableSchema({
       name: 'habits',

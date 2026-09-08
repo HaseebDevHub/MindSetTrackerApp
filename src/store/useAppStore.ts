@@ -3,6 +3,8 @@ import { ACHIEVEMENTS } from '../constants/achievements';
 import { migrateLegacyHabitData } from '../database/migrateLegacyHabitData';
 import { habitRepository } from '../database/repositories/habitRepository';
 import { journeyRepository } from '../database/repositories/journeyRepository';
+import { isBackupRestoreInProgress } from '../services/backup/backupOperationGate';
+import { notifyPersistentDataChanged } from '../services/backup/backupSyncEvents';
 import type {
   HabitCreateInput,
   HabitRepository,
@@ -63,6 +65,7 @@ export interface AppState {
   hydrationError?: string;
   persistenceError?: string;
   initialize: () => Promise<boolean>;
+  reloadPersistentData: () => Promise<boolean>;
   setWakeTime: (value: string) => void;
   setEndTime: (value: string) => void;
   toggleTarget: (value: OnboardingTarget) => void;
@@ -149,6 +152,36 @@ export function createAppStore(
     };
   }
 
+  async function loadPersistentState() {
+    const [loadedHabits, loadedActiveJourneys] = await Promise.all([
+      dependencies.repository.loadAllHabits(),
+      dependencies.journeyRepository.loadActiveJourneys(),
+    ]);
+    const streakHabits = withDerivedStreaks(loadedHabits);
+    const statsCandidate = calculateStats(
+      streakHabits,
+      toDateKey(dependencies.now()),
+      achievementStorage.getUnlocks().map(unlock => unlock.id),
+    );
+    const unlocks = achievementStorage.evaluate(statsCandidate, false).unlocks;
+    const draft = onboardingStorage.getDraft();
+    return {
+      ...derivedState(
+        streakHabits,
+        unlocks.map(unlock => unlock.id),
+      ),
+      wakeTime: draft.wakeUpTime ?? DEFAULT_WAKE_UP_TIME,
+      endTime: draft.dayEndTime ?? '22:00',
+      targets: draft.targets ?? [],
+      firstHabit: draft.firstHabit?.title,
+      onboardingComplete: onboardingStorage.isCompleted(),
+      weekStartsOn: weekSettingsStorage.getWeekStartsOn(),
+      activeJourneys: loadedActiveJourneys.filter(enrollment =>
+        journeys.some(journey => journey.id === enrollment.journeyId),
+      ),
+    };
+  }
+
   return create<AppState>((set, get) => ({
     wakeTime: onboardingDraft.wakeUpTime ?? DEFAULT_WAKE_UP_TIME,
     endTime: onboardingDraft.dayEndTime ?? '22:00',
@@ -176,31 +209,11 @@ export function createAppStore(
         });
         try {
           await dependencies.runLegacyMigration(dependencies.repository);
-          const [loadedHabits, loadedActiveJourneys] = await Promise.all([
-            dependencies.repository.loadAllHabits(),
-            dependencies.journeyRepository.loadActiveJourneys(),
-          ]);
-          const streakHabits = withDerivedStreaks(loadedHabits);
-          const statsCandidate = calculateStats(
-            streakHabits,
-            toDateKey(dependencies.now()),
-            achievementStorage.getUnlocks().map(unlock => unlock.id),
-          );
-          const unlocks = achievementStorage.evaluate(
-            statsCandidate,
-            false,
-          ).unlocks;
           set({
-            ...derivedState(
-              streakHabits,
-              unlocks.map(unlock => unlock.id),
-            ),
+            ...(await loadPersistentState()),
             isHydrating: false,
             isHydrated: true,
             hydrationError: undefined,
-            activeJourneys: loadedActiveJourneys.filter(enrollment =>
-              journeys.some(journey => journey.id === enrollment.journeyId),
-            ),
           });
           return true;
         } catch (error) {
@@ -218,6 +231,17 @@ export function createAppStore(
       })();
       return initializationPromise;
     },
+    reloadPersistentData: async () => {
+      try {
+        set({ persistenceError: undefined });
+        set({ ...(await loadPersistentState()), isHydrated: true });
+        return true;
+      } catch (error) {
+        logPersistenceError('reload after restore', error);
+        set({ persistenceError: 'The restored data could not be loaded.' });
+        return false;
+      }
+    },
     setWakeTime: wakeTime => set({ wakeTime }),
     setEndTime: endTime => set({ endTime }),
     toggleTarget: target =>
@@ -227,10 +251,26 @@ export function createAppStore(
           : [...state.targets, target],
       })),
     setFirstHabit: firstHabit => set({ firstHabit }),
-    saveWakeTime: () => onboardingStorage.setWakeUpTime(get().wakeTime),
-    saveEndTime: () => onboardingStorage.setDayEndTime(get().endTime),
-    saveTargets: () => onboardingStorage.setTargets(get().targets),
+    saveWakeTime: () => {
+      if (isBackupRestoreInProgress()) return false;
+      const saved = onboardingStorage.setWakeUpTime(get().wakeTime);
+      if (saved) notifyPersistentDataChanged();
+      return saved;
+    },
+    saveEndTime: () => {
+      if (isBackupRestoreInProgress()) return false;
+      const saved = onboardingStorage.setDayEndTime(get().endTime);
+      if (saved) notifyPersistentDataChanged();
+      return saved;
+    },
+    saveTargets: () => {
+      if (isBackupRestoreInProgress()) return false;
+      const saved = onboardingStorage.setTargets(get().targets);
+      if (saved) notifyPersistentDataChanged();
+      return saved;
+    },
     saveFirstHabit: candidate => {
+      if (isBackupRestoreInProgress()) return false;
       const title = candidate?.trim() ?? get().firstHabit?.trim();
       if (!title) return false;
       set({ firstHabit: title });
@@ -254,10 +294,12 @@ export function createAppStore(
         frequency: baseHabit.frequency ?? 'EVERYDAY',
         createdAt: baseHabit.createdAt ?? toDateKey(dependencies.now()),
       };
-      return onboardingStorage.setFirstHabit(habit);
+      const saved = onboardingStorage.setFirstHabit(habit);
+      if (saved) notifyPersistentDataChanged();
+      return saved;
     },
     finishOnboarding: async () => {
-      if (!get().isHydrated) return false;
+      if (!get().isHydrated || isBackupRestoreInProgress()) return false;
       if (finishOnboardingPromise) return finishOnboardingPromise;
       finishOnboardingPromise = (async () => {
         const firstHabit = onboardingStorage.getFirstHabit();
@@ -271,6 +313,7 @@ export function createAppStore(
             persistenceError: undefined,
             ...derivedState(habits, state.stats.unlockedAchievements),
           }));
+          notifyPersistentDataChanged();
           return true;
         } catch (error) {
           logPersistenceError('finish onboarding', error);
@@ -286,13 +329,16 @@ export function createAppStore(
     setSelectedDate: selectedDate => set({ selectedDate }),
     setSelectedFilter: selectedFilter => set({ selectedFilter }),
     setWeekStartsOn: weekStartsOn => {
+      if (isBackupRestoreInProgress()) return false;
       if (!weekSettingsStorage.setWeekStartsOn(weekStartsOn)) return false;
       set({ weekStartsOn });
+      notifyPersistentDataChanged();
       return true;
     },
     toggleHabit: async (id, date) => {
       if (
         !get().isHydrated ||
+        isBackupRestoreInProgress() ||
         getDateStatus(date, dependencies.now()) === 'future'
       )
         return false;
@@ -433,6 +479,7 @@ export function createAppStore(
                 persistenceError: undefined,
               };
             });
+            notifyPersistentDataChanged();
             return true;
           } catch (error) {
             logPersistenceError('toggle completion', error);
@@ -447,7 +494,7 @@ export function createAppStore(
       return operation;
     },
     addHabit: async habit => {
-      if (!get().isHydrated) return false;
+      if (!get().isHydrated || isBackupRestoreInProgress()) return false;
       try {
         const created = await dependencies.repository.createHabit({
           ...habit,
@@ -461,6 +508,7 @@ export function createAppStore(
           ),
           persistenceError: undefined,
         }));
+        notifyPersistentDataChanged();
         return true;
       } catch (error) {
         logPersistenceError('create habit', error);
@@ -469,7 +517,11 @@ export function createAppStore(
       }
     },
     updateHabit: async (id, updates) => {
-      if (!get().isHydrated || !get().habits.some(habit => habit.id === id)) {
+      if (
+        !get().isHydrated ||
+        isBackupRestoreInProgress() ||
+        !get().habits.some(habit => habit.id === id)
+      ) {
         return false;
       }
       try {
@@ -486,6 +538,7 @@ export function createAppStore(
             persistenceError: undefined,
           };
         });
+        notifyPersistentDataChanged();
         return true;
       } catch (error) {
         logPersistenceError('update habit', error);
@@ -494,7 +547,11 @@ export function createAppStore(
       }
     },
     deleteHabit: async id => {
-      if (!get().isHydrated || !get().habits.some(habit => habit.id === id)) {
+      if (
+        !get().isHydrated ||
+        isBackupRestoreInProgress() ||
+        !get().habits.some(habit => habit.id === id)
+      ) {
         return false;
       }
       try {
@@ -509,6 +566,7 @@ export function createAppStore(
             persistenceError: undefined,
           };
         });
+        notifyPersistentDataChanged();
         return true;
       } catch (error) {
         logPersistenceError('delete habit', error);
@@ -517,7 +575,11 @@ export function createAppStore(
       }
     },
     setHabitArchived: async (id, archived) => {
-      if (!get().isHydrated || !get().habits.some(habit => habit.id === id)) {
+      if (
+        !get().isHydrated ||
+        isBackupRestoreInProgress() ||
+        !get().habits.some(habit => habit.id === id)
+      ) {
         return false;
       }
       try {
@@ -536,6 +598,7 @@ export function createAppStore(
             persistenceError: undefined,
           };
         });
+        notifyPersistentDataChanged();
         return true;
       } catch (error) {
         logPersistenceError('archive habit', error);
@@ -546,6 +609,7 @@ export function createAppStore(
     startJourney: async journeyId => {
       if (
         !get().isHydrated ||
+        isBackupRestoreInProgress() ||
         !journeys.some(journey => journey.id === journeyId)
       ) {
         return undefined;
@@ -564,6 +628,7 @@ export function createAppStore(
           ],
           persistenceError: undefined,
         }));
+        notifyPersistentDataChanged();
         return enrollment;
       } catch (error) {
         logPersistenceError('start journey', error);
@@ -572,7 +637,7 @@ export function createAppStore(
       }
     },
     toggleJourneyTask: async (activeJourneyId, taskId) => {
-      if (!get().isHydrated) return false;
+      if (!get().isHydrated || isBackupRestoreInProgress()) return false;
       const todayKey = toDateKey(dependencies.now());
       const queueKey = `${activeJourneyId}\u0000${taskId}\u0000${todayKey}`;
       const previous =
@@ -617,6 +682,7 @@ export function createAppStore(
               }),
               persistenceError: undefined,
             }));
+            notifyPersistentDataChanged();
             return true;
           } catch (error) {
             logPersistenceError('toggle journey task', error);
@@ -635,6 +701,7 @@ export function createAppStore(
     removeActiveJourney: async activeJourneyId => {
       if (
         !get().isHydrated ||
+        isBackupRestoreInProgress() ||
         !get().activeJourneys.some(item => item.id === activeJourneyId)
       ) {
         return false;
@@ -652,6 +719,7 @@ export function createAppStore(
           ),
           persistenceError: undefined,
         }));
+        notifyPersistentDataChanged();
         return true;
       } catch (error) {
         logPersistenceError('remove active journey', error);
