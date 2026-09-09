@@ -37,6 +37,8 @@ type DesiredSchedule = {
   body: string;
 };
 
+const NOTIFICATION_SMALL_ICON = 'ic_notification';
+
 export type NotificationTransport = {
   createChannel: typeof notifee.createChannel;
   requestPermission: typeof notifee.requestPermission;
@@ -134,6 +136,7 @@ function scheduleFingerprint(schedule: DesiredSchedule, exact: boolean) {
     title: schedule.title,
     body: schedule.body,
     exact,
+    smallIcon: NOTIFICATION_SMALL_ICON,
   });
 }
 
@@ -150,7 +153,7 @@ function createNotification(
       channelId: NOTIFICATION_CHANNEL_ID,
       importance: AndroidImportance.HIGH,
       pressAction: { id: 'default' },
-      smallIcon: 'ic_launcher',
+      smallIcon: NOTIFICATION_SMALL_ICON,
     },
   };
 }

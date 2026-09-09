@@ -96,6 +96,9 @@ describe('notification scheduling service', () => {
     );
     expect(first.scheduledCount).toBe(5);
     expect(triggers).toHaveLength(5);
+    expect(triggers[0].notification.android?.smallIcon).toBe(
+      'ic_notification',
+    );
 
     await service.synchronize(preferences, habits, 'English', now);
     expect(triggers).toHaveLength(5);
