@@ -20,6 +20,7 @@ import {
   normalizeScheduleMode,
   normalizeWeekdays,
 } from '../../../utils/habitSchedule';
+import { canEnableHabitReminder } from '../../../utils/notifications';
 import useStyles from '../HistoryScreenStyle';
 
 type HabitHistoryRow =
@@ -130,6 +131,13 @@ export function AllHabits() {
 
   const resumeHabit = async (habit: HabitItem) => {
     if (resumingHabitId) return;
+    if (habit.reminderEnabled && !canEnableHabitReminder(habits, habit.id)) {
+      Alert.alert(
+        t('notification_limit_title'),
+        t('notification_limit_message'),
+      );
+      return;
+    }
     setResumingHabitId(habit.id);
     try {
       if (!(await setHabitArchived(habit.id, false))) {

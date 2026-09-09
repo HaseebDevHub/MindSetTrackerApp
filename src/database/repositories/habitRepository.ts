@@ -190,6 +190,28 @@ async function deleteHabit(id: string) {
   });
 }
 
+async function disableHabitReminders(ids: string[]) {
+  if (!ids.length) return true;
+  return serializeWrite('habits:disable-reminders', async () => {
+    const database = await getDatabase();
+    return database.write(async () => {
+      const records = await database
+        .get<Habit>('habits')
+        .query(Q.where('id', Q.oneOf(ids)))
+        .fetch();
+      if (records.length !== ids.length) return false;
+      await database.batch(
+        ...records.map(record =>
+          record.prepareUpdate(updated => {
+            updated.isReminderEnabled = false;
+          }),
+        ),
+      );
+      return true;
+    });
+  });
+}
+
 async function setArchived(id: string, archived: boolean, archivedAt?: string) {
   return updateHabit(id, {
     archived,
@@ -281,9 +303,7 @@ async function setHabitAction(
         });
         if (records.length > 1) {
           await database.batch(
-            records
-              .slice(1)
-              .map(record => record.prepareDestroyPermanently()),
+            records.slice(1).map(record => record.prepareDestroyPermanently()),
           );
         }
       } else {
@@ -405,6 +425,7 @@ export const habitRepository: HabitRepository = {
   createHabit,
   updateHabit,
   deleteHabit,
+  disableHabitReminders,
   setArchived,
   setHabitCompletion,
   isHabitCompleted,

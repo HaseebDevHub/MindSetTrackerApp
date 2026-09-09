@@ -9,6 +9,7 @@ import type {
   TimeOfDay,
 } from '../../types/models';
 import type { OnboardingTarget } from '../../types/onboarding';
+import type { NotificationPreferences } from '../../types/notification';
 
 export type HabitBackupRecord = {
   id: string;
@@ -73,6 +74,7 @@ export type BackupPreferences = {
     celebratedPerfectDays: string[];
   };
   notificationReminderTime?: string;
+  notificationSettings?: NotificationPreferences;
   weekStartsOn: 0 | 1;
 };
 

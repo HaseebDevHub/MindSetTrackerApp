@@ -2,6 +2,7 @@ import type { BackupPreferences } from './backupTypes';
 import { achievementStorage } from '../../storage/achievementStorage';
 import { appUsageStorage } from '../../storage/appUsageStorage';
 import { onboardingStorage } from '../../storage/onboardingStorage';
+import { notificationSettingsStorage } from '../../storage/notificationSettingsStorage';
 import { storage } from '../../storage/storage';
 import { STORAGE_KEYS } from '../../storage/storageKeys';
 import { weekSettingsStorage } from '../../storage/weekSettingsStorage';
@@ -24,6 +25,7 @@ export function exportBackupPreferences(): BackupPreferences {
     notificationReminderTime: storage.getString(
       STORAGE_KEYS.NOTIFICATION_REMINDER_TIME,
     ),
+    notificationSettings: notificationSettingsStorage.getSettings(),
     weekStartsOn: weekSettingsStorage.getWeekStartsOn(),
   };
 }
@@ -81,6 +83,12 @@ export function applyBackupPreferences(preferences: BackupPreferences) {
       STORAGE_KEYS.NOTIFICATION_REMINDER_TIME,
       preferences.notificationReminderTime,
     ),
+    preferences.notificationSettings
+      ? notificationSettingsStorage.setSettings(
+          preferences.notificationSettings,
+        )
+      : !storage.has(STORAGE_KEYS.NOTIFICATION_SETTINGS_V1) ||
+        storage.remove(STORAGE_KEYS.NOTIFICATION_SETTINGS_V1),
     storage.setString(
       STORAGE_KEYS.ACHIEVEMENT_UNLOCKS,
       JSON.stringify(preferences.achievements.unlocks),
@@ -89,7 +97,10 @@ export function applyBackupPreferences(preferences: BackupPreferences) {
       STORAGE_KEYS.CELEBRATED_PERFECT_DAYS,
       JSON.stringify(preferences.achievements.celebratedPerfectDays),
     ),
-    storage.setNumber(STORAGE_KEYS.GENERAL_WEEK_START, preferences.weekStartsOn),
+    storage.setNumber(
+      STORAGE_KEYS.GENERAL_WEEK_START,
+      preferences.weekStartsOn,
+    ),
     onboarding.completed
       ? storage.setBoolean(STORAGE_KEYS.ONBOARDING_COMPLETED, true)
       : !storage.has(STORAGE_KEYS.ONBOARDING_COMPLETED) ||

@@ -7,9 +7,13 @@ import type {
   HabitType,
   TimeOfDay,
 } from '../../types/models';
-import { isOnboardingTarget, isValidHabit } from '../../utils/onboardingValidation';
+import {
+  isOnboardingTarget,
+  isValidHabit,
+} from '../../utils/onboardingValidation';
 import { isDateKey } from '../../utils/dates';
 import { isValidLocalTime } from '../../utils/time';
+import { isNotificationPreferences } from '../../storage/notificationSettingsStorage';
 import { BACKUP_VERSION } from './backupConstants';
 import { migrateBackupToCurrent } from './backupMigrations';
 import { BackupValidationError } from './backupValidationError';
@@ -24,12 +28,7 @@ import type {
 
 export { BackupValidationError } from './backupValidationError';
 
-const TIME_VALUES: TimeOfDay[] = [
-  'MORNING',
-  'AFTERNOON',
-  'EVENING',
-  'ANYTIME',
-];
+const TIME_VALUES: TimeOfDay[] = ['MORNING', 'AFTERNOON', 'EVENING', 'ANYTIME'];
 const FREQUENCY_VALUES: HabitFrequency[] = ['EVERYDAY', 'WEEKDAYS'];
 const HABIT_TYPE_VALUES: HabitType[] = ['REGULAR', 'NEGATIVE', 'ONE_TIME'];
 const SCHEDULE_VALUES: HabitScheduleMode[] = [
@@ -183,6 +182,8 @@ function isPreferences(value: unknown): value is BackupPreferences {
       date => isString(date) && isDateKey(date),
     ) &&
     isOptionalLocalTime(value.notificationReminderTime) &&
+    (value.notificationSettings === undefined ||
+      isNotificationPreferences(value.notificationSettings)) &&
     (value.weekStartsOn === 0 || value.weekStartsOn === 1)
   );
 }
@@ -213,7 +214,10 @@ function deduplicateLogicalRecords(backup: MindsetTrackerBackup) {
 
 function validateCurrentBackup(value: unknown): MindsetTrackerBackup {
   if (!isObject(value)) {
-    throw new BackupValidationError('malformed_backup', 'Backup is not an object.');
+    throw new BackupValidationError(
+      'malformed_backup',
+      'Backup is not an object.',
+    );
   }
   if (value.backupVersion !== BACKUP_VERSION) {
     throw new BackupValidationError(
@@ -227,11 +231,17 @@ function validateCurrentBackup(value: unknown): MindsetTrackerBackup {
       'Database schema version is not supported.',
     );
   }
-  if (!isString(value.exportedAt) || Number.isNaN(Date.parse(value.exportedAt))) {
+  if (
+    !isString(value.exportedAt) ||
+    Number.isNaN(Date.parse(value.exportedAt))
+  ) {
     throw new BackupValidationError('malformed_backup', 'Invalid export time.');
   }
   if (!isObject(value.data)) {
-    throw new BackupValidationError('malformed_backup', 'Backup data is missing.');
+    throw new BackupValidationError(
+      'malformed_backup',
+      'Backup data is missing.',
+    );
   }
   const data = value.data;
   if (
@@ -295,6 +305,9 @@ export function parseBackup(serialized: string) {
     return validateBackup(JSON.parse(serialized) as unknown);
   } catch (error) {
     if (error instanceof BackupValidationError) throw error;
-    throw new BackupValidationError('malformed_backup', 'Backup JSON is invalid.');
+    throw new BackupValidationError(
+      'malformed_backup',
+      'Backup JSON is invalid.',
+    );
   }
 }

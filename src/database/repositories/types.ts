@@ -17,6 +17,7 @@ export interface HabitRepository {
   createHabit(habit: HabitCreateInput): Promise<HabitItem>;
   updateHabit(id: string, updates: HabitUpdateInput): Promise<boolean>;
   deleteHabit(id: string): Promise<boolean>;
+  disableHabitReminders?(ids: string[]): Promise<boolean>;
   setArchived(
     id: string,
     archived: boolean,

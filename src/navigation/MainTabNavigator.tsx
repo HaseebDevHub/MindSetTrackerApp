@@ -4,6 +4,7 @@ import { getFocusedRouteNameFromRoute } from '@react-navigation/native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { BarChart3, BookOpen, CalendarDays, User } from 'lucide-react-native';
 import { useTheme } from '../context/ThemeContext';
+import { NotificationCoordinator } from '../components/common/NotificationCoordinator';
 import { TabScreenProvider } from '../context/TabScreenContext';
 import { useTranslation } from '../localization';
 import type { MainTabParamList } from '../types/models';
@@ -43,6 +44,7 @@ export function MainTabNavigator() {
 
   return (
     <TabScreenProvider value>
+      <NotificationCoordinator />
       <Tabs.Navigator
         screenOptions={{
           headerShown: false,

@@ -15,6 +15,7 @@ import { journeys } from '../data/mockData';
 import { t } from '../localization';
 import { achievementStorage } from '../storage/achievementStorage';
 import { appUsageStorage } from '../storage/appUsageStorage';
+import { notificationSettingsStorage } from '../storage/notificationSettingsStorage';
 import { onboardingStorage } from '../storage/onboardingStorage';
 import { weekSettingsStorage } from '../storage/weekSettingsStorage';
 import type {
@@ -38,6 +39,10 @@ import {
 import { normalizeGoalMode, normalizeHabitType } from '../utils/habitSchedule';
 import { getJourneyMetrics } from '../utils/journeyAnalytics';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
+import {
+  canEnableHabitReminder,
+  getExcessReminderHabitIds,
+} from '../utils/notifications';
 
 const emptyStats = (unlockedAchievements: string[] = []): UserStats => ({
   currentStreak: 0,
@@ -86,6 +91,7 @@ export interface AppState {
   updateHabit: (id: string, updates: HabitUpdateInput) => Promise<boolean>;
   deleteHabit: (id: string) => Promise<boolean>;
   setHabitArchived: (id: string, archived: boolean) => Promise<boolean>;
+  normalizeHabitReminderLimit: () => Promise<number>;
   startJourney: (
     journeyId: JourneyId,
   ) => Promise<ActiveJourneyItem | undefined>;
@@ -507,9 +513,12 @@ export function createAppStore(
     },
     addHabit: async habit => {
       if (!get().isHydrated || isBackupRestoreInProgress()) return false;
+      const reminderLimitReached =
+        habit.reminderEnabled && !canEnableHabitReminder(get().habits);
       try {
         const created = await dependencies.repository.createHabit({
           ...habit,
+          reminderEnabled: reminderLimitReached ? false : habit.reminderEnabled,
           frequency: habit.frequency ?? 'EVERYDAY',
           createdAt: habit.createdAt ?? toDateKey(dependencies.now()),
         });
@@ -536,14 +545,20 @@ export function createAppStore(
       ) {
         return false;
       }
+      const reminderLimitReached =
+        updates.reminderEnabled === true &&
+        !canEnableHabitReminder(get().habits, id);
+      const safeUpdates = reminderLimitReached
+        ? { ...updates, reminderEnabled: false }
+        : updates;
       try {
-        if (!(await dependencies.repository.updateHabit(id, updates))) {
+        if (!(await dependencies.repository.updateHabit(id, safeUpdates))) {
           set({ persistenceError: 'The habit is no longer available.' });
           return false;
         }
         set(state => {
           const habits = state.habits.map(habit =>
-            habit.id === id ? { ...habit, ...updates } : habit,
+            habit.id === id ? { ...habit, ...safeUpdates } : habit,
           );
           return {
             ...derivedState(habits, state.stats.unlockedAchievements),
@@ -594,6 +609,15 @@ export function createAppStore(
       ) {
         return false;
       }
+      const selectedHabit = get().habits.find(habit => habit.id === id);
+      if (
+        !archived &&
+        selectedHabit?.reminderEnabled &&
+        !canEnableHabitReminder(get().habits, id)
+      ) {
+        set({ persistenceError: 'The habit reminder limit has been reached.' });
+        return false;
+      }
       try {
         const archivedAt = archived ? toDateKey(dependencies.now()) : undefined;
         if (
@@ -616,6 +640,44 @@ export function createAppStore(
         logPersistenceError('archive habit', error);
         set({ persistenceError: 'The habit could not be archived.' });
         return false;
+      }
+    },
+    normalizeHabitReminderLimit: async () => {
+      if (!get().isHydrated || isBackupRestoreInProgress()) return 0;
+      const excessIds = getExcessReminderHabitIds(get().habits);
+      if (!excessIds.length) {
+        if (!notificationSettingsStorage.hasMigratedReminderLimit()) {
+          notificationSettingsStorage.markReminderLimitMigrated();
+        }
+        return 0;
+      }
+      try {
+        const repository = dependencies.repository;
+        const normalized = repository.disableHabitReminders
+          ? await repository.disableHabitReminders(excessIds)
+          : (
+              await Promise.all(
+                excessIds.map(id =>
+                  repository.updateHabit(id, { reminderEnabled: false }),
+                ),
+              )
+            ).every(Boolean);
+        if (!normalized) return 0;
+        set(state => ({
+          habits: state.habits.map(habit =>
+            excessIds.includes(habit.id)
+              ? { ...habit, reminderEnabled: false }
+              : habit,
+          ),
+          persistenceError: undefined,
+        }));
+        notificationSettingsStorage.markReminderLimitMigrated();
+        notificationSettingsStorage.setReminderLimitNoticePending(true);
+        notifyPersistentDataChanged();
+        return excessIds.length;
+      } catch (error) {
+        logPersistenceError('normalize reminder limit', error);
+        return 0;
       }
     },
     startJourney: async journeyId => {

@@ -76,6 +76,43 @@ describe('backup validation', () => {
     expect(parseBackup(JSON.stringify(makeBackup()))).toEqual(makeBackup());
   });
 
+  test('accepts notification settings while remaining compatible with older backups', () => {
+    const backup = makeBackup();
+    backup.data.preferences.notificationSettings = {
+      version: 1,
+      masterEnabled: true,
+      globalRemindersEnabled: false,
+      habitRemindersEnabled: true,
+      times: {
+        morning: '07:00',
+        afternoon: '13:30',
+        evening: '21:15',
+      },
+    };
+
+    expect(
+      validateBackup(backup).data.preferences.notificationSettings,
+    ).toEqual(backup.data.preferences.notificationSettings);
+    expect(validateBackup(makeBackup())).toEqual(makeBackup());
+  });
+
+  test('rejects malformed notification settings', () => {
+    const backup = makeBackup();
+    backup.data.preferences.notificationSettings = {
+      version: 1,
+      masterEnabled: true,
+      globalRemindersEnabled: true,
+      habitRemindersEnabled: true,
+      times: {
+        morning: 'not-a-time',
+        afternoon: '13:00',
+        evening: '20:00',
+      },
+    };
+
+    expect(() => validateBackup(backup)).toThrow(BackupValidationError);
+  });
+
   test('deduplicates logical completion rows without losing their parent', () => {
     const backup = makeBackup();
     backup.data.habitCompletions.push({
@@ -104,9 +141,9 @@ describe('backup validation', () => {
 
   test('rejects malformed JSON and incompatible backup versions', () => {
     expect(() => parseBackup('{not-json')).toThrow(BackupValidationError);
-    expect(() =>
-      validateBackup({ ...makeBackup(), backupVersion: 2 }),
-    ).toThrow('Backup version is not supported');
+    expect(() => validateBackup({ ...makeBackup(), backupVersion: 2 })).toThrow(
+      'Backup version is not supported',
+    );
   });
 
   test('rejects invalid local date keys, enums, and non-finite values', () => {

@@ -116,6 +116,32 @@ const createStyles = (colors: ThemeColors) =>
       marginBottom: spacing.medium,
     },
     noticeText: { ...typography.caption, color: colors.textSecondary, flex: 1 },
+    notificationFallbackCard: {
+      gap: spacing.small,
+      padding: spacing.medium,
+      borderRadius: radii.button,
+      backgroundColor: colors.surfaceSecondary,
+      marginBottom: spacing.small,
+    },
+    notificationSettingsAction: {
+      minHeight: 40,
+      alignItems: 'center',
+      justifyContent: 'center',
+      paddingHorizontal: spacing.medium,
+      borderRadius: radii.button,
+      backgroundColor: colors.iconSurface,
+      marginBottom: spacing.small,
+    },
+    notificationSettingsActionText: {
+      ...typography.caption,
+      color: colors.primary,
+      fontWeight: '700',
+      textAlign: 'center',
+    },
+    notificationTimeRows: {
+      gap: spacing.small,
+      paddingStart: spacing.large,
+    },
     choiceRow: {
       height: 46,
       marginHorizontal: -4,

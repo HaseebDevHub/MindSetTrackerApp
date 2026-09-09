@@ -131,7 +131,8 @@ export const spanish: TranslationDictionary = {
     'No se concedió acceso a Google Drive. Vuelve a conectar y permite el acceso a copias.',
   settings_backup_error_invalid:
     'La copia de Drive no es válida o pertenece a una versión no compatible.',
-  settings_backup_error_not_found: 'No se encontró una copia de Mindset Tracker.',
+  settings_backup_error_not_found:
+    'No se encontró una copia de Mindset Tracker.',
   settings_backup_error_generic:
     'No se pudo completar la operación. Inténtalo de nuevo.',
   settings_premium_active: 'PREMIUM ACTIVO',
@@ -180,17 +181,49 @@ export const spanish: TranslationDictionary = {
   notification_title: 'NOTIFICACIONES',
   notification_preview:
     'Estas preferencias son una demostración. No se solicitan permisos ni se programa ninguna notificación.',
+  notification_status_active:
+    'Hay {{count}} recordatorios programados en este dispositivo.',
+  notification_status_denied:
+    'Las notificaciones están desactivadas. Actívalas en los ajustes del sistema para recibir recordatorios.',
+  notification_status_error:
+    'No se pudieron sincronizar los recordatorios. Tus ajustes guardados no cambiaron.',
+  notification_status_exact_fallback:
+    'Las alarmas exactas están desactivadas; Android podría entregar los recordatorios un poco más tarde.',
+  notification_open_settings: 'ABRIR AJUSTES DE NOTIFICACIONES',
+  notification_open_alarm_settings: 'PERMITIR ALARMAS EXACTAS',
   notification_enable: 'Activar recordatorios',
   notification_enable_description: 'Preferencia principal de recordatorios',
-  notification_daily: 'Recordatorio diario',
-  notification_daily_description: 'Termina tu lista cada noche',
+  notification_daily: 'Recordatorios diarios',
+  notification_daily_description: 'Avisos por la mañana, tarde y noche',
   notification_time: 'Hora del recordatorio',
+  notification_times_description: 'Mañana, tarde y noche',
+  notification_morning: 'Mañana',
+  notification_afternoon: 'Tarde',
+  notification_evening: 'Noche',
   notification_habit: 'Recordatorios de hábitos',
   notification_habit_description: 'Usar las preferencias de cada hábito',
   notification_select_time: 'Seleccionar hora del recordatorio',
   notification_save_error: 'No se pudo guardar',
   notification_save_error_message:
     'Comprueba la hora seleccionada e inténtalo de nuevo.',
+  notification_limit_title: 'Límite de recordatorios alcanzado',
+  notification_limit_message:
+    'Ya tienes recordatorios activos para dos hábitos. Desactiva uno antes de activar otro.',
+  notification_limit_normalized:
+    'Solo pueden estar activos dos recordatorios de hábitos. Se desactivaron los adicionales.',
+  notification_morning_title: 'Buenos días ☀️',
+  notification_morning_body:
+    'Empieza el día con fuerza. Revisa tus hábitos de hoy.',
+  notification_afternoon_title: 'Revisión de la tarde',
+  notification_afternoon_body:
+    'Mantén el ritmo. Revisa los hábitos que te faltan.',
+  notification_evening_title: 'Termina bien el día',
+  notification_evening_body:
+    'Dedica un momento a completar los hábitos restantes.',
+  notification_habit_notification_title: 'Recordatorio de hábito',
+  notification_habit_notification_body: 'Es hora de “{{title}}”',
+  notification_channel_name: 'Recordatorios de Mindset',
+  habit_reminder_enabled_accessibility: 'Recordatorio activado',
   premium_title: 'PREMIUM',
   premium_hero: 'Haz que cada día cuente',
   premium_description: 'Descubre toda la experiencia de Mindset Tracker.',

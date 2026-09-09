@@ -36,6 +36,13 @@ const createStyles = (colors: ThemeColors) =>
       gap: spacing.small,
     },
     title: { ...typography.bodyLarge, color: colors.onPrimary, flex: 1 },
+    reminderIndicator: {
+      width: 22,
+      height: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      opacity: 0.86,
+    },
     textRTL: { textAlign: 'right', writingDirection: 'rtl' },
     completedTitle: {
       textDecorationLine: 'line-through',

@@ -182,11 +182,25 @@ export const german: TranslationDictionary = {
   notification_title: 'BENACHRICHTIGUNGEN',
   notification_preview:
     'Diese Einstellungen sind eine Vorschau. Es werden keine Berechtigungen angefordert und nichts geplant.',
+  notification_status_active:
+    '{{count}} Erinnerungen sind auf diesem Gerät geplant.',
+  notification_status_denied:
+    'Benachrichtigungen sind deaktiviert. Aktiviere sie in den Systemeinstellungen, um Erinnerungen zu erhalten.',
+  notification_status_error:
+    'Erinnerungen konnten nicht synchronisiert werden. Deine gespeicherten Einstellungen bleiben erhalten.',
+  notification_status_exact_fallback:
+    'Exakte Alarme sind deaktiviert; Android kann Erinnerungen etwas später anzeigen.',
+  notification_open_settings: 'BENACHRICHTIGUNGSEINSTELLUNGEN ÖFFNEN',
+  notification_open_alarm_settings: 'EXAKTE ALARME ERLAUBEN',
   notification_enable: 'Erinnerungen aktivieren',
   notification_enable_description: 'Allgemeine Erinnerungseinstellung',
-  notification_daily: 'Tägliche Erinnerung',
-  notification_daily_description: 'Schließe jeden Abend deine Liste ab',
+  notification_daily: 'Tägliche Erinnerungen',
+  notification_daily_description: 'Hinweise morgens, nachmittags und abends',
   notification_time: 'Erinnerungszeit',
+  notification_times_description: 'Morgens, nachmittags und abends',
+  notification_morning: 'Morgens',
+  notification_afternoon: 'Nachmittags',
+  notification_evening: 'Abends',
   notification_habit: 'Gewohnheitserinnerungen',
   notification_habit_description:
     'Einstellungen der einzelnen Gewohnheiten verwenden',
@@ -194,6 +208,24 @@ export const german: TranslationDictionary = {
   notification_save_error: 'Speichern nicht möglich',
   notification_save_error_message:
     'Prüfe die ausgewählte Zeit und versuche es erneut.',
+  notification_limit_title: 'Limit für Erinnerungen erreicht',
+  notification_limit_message:
+    'Für zwei Gewohnheiten sind bereits Erinnerungen aktiv. Deaktiviere eine, bevor du eine weitere aktivierst.',
+  notification_limit_normalized:
+    'Nur zwei Gewohnheitserinnerungen können aktiv sein. Zusätzliche Erinnerungen wurden deaktiviert.',
+  notification_morning_title: 'Guten Morgen ☀️',
+  notification_morning_body:
+    'Starte stark in den Tag. Sieh dir deine heutigen Gewohnheiten an.',
+  notification_afternoon_title: 'Nachmittags-Check-in',
+  notification_afternoon_body:
+    'Bleib dran. Sieh dir deine übrigen Gewohnheiten an.',
+  notification_evening_title: 'Beende den Tag stark',
+  notification_evening_body:
+    'Nimm dir einen Moment für deine übrigen Gewohnheiten.',
+  notification_habit_notification_title: 'Gewohnheitserinnerung',
+  notification_habit_notification_body: 'Zeit für „{{title}}“',
+  notification_channel_name: 'Mindset-Erinnerungen',
+  habit_reminder_enabled_accessibility: 'Erinnerung aktiviert',
   premium_title: 'PREMIUM',
   premium_hero: 'Lass jeden Tag zählen',
   premium_description: 'Entdecke das vollständige Mindset-Tracker-Erlebnis.',

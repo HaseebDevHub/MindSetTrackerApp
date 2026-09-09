@@ -175,17 +175,47 @@ export const english = {
   notification_title: 'NOTIFICATION',
   notification_preview:
     'These preferences are a UI preview. No notification permissions are requested and nothing is scheduled.',
+  notification_status_active:
+    '{{count}} reminders are scheduled on this device.',
+  notification_status_denied:
+    'Notifications are disabled. Enable them in system settings to receive reminders.',
+  notification_status_error:
+    'Reminders could not be synchronized. Your saved settings are unchanged.',
+  notification_status_exact_fallback:
+    'Exact alarms are disabled, so Android may deliver reminders a little later.',
+  notification_open_settings: 'OPEN NOTIFICATION SETTINGS',
+  notification_open_alarm_settings: 'ALLOW EXACT ALARMS',
   notification_enable: 'Enable reminders',
   notification_enable_description: 'Master reminder preference',
-  notification_daily: 'Daily reminder',
-  notification_daily_description: 'Finish your checklist each evening',
+  notification_daily: 'Daily reminders',
+  notification_daily_description: 'Morning, afternoon, and evening check-ins',
   notification_time: 'Reminder time',
+  notification_times_description: 'Morning, afternoon, and evening',
+  notification_morning: 'Morning',
+  notification_afternoon: 'Afternoon',
+  notification_evening: 'Evening',
   notification_habit: 'Habit reminders',
   notification_habit_description: 'Use preferences set on each habit',
   notification_select_time: 'Select reminder time',
   notification_save_error: 'Unable to save',
   notification_save_error_message:
     'Please check the selected time and try again.',
+  notification_limit_title: 'Habit reminder limit reached',
+  notification_limit_message:
+    'You already have reminders enabled for two habits. Disable one before enabling another.',
+  notification_limit_normalized:
+    'Only two habit reminders can be active. Extra reminder preferences were turned off.',
+  notification_morning_title: 'Good morning ☀️',
+  notification_morning_body: "Start your day strong. Check today's habits.",
+  notification_afternoon_title: 'Afternoon check-in',
+  notification_afternoon_body:
+    'Keep your momentum going. Check your remaining habits.',
+  notification_evening_title: 'Finish your day strong',
+  notification_evening_body: 'Take a moment to complete your remaining habits.',
+  notification_habit_notification_title: 'Habit reminder',
+  notification_habit_notification_body: 'Time for “{{title}}”',
+  notification_channel_name: 'Mindset reminders',
+  habit_reminder_enabled_accessibility: 'Reminder enabled',
   premium_title: 'PREMIUM',
   premium_hero: 'Make every day count',
   premium_description: 'Explore the full Mindset Tracker experience.',

@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Check, MoreHorizontal } from 'lucide-react-native';
+import { Bell, Check, MoreHorizontal } from 'lucide-react-native';
 import { getHabitIcon } from '../../constants/habitIcons';
 import { normalizeHabitColor } from '../../constants/habitColors';
 import { useTheme } from '../../context/ThemeContext';
@@ -168,6 +168,20 @@ export const HabitCard = React.memo(function HabitCardComponent({
           >
             {habit.title}
           </Text>
+          {habit.reminderEnabled ? (
+            <View
+              accessible
+              accessibilityLabel={t('habit_reminder_enabled_accessibility')}
+              style={styles.reminderIndicator}
+            >
+              <Bell
+                color={
+                  completed ? colors.completedHabitForeground : colors.onPrimary
+                }
+                size={15}
+              />
+            </View>
+          ) : null}
         </View>
         {completed ? (
           <View style={[styles.finished, isRTL && styles.rowRTL]}>

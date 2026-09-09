@@ -55,6 +55,74 @@ jest.mock('@react-native-google-signin/google-signin', () => ({
   },
 }));
 
+jest.mock('@notifee/react-native', () => {
+  const api = {
+    createChannel: jest.fn(async ({ id }) => id),
+    requestPermission: jest.fn(async () => ({
+      authorizationStatus: 1,
+      android: { alarm: 1 },
+    })),
+    getNotificationSettings: jest.fn(async () => ({
+      authorizationStatus: 1,
+      android: { alarm: 1 },
+    })),
+    getTriggerNotifications: jest.fn(async () => []),
+    createTriggerNotification: jest.fn(async () => undefined),
+    cancelTriggerNotification: jest.fn(async () => undefined),
+    openNotificationSettings: jest.fn(async () => undefined),
+    openAlarmPermissionSettings: jest.fn(async () => undefined),
+  };
+
+  return {
+    __esModule: true,
+    default: api,
+    AlarmType: { SET_EXACT_AND_ALLOW_WHILE_IDLE: 3 },
+    AndroidImportance: { HIGH: 4 },
+    AndroidNotificationSetting: { DISABLED: 0, ENABLED: 1 },
+    AuthorizationStatus: {
+      DENIED: 0,
+      AUTHORIZED: 1,
+      PROVISIONAL: 2,
+      NOT_DETERMINED: -1,
+    },
+    RepeatFrequency: { DAILY: 0 },
+    TriggerType: { TIMESTAMP: 0 },
+  };
+});
+
+jest.mock('react-native-reanimated', () => {
+  const { Text, View } = require('react-native');
+  const transition = { duration: () => transition };
+  return {
+    __esModule: true,
+    default: {
+      View,
+      Text,
+      createAnimatedComponent: component => component,
+      call: () => undefined,
+    },
+    Easing: {
+      cubic: value => value,
+      in: easing => easing,
+      inOut: easing => easing,
+    },
+    FadeIn: transition,
+    FadeOut: transition,
+    cancelAnimation: jest.fn(),
+    interpolateColor: jest.fn((_value, _input, output) => output[0]),
+    runOnJS: callback => callback,
+    useAnimatedProps: factory => factory(),
+    useAnimatedStyle: factory => factory(),
+    useSharedValue: value => ({ value }),
+    withSequence: (...values) => values[values.length - 1],
+    withSpring: value => value,
+    withTiming: (value, _config, callback) => {
+      if (callback) callback(true);
+      return value;
+    },
+  };
+});
+
 jest.mock('./src/database/repositories/habitRepository', () => {
   let nextId = 1;
   return {

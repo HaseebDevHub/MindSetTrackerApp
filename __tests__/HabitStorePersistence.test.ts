@@ -36,6 +36,8 @@ function resetPreferenceState() {
     STORAGE_KEYS.ACHIEVEMENT_UNLOCKS,
     STORAGE_KEYS.CELEBRATED_PERFECT_DAYS,
     STORAGE_KEYS.WATERMELON_HABIT_MIGRATION_V1,
+    STORAGE_KEYS.NOTIFICATION_REMINDER_LIMIT_MIGRATED,
+    STORAGE_KEYS.NOTIFICATION_REMINDER_LIMIT_NOTICE,
   ].forEach(key => storage.remove(key));
 }
 
@@ -116,6 +118,74 @@ describe('async WatermelonDB store orchestration', () => {
       frequency: 'EVERYDAY',
       createdAt: '2026-08-30',
     });
+  });
+
+  test('saves a third habit without its reminder when two slots are occupied', async () => {
+    const reminderHabits = [
+      { ...habit, id: 'reminder-1', createdAt: '2026-08-20' },
+      { ...habit, id: 'reminder-2', createdAt: '2026-08-21' },
+    ];
+    const repository = new InMemoryHabitRepository(reminderHabits);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+
+    expect(
+      await store.getState().addHabit({
+        title: 'Third reminder',
+        timeOfDay: 'EVENING',
+        iconName: 'Bell',
+        reminderEnabled: true,
+        reminderTime: '18:00',
+      }),
+    ).toBe(true);
+    expect(
+      store.getState().habits.find(item => item.title === 'Third reminder'),
+    ).toMatchObject({ reminderEnabled: false });
+  });
+
+  test('keeps an archived reminder paused when both active slots are occupied', async () => {
+    const archived = {
+      ...habit,
+      id: 'archived-reminder',
+      archived: true,
+      createdAt: '2026-08-19',
+    };
+    const repository = new InMemoryHabitRepository([
+      archived,
+      { ...habit, id: 'reminder-1', createdAt: '2026-08-20' },
+      { ...habit, id: 'reminder-2', createdAt: '2026-08-21' },
+    ]);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+
+    expect(await store.getState().setHabitArchived(archived.id, false)).toBe(
+      false,
+    );
+    expect(
+      store.getState().habits.find(item => item.id === archived.id)?.archived,
+    ).toBe(true);
+  });
+
+  test('normalizes legacy reminder preferences to the two oldest habits', async () => {
+    const repository = new InMemoryHabitRepository([
+      { ...habit, id: 'newest', createdAt: '2026-08-22' },
+      { ...habit, id: 'oldest', createdAt: '2026-08-20' },
+      { ...habit, id: 'middle', createdAt: '2026-08-21' },
+    ]);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+
+    expect(await store.getState().normalizeHabitReminderLimit()).toBe(1);
+    expect(
+      store
+        .getState()
+        .habits.filter(item => item.reminderEnabled)
+        .map(item => item.id)
+        .sort(),
+    ).toEqual(['middle', 'oldest']);
+    expect(
+      storage.getBoolean(STORAGE_KEYS.NOTIFICATION_REMINDER_LIMIT_NOTICE),
+    ).toBe(true);
   });
 
   test('updates and archives the database before changing Zustand', async () => {

@@ -12,7 +12,10 @@ import type {
   DriveBackupMetadata,
   MindsetTrackerBackup,
 } from '../services/backup/backupTypes';
-import { BackupValidationError, parseBackup } from '../services/backup/backupValidation';
+import {
+  BackupValidationError,
+  parseBackup,
+} from '../services/backup/backupValidation';
 import {
   backupSyncStorage,
   type BackupAccountMetadata,
@@ -85,8 +88,13 @@ const defaultDependencies: Dependencies = {
     import('../services/backup/backupDataService').then(module =>
       module.recoverPendingPreferenceRestore(),
     ),
-  reloadApplicationData: () =>
-    useAppStore.getState().reloadPersistentData(),
+  reloadApplicationData: async () => {
+    const reloaded = await useAppStore.getState().reloadPersistentData();
+    if (reloaded) {
+      await useAppStore.getState().normalizeHabitReminderLimit();
+    }
+    return reloaded;
+  },
   now: () => new Date(),
 };
 
@@ -193,8 +201,7 @@ export function createBackupSyncStore(
         return { ok: false, reason: 'offline' };
       }
       if (
-        (get().status === 'conflict' ||
-          get().status === 'restore_available') &&
+        (get().status === 'conflict' || get().status === 'restore_available') &&
         !confirmRemoteOverwrite
       ) {
         return { ok: false, reason: 'conflict' };
@@ -323,13 +330,15 @@ export function createBackupSyncStore(
           isInitialized: false,
           error: undefined,
           backupMetadata: undefined,
-          lastSyncedAt: backupSyncStorage.getAccount(userId)
-            ?.lastSuccessfulSyncAt,
+          lastSyncedAt:
+            backupSyncStorage.getAccount(userId)?.lastSuccessfulSyncAt,
         });
         initializationPromise = (async () => {
           try {
             if (!(await dependencies.recoverPendingPreferenceRestore())) {
-              throw new Error('Pending restore preferences could not be applied.');
+              throw new Error(
+                'Pending restore preferences could not be applied.',
+              );
             }
             const [localExists, discovery] = await Promise.all([
               dependencies.hasMeaningfulLocalData(),
@@ -349,10 +358,16 @@ export function createBackupSyncStore(
                   account &&
                   localRevision > account.lastSyncedLocalRevision
                 ) {
-                  set({ status: 'pending', backupMetadata: discovery.valid.metadata });
+                  set({
+                    status: 'pending',
+                    backupMetadata: discovery.valid.metadata,
+                  });
                   schedule();
                 } else {
-                  set({ status: 'success', backupMetadata: discovery.valid.metadata });
+                  set({
+                    status: 'success',
+                    backupMetadata: discovery.valid.metadata,
+                  });
                 }
               } else {
                 set({
@@ -396,9 +411,11 @@ export function createBackupSyncStore(
           queuedAfterCurrent = true;
           return syncPromise;
         }
-        syncPromise = performSync(options?.confirmRemoteOverwrite).finally(() => {
-          syncPromise = undefined;
-        });
+        syncPromise = performSync(options?.confirmRemoteOverwrite).finally(
+          () => {
+            syncPromise = undefined;
+          },
+        );
         return syncPromise;
       },
 
@@ -408,7 +425,8 @@ export function createBackupSyncStore(
           return Promise.resolve({ ok: false, reason: 'conflict' });
         }
         const userId = get().userId;
-        if (!userId) return Promise.resolve({ ok: false, reason: 'not_connected' });
+        if (!userId)
+          return Promise.resolve({ ok: false, reason: 'not_connected' });
         clearDebounce();
         restorePromise = (async (): Promise<BackupResult> => {
           set({ status: 'restoring', isRestoring: true, error: undefined });
@@ -472,7 +490,10 @@ export function createBackupSyncStore(
         backupSyncStorage.incrementLocalRevision();
         if (get().isSyncing) queuedAfterCurrent = true;
         if (!get().userId) return;
-        if (get().status !== 'conflict' && get().status !== 'restore_available') {
+        if (
+          get().status !== 'conflict' &&
+          get().status !== 'restore_available'
+        ) {
           set({ status: online ? 'pending' : 'offline' });
           if (!get().isSyncing) schedule();
         }
@@ -481,7 +502,8 @@ export function createBackupSyncStore(
       setOnline: nextOnline => {
         const wasOffline = !online;
         online = nextOnline;
-        if (!nextOnline && get().status === 'pending') set({ status: 'offline' });
+        if (!nextOnline && get().status === 'pending')
+          set({ status: 'offline' });
         if (nextOnline && wasOffline) get().retryPending();
       },
 

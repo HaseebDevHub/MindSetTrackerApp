@@ -65,6 +65,7 @@ import {
   normalizeScheduleMode,
   normalizeWeekdays,
 } from '../../utils/habitSchedule';
+import { canEnableHabitReminder } from '../../utils/notifications';
 import { formatLocalTime } from '../../utils/time';
 import useStyles from './TodayScreenStyle';
 
@@ -592,6 +593,18 @@ export function CreateHabitScreen({ navigation, route }: Props) {
       ? `${quotaCount} ${t(scheduleLabelKeys[scheduleMode]).toLowerCase()}`
       : t(scheduleLabelKeys[scheduleMode]);
 
+  const showReminderLimit = () =>
+    Alert.alert(t('notification_limit_title'), t('notification_limit_message'));
+
+  const changeReminderEnabled = (enabled: boolean) => {
+    if (enabled && !canEnableHabitReminder(habits, existing?.id)) {
+      setReminder(false);
+      showReminderLimit();
+      return;
+    }
+    setReminder(enabled);
+  };
+
   const chooseType = (value: HabitType) => {
     setHabitType(value);
     setScheduleMode(value === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY');
@@ -613,6 +626,12 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         t('habit_select_weekday_error'),
       );
       return;
+    }
+    const reminderAllowed =
+      !reminder || canEnableHabitReminder(habits, existing?.id);
+    if (!reminderAllowed) {
+      setReminder(false);
+      showReminderLimit();
     }
     savingRef.current = true;
     setIsSaving(true);
@@ -649,7 +668,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         habitType === 'NEGATIVE' && motivationalText.trim()
           ? motivationalText.trim()
           : undefined,
-      reminderEnabled: reminder,
+      reminderEnabled: reminderAllowed && reminder,
       reminderTime,
     };
     const saved = existing
@@ -1082,7 +1101,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
             <Switch
               accessibilityLabel={t('habit_enable_reminder')}
               value={reminder}
-              onValueChange={setReminder}
+              onValueChange={changeReminderEnabled}
               trackColor={{ false: colors.muted, true: colors.primary }}
               thumbColor={colors.onPrimary}
             />

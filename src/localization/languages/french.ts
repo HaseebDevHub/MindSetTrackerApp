@@ -6,8 +6,7 @@ export const french: TranslationDictionary = {
   splash_logo: 'Mindset Tracker',
   splash_day_in_app: 'Jour {{day}} avec Mindset Tracker',
   splash_weekly_completed_one: '{{count}} habitude terminée cette semaine',
-  splash_weekly_completed_other:
-    '{{count}} habitudes terminées cette semaine',
+  splash_weekly_completed_other: '{{count}} habitudes terminées cette semaine',
   filter_all: 'TOUS',
   filter_anytime: 'À TOUT MOMENT',
   filter_morning: 'MATIN',
@@ -182,17 +181,49 @@ export const french: TranslationDictionary = {
   notification_title: 'NOTIFICATIONS',
   notification_preview:
     "Ces préférences sont une démonstration. Aucune autorisation n'est demandée et rien n'est programmé.",
+  notification_status_active:
+    '{{count}} rappels sont programmés sur cet appareil.',
+  notification_status_denied:
+    'Les notifications sont désactivées. Activez-les dans les réglages système pour recevoir les rappels.',
+  notification_status_error:
+    "Les rappels n'ont pas pu être synchronisés. Vos réglages enregistrés sont inchangés.",
+  notification_status_exact_fallback:
+    'Les alarmes exactes sont désactivées ; Android peut livrer les rappels un peu plus tard.',
+  notification_open_settings: 'OUVRIR LES RÉGLAGES DE NOTIFICATION',
+  notification_open_alarm_settings: 'AUTORISER LES ALARMES EXACTES',
   notification_enable: 'Activer les rappels',
   notification_enable_description: 'Préférence principale des rappels',
-  notification_daily: 'Rappel quotidien',
-  notification_daily_description: 'Terminez votre liste chaque soir',
+  notification_daily: 'Rappels quotidiens',
+  notification_daily_description: 'Rappels le matin, l’après-midi et le soir',
   notification_time: 'Heure du rappel',
+  notification_times_description: 'Matin, après-midi et soir',
+  notification_morning: 'Matin',
+  notification_afternoon: 'Après-midi',
+  notification_evening: 'Soir',
   notification_habit: "Rappels d'habitudes",
   notification_habit_description: 'Utiliser les préférences de chaque habitude',
   notification_select_time: "Choisir l'heure du rappel",
   notification_save_error: "Impossible d'enregistrer",
   notification_save_error_message:
     "Vérifiez l'heure sélectionnée et réessayez.",
+  notification_limit_title: 'Limite de rappels atteinte',
+  notification_limit_message:
+    "Des rappels sont déjà activés pour deux habitudes. Désactivez-en un avant d'en activer un autre.",
+  notification_limit_normalized:
+    "Seuls deux rappels d'habitudes peuvent être actifs. Les rappels supplémentaires ont été désactivés.",
+  notification_morning_title: 'Bonjour ☀️',
+  notification_morning_body:
+    "Commencez bien la journée. Consultez vos habitudes d'aujourd'hui.",
+  notification_afternoon_title: "Point de l'après-midi",
+  notification_afternoon_body:
+    'Gardez votre élan. Consultez les habitudes restantes.',
+  notification_evening_title: 'Terminez bien la journée',
+  notification_evening_body:
+    'Prenez un moment pour terminer vos habitudes restantes.',
+  notification_habit_notification_title: "Rappel d'habitude",
+  notification_habit_notification_body: 'Il est temps de « {{title}} »',
+  notification_channel_name: 'Rappels Mindset',
+  habit_reminder_enabled_accessibility: 'Rappel activé',
   premium_title: 'PREMIUM',
   premium_hero: 'Faites de chaque jour une réussite',
   premium_description: "Découvrez toute l'expérience Mindset Tracker.",
