@@ -1,42 +1,18 @@
-import React, {
-  memo,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
-import {
-  Alert,
-  Modal,
-  Pressable,
-  ScrollView,
-  Switch,
-  Text,
-  View,
-  type ViewStyle,
-} from 'react-native';
+import React, { useCallback, useRef, useState, useTransition } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import {
-  Ban,
   Bell,
   CalendarDays,
-  Check,
   ChevronDown,
   ChevronLeft,
   ChevronRight,
-  ListTodo,
   Minus,
   MoreVertical,
   Palette,
   Plus,
-  Repeat2,
   Target,
-  Trash2,
-  Archive,
-  X,
 } from 'lucide-react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { AppButton } from '../../components/common/AppButton';
 import { AppHeader } from '../../components/common/AppHeader';
 import { AppInput } from '../../components/common/AppInput';
@@ -44,12 +20,11 @@ import { ReminderTimeModal } from '../../components/common/ReminderTimeModal';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import {
   DEFAULT_HABIT_COLOR,
-  HABIT_COLORS,
   normalizeHabitColor,
 } from '../../constants/habitColors';
 import { DEFAULT_HABIT_ICON_ID, HABIT_ICONS } from '../../constants/habitIcons';
 import { useTheme } from '../../context/ThemeContext';
-import { useTranslation, type TranslationKey } from '../../localization';
+import { useTranslation } from '../../localization';
 import { reminderSettingsStorage } from '../../storage/reminderSettingsStorage';
 import { useAppStore } from '../../store/useAppStore';
 import type {
@@ -60,12 +35,7 @@ import type {
   TimeOfDay,
   TodayStackParamList,
 } from '../../types/models';
-import {
-  addDays,
-  formatShortDate,
-  fromDateKey,
-  toDateKey,
-} from '../../utils/dates';
+import { formatShortDate, fromDateKey, toDateKey } from '../../utils/dates';
 import {
   normalizeGoalMode,
   normalizeHabitType,
@@ -77,551 +47,27 @@ import { formatLocalTime } from '../../utils/time';
 import useStyles from './TodayScreenStyle';
 import { HabitAlertTypeSelector } from './components/HabitAlertTypeSelector';
 import { normalizeHabitAlertType } from '../../utils/habitSchedule';
+import { HabitTypeSelection } from './components/createHabit/HabitTypeSelection';
+import { DateSheet } from './components/createHabit/DateSheet';
+import { ScheduleSheet } from './components/createHabit/ScheduleSheet';
+import { IconSheet } from './components/createHabit/IconSheet';
+import { ColorSheet } from './components/createHabit/ColorSheet';
+import { HabitActionsMenu } from './components/createHabit/HabitActionsMenu';
+import {
+  backgroundColorStyle,
+  habitTypes,
+  timeOptions,
+  goalModeLabelKeys,
+  scheduleLabelKeys,
+  weekdayLabelKeys,
+} from './components/createHabit/createHabitOptions';
 
 type Props = NativeStackScreenProps<TodayStackParamList, 'CreateHabit'>;
-
-const timeOptions: { value: TimeOfDay; labelKey: TranslationKey }[] = [
-  { value: 'ANYTIME', labelKey: 'habit_time_anytime' },
-  { value: 'MORNING', labelKey: 'habit_time_morning' },
-  { value: 'AFTERNOON', labelKey: 'habit_time_afternoon' },
-  { value: 'EVENING', labelKey: 'habit_time_evening' },
-];
-
-const habitTypes: {
-  value: HabitType;
-  labelKey: TranslationKey;
-  icon: typeof Repeat2;
-  descriptionKey: TranslationKey;
-}[] = [
-  {
-    value: 'REGULAR',
-    labelKey: 'habit_type_regular',
-    icon: Repeat2,
-    descriptionKey: 'habit_type_regular_description',
-  },
-  {
-    value: 'NEGATIVE',
-    labelKey: 'habit_type_negative',
-    icon: Ban,
-    descriptionKey: 'habit_type_negative_description',
-  },
-  {
-    value: 'ONE_TIME',
-    labelKey: 'habit_type_one_time',
-    icon: ListTodo,
-    descriptionKey: 'habit_type_one_time_description',
-  },
-];
-
-const scheduleLabelKeys: Record<HabitScheduleMode, TranslationKey> = {
-  EVERYDAY: 'habit_schedule_everyday',
-  WEEKDAYS: 'habit_schedule_weekdays',
-  SPECIFIC_DAYS: 'habit_schedule_specific',
-  WEEKLY_QUOTA: 'habit_schedule_weekly',
-  MONTHLY_QUOTA: 'habit_schedule_monthly',
-  YEARLY_QUOTA: 'habit_schedule_yearly',
-  ONE_TIME: 'habit_schedule_one_time',
-};
-
-const scheduleModes: HabitScheduleMode[] = [
-  'EVERYDAY',
-  'WEEKDAYS',
-  'SPECIFIC_DAYS',
-  'WEEKLY_QUOTA',
-  'MONTHLY_QUOTA',
-  'YEARLY_QUOTA',
-];
-const goalModeLabelKeys: Record<HabitGoalMode, TranslationKey> = {
-  OFF: 'habit_goal_off',
-  DURATION: 'habit_goal_duration',
-  REPEAT: 'habit_goal_repeat',
-};
-const weekdayLabelKeys: TranslationKey[] = [
-  'weekday_sun',
-  'weekday_mon',
-  'weekday_tue',
-  'weekday_wed',
-  'weekday_thu',
-  'weekday_fri',
-  'weekday_sat',
-];
-const weekdayAccessibilityKeys: TranslationKey[] = [
-  'weekday_sunday',
-  'weekday_monday',
-  'weekday_tuesday',
-  'weekday_wednesday',
-  'weekday_thursday',
-  'weekday_friday',
-  'weekday_saturday',
-];
-const iconLabelKeys: Record<string, TranslationKey> = {
-  Droplets: 'habit_icon_water',
-  Footprints: 'habit_icon_walking',
-  BookOpen: 'habit_icon_reading',
-  Brain: 'habit_icon_meditation',
-  Moon: 'habit_icon_night',
-  Dumbbell: 'habit_icon_exercise',
-  Pill: 'habit_icon_medicine',
-  AlarmClock: 'habit_icon_alarm',
-  Utensils: 'habit_icon_food',
-  BedDouble: 'habit_icon_sleep',
-  Activity: 'habit_icon_running',
-  BicepsFlexed: 'habit_icon_gym',
-  HeartPulse: 'habit_icon_health',
-  GraduationCap: 'habit_icon_study',
-  BriefcaseBusiness: 'habit_icon_work',
-  SprayCan: 'habit_icon_cleaning',
-  NotebookPen: 'habit_icon_journaling',
-};
-const colorLabelKeys: Record<string, TranslationKey> = {
-  blue: 'habit_color_blue',
-  green: 'habit_color_green',
-  amber: 'habit_color_amber',
-  indigo: 'habit_color_indigo',
-  red: 'habit_color_red',
-  sky: 'habit_color_sky',
-  coral: 'habit_color_coral',
-  teal: 'habit_color_teal',
-};
-
-function backgroundColorStyle(backgroundColor: string): ViewStyle {
-  return { backgroundColor };
-}
-
-type ScheduleDraft = {
-  mode: HabitScheduleMode;
-  weekdays: number[];
-  quota: number;
-};
-
-function BottomSheet({
-  visible,
-  title,
-  onClose,
-  children,
-}: {
-  visible: boolean;
-  title: string;
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  const styles = useStyles();
-  const { colors } = useTheme();
-  const { isRTL, t } = useTranslation();
-  return (
-    <Modal
-      transparent
-      visible={visible}
-      animationType="slide"
-      statusBarTranslucent
-      onRequestClose={onClose}
-    >
-      <View style={styles.createSheetBackdrop}>
-        <Pressable
-          accessibilityLabel={t('habit_close_sheet', { title })}
-          style={styles.createSheetDismiss}
-          onPress={onClose}
-        />
-        <View accessibilityViewIsModal style={styles.createSheet}>
-          <View style={styles.sheetHandle} />
-          <View style={[styles.createSheetHeader, isRTL && styles.rowRTL]}>
-            <Text style={[styles.sheetTitle, isRTL && styles.textRTL]}>
-              {title}
-            </Text>
-            <Pressable
-              accessibilityLabel={t('habit_close_sheet', { title })}
-              onPress={onClose}
-            >
-              <X color={colors.textSecondary} size={22} />
-            </Pressable>
-          </View>
-          {children}
-        </View>
-      </View>
-    </Modal>
-  );
-}
-
-function ScheduleSheet({
-  visible,
-  value,
-  onCancel,
-  onSave,
-}: {
-  visible: boolean;
-  value: ScheduleDraft;
-  onCancel: () => void;
-  onSave: (value: ScheduleDraft) => void;
-}) {
-  const styles = useStyles();
-  const { colors } = useTheme();
-  const { isRTL, t } = useTranslation();
-  const [draft, setDraft] = useState(value);
-  useEffect(() => {
-    if (visible) setDraft(value);
-  }, [value, visible]);
-  const maximum =
-    draft.mode === 'WEEKLY_QUOTA'
-      ? 6
-      : draft.mode === 'MONTHLY_QUOTA'
-      ? 31
-      : 365;
-  const requiresQuota =
-    draft.mode === 'WEEKLY_QUOTA' ||
-    draft.mode === 'MONTHLY_QUOTA' ||
-    draft.mode === 'YEARLY_QUOTA';
-  const valid = draft.mode !== 'SPECIFIC_DAYS' || draft.weekdays.length > 0;
-
-  return (
-    <BottomSheet visible={visible} title={t('habit_days')} onClose={onCancel}>
-      <ScrollView showsVerticalScrollIndicator={false}>
-        <View style={styles.createSheetOptions}>
-          {scheduleModes.map(mode => {
-            const selected = draft.mode === mode;
-            return (
-              <Pressable
-                key={mode}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                onPress={() => setDraft(current => ({ ...current, mode }))}
-                style={[
-                  styles.createSheetOption,
-                  isRTL && styles.rowRTL,
-                  selected && styles.createSheetOptionActive,
-                ]}
-              >
-                <Text
-                  style={[
-                    styles.createSheetOptionText,
-                    isRTL && styles.textRTL,
-                  ]}
-                >
-                  {t(scheduleLabelKeys[mode])}
-                </Text>
-                <View
-                  style={[
-                    styles.createRadio,
-                    selected && styles.createRadioActive,
-                  ]}
-                >
-                  {selected ? (
-                    <Check color={colors.onPrimary} size={16} />
-                  ) : null}
-                </View>
-              </Pressable>
-            );
-          })}
-        </View>
-        {draft.mode === 'SPECIFIC_DAYS' ? (
-          <View style={[styles.weekdayPicker, isRTL && styles.rowRTL]}>
-            {weekdayLabelKeys.map((labelKey, weekday) => {
-              const selected = draft.weekdays.includes(weekday);
-              return (
-                <Pressable
-                  key={`${labelKey}-${weekday}`}
-                  accessibilityLabel={t(weekdayAccessibilityKeys[weekday])}
-                  accessibilityRole="checkbox"
-                  accessibilityState={{ checked: selected }}
-                  onPress={() =>
-                    setDraft(current => ({
-                      ...current,
-                      weekdays: selected
-                        ? current.weekdays.filter(
-                            dayValue => dayValue !== weekday,
-                          )
-                        : normalizeWeekdays([...current.weekdays, weekday]),
-                    }))
-                  }
-                  style={[
-                    styles.weekdayButton,
-                    selected && styles.weekdayButtonActive,
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.weekdayButtonText,
-                      isRTL && styles.centeredTextRTL,
-                      selected && styles.accentActiveText,
-                    ]}
-                  >
-                    {t(labelKey)}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        ) : null}
-        {requiresQuota ? (
-          <View style={[styles.quotaPicker, isRTL && styles.rowRTL]}>
-            <Pressable
-              accessibilityLabel={t('habit_decrease_target')}
-              disabled={draft.quota <= 1}
-              onPress={() =>
-                setDraft(current => ({
-                  ...current,
-                  quota: Math.max(1, current.quota - 1),
-                }))
-              }
-              style={styles.quotaButton}
-            >
-              <Minus color={colors.text} size={22} />
-            </Pressable>
-            <View style={styles.quotaValueGroup}>
-              <Text style={styles.quotaValue}>{draft.quota}</Text>
-              <Text
-                style={[styles.quotaCaption, isRTL && styles.centeredTextRTL]}
-              >
-                {draft.mode === 'WEEKLY_QUOTA'
-                  ? t('habit_days_per_week')
-                  : draft.mode === 'MONTHLY_QUOTA'
-                  ? t('habit_days_per_month')
-                  : t('habit_days_per_year')}
-              </Text>
-            </View>
-            <Pressable
-              accessibilityLabel={t('habit_increase_target')}
-              disabled={draft.quota >= maximum}
-              onPress={() =>
-                setDraft(current => ({
-                  ...current,
-                  quota: Math.min(maximum, current.quota + 1),
-                }))
-              }
-              style={styles.quotaButton}
-            >
-              <Plus color={colors.text} size={22} />
-            </Pressable>
-          </View>
-        ) : null}
-      </ScrollView>
-      {!valid ? (
-        <Text style={[styles.formError, isRTL && styles.textRTL]}>
-          {t('habit_select_weekday_error')}
-        </Text>
-      ) : null}
-      <View style={[styles.createSheetActions, isRTL && styles.rowRTL]}>
-        <AppButton
-          title={t('common_cancel')}
-          variant="secondary"
-          onPress={onCancel}
-          style={styles.createSheetAction}
-        />
-        <AppButton
-          title={t('common_save')}
-          disabled={!valid}
-          onPress={() => onSave(draft)}
-          style={styles.createSheetAction}
-        />
-      </View>
-    </BottomSheet>
-  );
-}
-
-function DateSheet({
-  visible,
-  title,
-  value,
-  allowOff,
-  onCancel,
-  onSave,
-}: {
-  visible: boolean;
-  title: string;
-  value?: string;
-  allowOff?: boolean;
-  onCancel: () => void;
-  onSave: (value?: string) => void;
-}) {
-  const styles = useStyles();
-  const { isRTL, locale, t } = useTranslation();
-  const today = useMemo(() => new Date(), []);
-  const dates = useMemo(() => {
-    const upcoming = Array.from({ length: 366 }, (_, index) =>
-      addDays(today, index),
-    );
-    if (value && value < toDateKey(today)) {
-      return [fromDateKey(value), ...upcoming];
-    }
-    return upcoming;
-  }, [today, value]);
-  const [draft, setDraft] = useState<string | undefined>(value);
-  useEffect(() => {
-    if (visible) setDraft(value);
-  }, [value, visible]);
-  return (
-    <BottomSheet visible={visible} title={title} onClose={onCancel}>
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={isRTL ? styles.horizontalMirror : undefined}
-        contentContainerStyle={styles.datePickerRow}
-      >
-        {allowOff ? (
-          <Pressable
-            accessibilityRole="radio"
-            accessibilityState={{ selected: draft === undefined }}
-            onPress={() => setDraft(undefined)}
-            style={[
-              styles.datePickerOption,
-              isRTL && styles.horizontalUnmirror,
-              draft === undefined && styles.datePickerOptionActive,
-            ]}
-          >
-            <Text
-              style={[styles.datePickerDay, isRTL && styles.centeredTextRTL]}
-            >
-              {t('habit_goal_off')}
-            </Text>
-            <Text
-              style={[styles.datePickerDate, isRTL && styles.centeredTextRTL]}
-            >
-              {t('habit_no_end')}
-            </Text>
-          </Pressable>
-        ) : null}
-        {dates.map(date => {
-          const dateKey = toDateKey(date);
-          const selected = draft === dateKey;
-          return (
-            <Pressable
-              key={dateKey}
-              accessibilityLabel={date.toLocaleDateString(locale, {
-                dateStyle: 'full',
-              })}
-              accessibilityRole="radio"
-              accessibilityState={{ selected }}
-              onPress={() => setDraft(dateKey)}
-              style={[
-                styles.datePickerOption,
-                isRTL && styles.horizontalUnmirror,
-                selected && styles.datePickerOptionActive,
-              ]}
-            >
-              <Text
-                style={[styles.datePickerDay, isRTL && styles.centeredTextRTL]}
-              >
-                {date.toLocaleDateString(locale, { weekday: 'short' })}
-              </Text>
-              <Text
-                style={[styles.datePickerDate, isRTL && styles.centeredTextRTL]}
-              >
-                {formatShortDate(date, locale)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </ScrollView>
-      <View style={[styles.createSheetActions, isRTL && styles.rowRTL]}>
-        <AppButton
-          title={t('common_cancel')}
-          variant="secondary"
-          onPress={onCancel}
-          style={styles.createSheetAction}
-        />
-        <AppButton
-          title={t('common_save')}
-          disabled={!allowOff && !draft}
-          onPress={() => onSave(draft)}
-          style={styles.createSheetAction}
-        />
-      </View>
-    </BottomSheet>
-  );
-}
-
-// Keep selection local: switching tabs should not rerender/reset the entire
-// habit form or subscribe to database changes.
-const HabitTypeSelection = memo(function TypeSelection({
-  initialType,
-  onBack,
-  onContinue,
-}: {
-  initialType: HabitType;
-  onBack: () => void;
-  onContinue: (type: HabitType) => void;
-}) {
-  const styles = useStyles();
-  const { colors } = useTheme();
-  const { t, isRTL } = useTranslation();
-  const [selectedType, setSelectedType] = useState(initialType);
-  const selectedRef = useRef(initialType);
-  const selectType = useCallback((next: HabitType) => {
-    if (selectedRef.current === next) return;
-    selectedRef.current = next;
-    setSelectedType(next);
-  }, []);
-  const definition = habitTypes.find(item => item.value === selectedType)!;
-
-  return (
-    <ScreenContainer scroll style={styles.createTypeScreen}>
-      <AppHeader
-        title={t('habit_create_title')}
-        onBack={onBack}
-        isRTL={isRTL}
-      />
-      <View style={[styles.habitTypeRow, isRTL && styles.rowRTL]}>
-        {habitTypes.map(({ value, labelKey, icon: Icon }) => {
-          const selected = value === selectedType;
-          return (
-            <Pressable
-              key={value}
-              accessibilityRole="tab"
-              accessibilityState={{ selected }}
-              accessibilityLabel={t(labelKey).replace('\n', ' ')}
-              hitSlop={4}
-              onPress={() => selectType(value)}
-              style={({ pressed }) => [
-                styles.habitTypeCard,
-                selected && styles.habitTypeCardActive,
-                selected && value === 'NEGATIVE' && styles.habitTypeNegative,
-                pressed && styles.reminderPressed,
-              ]}
-            >
-              <Icon
-                pointerEvents="none"
-                color={selected ? colors.onPrimary : colors.textSecondary}
-                size={31}
-              />
-              <Text
-                pointerEvents="none"
-                style={[
-                  styles.habitTypeLabel,
-                  isRTL && styles.centeredTextRTL,
-                  selected && styles.accentActiveText,
-                ]}
-              >
-                {t(labelKey)}
-              </Text>
-            </Pressable>
-          );
-        })}
-      </View>
-      <View style={styles.habitTypeDescription}>
-        <Text
-          style={[styles.habitTypeDescriptionTitle, isRTL && styles.textRTL]}
-        >
-          {t(definition.labelKey).replace('\n', ' ')}
-        </Text>
-        <Text
-          style={[styles.habitTypeDescriptionText, isRTL && styles.textRTL]}
-        >
-          {t(definition.descriptionKey)}
-        </Text>
-      </View>
-      <AppButton
-        title={t('habit_create_own')}
-        onPress={() => onContinue(selectedRef.current)}
-        style={styles.createOwnButton}
-      />
-    </ScreenContainer>
-  );
-});
 
 export function CreateHabitScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
   const { isRTL, locale, t } = useTranslation();
   const styles = useStyles();
-  const insets = useSafeAreaInsets();
   const habits = useAppStore(state => state.habits);
   const add = useAppStore(state => state.addHabit);
   const update = useAppStore(state => state.updateHabit);
@@ -631,6 +77,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
   const initialType = normalizeHabitType(existing?.habitType);
   const [habitType, setHabitType] = useState<HabitType>(initialType);
   const [editingDetails, setEditingDetails] = useState(Boolean(existing));
+  const [isOpeningDetails, startOpeningDetails] = useTransition();
   const [title, setTitle] = useState(existing?.title ?? '');
   const [iconName, setIconName] = useState(
     existing?.iconName ?? DEFAULT_HABIT_ICON_ID,
@@ -671,8 +118,6 @@ export function CreateHabitScreen({ navigation, route }: Props) {
   );
   const [iconSheetVisible, setIconSheetVisible] = useState(false);
   const [colorSheetVisible, setColorSheetVisible] = useState(false);
-  const [iconDraft, setIconDraft] = useState(iconName);
-  const [colorDraft, setColorDraft] = useState(color);
   const [scheduleSheetVisible, setScheduleSheetVisible] = useState(false);
   const [targetDateSheetVisible, setTargetDateSheetVisible] = useState(false);
   const [endDateSheetVisible, setEndDateSheetVisible] = useState(false);
@@ -707,18 +152,20 @@ export function CreateHabitScreen({ navigation, route }: Props) {
 
   const continueWithType = useCallback(
     (value: HabitType) => {
-      if (value !== habitType) {
-        setHabitType(value);
-        setScheduleMode(value === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY');
-        setSelectedWeekdays([]);
-        setQuotaCount(3);
-        setGoalMode('OFF');
-        setGoalTarget(10);
-        setMotivationalText('');
-        setEndDate(undefined);
-        setTargetDate(toDateKey(new Date()));
-      }
-      setEditingDetails(true);
+      startOpeningDetails(() => {
+        if (value !== habitType) {
+          setHabitType(value);
+          setScheduleMode(value === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY');
+          setSelectedWeekdays([]);
+          setQuotaCount(3);
+          setGoalMode('OFF');
+          setGoalTarget(10);
+          setMotivationalText('');
+          setEndDate(undefined);
+          setTargetDate(toDateKey(new Date()));
+        }
+        setEditingDetails(true);
+      });
     },
     [habitType],
   );
@@ -873,6 +320,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
     return (
       <HabitTypeSelection
         initialType={habitType}
+        loading={isOpeningDetails}
         onBack={navigation.goBack}
         onContinue={continueWithType}
       />
@@ -927,7 +375,6 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         <Pressable
           accessibilityLabel={t('habit_choose_icon')}
           onPress={() => {
-            setIconDraft(iconName);
             setIconSheetVisible(true);
           }}
           style={[styles.appearanceRow, isRTL && styles.rowRTL]}
@@ -951,7 +398,6 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         <Pressable
           accessibilityLabel={t('habit_choose_color')}
           onPress={() => {
-            setColorDraft(color);
             setColorSheetVisible(true);
           }}
           style={[styles.appearanceRow, isRTL && styles.rowRTL]}
@@ -1199,192 +645,88 @@ export function CreateHabitScreen({ navigation, route }: Props) {
         onPress={() => save().catch(() => undefined)}
         style={styles.save}
       />
-      <Modal
-        transparent
-        visible={Boolean(existing && actionsVisible)}
-        animationType="fade"
-        onRequestClose={() => setActionsVisible(false)}
-      >
-        <Pressable
-          accessibilityLabel={t('habit_close_actions')}
-          style={styles.editActionsBackdrop}
-          onPress={() => setActionsVisible(false)}
-        >
-          <Pressable
-            style={[
-              styles.editActionsMenu,
-              isRTL && styles.editActionsMenuRTL,
-              { top: insets.top + 52 },
-            ]}
-            onPress={event => event.stopPropagation()}
-          >
-            <Pressable
-              accessibilityLabel={t('habit_archive_accessibility')}
-              accessibilityRole="button"
-              onPress={archiveExistingHabit}
-              style={[styles.editActionItem, isRTL && styles.rowRTL]}
-            >
-              <Archive color={colors.textSecondary} size={19} />
-              <Text style={[styles.editActionText, isRTL && styles.textRTL]}>
-                {t('habit_archive_action')}
-              </Text>
-            </Pressable>
-            <View style={styles.editActionDivider} />
-            <Pressable
-              accessibilityLabel={t('habit_delete_accessibility')}
-              accessibilityRole="button"
-              onPress={deleteExistingHabit}
-              style={[styles.editActionItem, isRTL && styles.rowRTL]}
-            >
-              <Trash2 color={colors.red} size={19} />
-              <Text
-                style={[styles.editActionDangerText, isRTL && styles.textRTL]}
-              >
-                {t('common_delete')}
-              </Text>
-            </Pressable>
-          </Pressable>
-        </Pressable>
-      </Modal>
-      <BottomSheet
-        visible={iconSheetVisible}
-        title={t('habit_icon_picker_title')}
-        onClose={() => setIconSheetVisible(false)}
-      >
-        <View style={[styles.iconPickerGrid, isRTL && styles.wrapRowRTL]}>
-          {HABIT_ICONS.map(({ id, icon: Icon }) => {
-            const selected = iconDraft === id;
-            return (
-              <Pressable
-                key={id}
-                accessibilityLabel={t('habit_icon_accessibility', {
-                  label: t(iconLabelKeys[id] ?? 'habit_icon'),
-                })}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                onPress={() => setIconDraft(id)}
-                style={[
-                  styles.iconPickerOption,
-                  selected && styles.iconPickerOptionActive,
-                ]}
-              >
-                <Icon
-                  color={selected ? colors.onPrimary : colors.textSecondary}
-                  size={25}
-                />
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={[styles.createSheetActions, isRTL && styles.rowRTL]}>
-          <AppButton
-            title={t('common_cancel')}
-            variant="secondary"
-            onPress={() => setIconSheetVisible(false)}
-            style={styles.createSheetAction}
-          />
-          <AppButton
-            title={t('common_save')}
-            onPress={() => {
-              setIconName(iconDraft);
-              setIconSheetVisible(false);
-            }}
-            style={styles.createSheetAction}
-          />
-        </View>
-      </BottomSheet>
-      <BottomSheet
-        visible={colorSheetVisible}
-        title={t('habit_color_picker_title')}
-        onClose={() => setColorSheetVisible(false)}
-      >
-        <View style={[styles.colorPickerGrid, isRTL && styles.wrapRowRTL]}>
-          {HABIT_COLORS.map(option => {
-            const selected = colorDraft === option.value;
-            return (
-              <Pressable
-                key={option.id}
-                accessibilityLabel={t('habit_color_accessibility', {
-                  label: t(colorLabelKeys[option.id] ?? 'habit_color'),
-                })}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                onPress={() => setColorDraft(option.value)}
-                style={[
-                  styles.colorPickerOption,
-                  backgroundColorStyle(option.value),
-                  selected && styles.colorPickerOptionActive,
-                ]}
-              >
-                {selected ? <Check color={colors.onPrimary} size={24} /> : null}
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={[styles.createSheetActions, isRTL && styles.rowRTL]}>
-          <AppButton
-            title={t('common_cancel')}
-            variant="secondary"
-            onPress={() => setColorSheetVisible(false)}
-            style={styles.createSheetAction}
-          />
-          <AppButton
-            title={t('common_save')}
-            onPress={() => {
-              setColor(colorDraft);
-              setColorSheetVisible(false);
-            }}
-            style={styles.createSheetAction}
-          />
-        </View>
-      </BottomSheet>
-      <ScheduleSheet
-        visible={scheduleSheetVisible}
-        value={{
-          mode: scheduleMode === 'ONE_TIME' ? 'EVERYDAY' : scheduleMode,
-          weekdays: selectedWeekdays,
-          quota: quotaCount,
-        }}
-        onCancel={() => setScheduleSheetVisible(false)}
-        onSave={value => {
-          setScheduleMode(value.mode);
-          setSelectedWeekdays(value.weekdays);
-          setQuotaCount(value.quota);
-          setScheduleSheetVisible(false);
-        }}
-      />
-      <DateSheet
-        visible={targetDateSheetVisible}
-        title={t('habit_do_it_on')}
-        value={targetDate}
-        onCancel={() => setTargetDateSheetVisible(false)}
-        onSave={value => {
-          if (value) setTargetDate(value);
-          setTargetDateSheetVisible(false);
-        }}
-      />
-      <DateSheet
-        visible={endDateSheetVisible}
-        title={t('habit_end_on_section')}
-        value={endDate}
-        allowOff
-        onCancel={() => setEndDateSheetVisible(false)}
-        onSave={value => {
-          setEndDate(value);
-          setEndDateSheetVisible(false);
-        }}
-      />
-      <ReminderTimeModal
-        isRTL={isRTL}
-        visible={timeEditorVisible}
-        title={t('habit_set_reminder')}
-        value={reminderTime}
-        onCancel={() => setTimeEditorVisible(false)}
-        onSave={value => {
-          setReminderTime(value);
-          setTimeEditorVisible(false);
-        }}
-      />
+      {existing && actionsVisible && (
+        <HabitActionsMenu
+          onClose={() => setActionsVisible(false)}
+          onArchive={archiveExistingHabit}
+          onDelete={deleteExistingHabit}
+        />
+      )}
+      {iconSheetVisible && (
+        <IconSheet
+          value={iconName}
+          onCancel={() => setIconSheetVisible(false)}
+          onSave={value => {
+            setIconName(value);
+            setIconSheetVisible(false);
+          }}
+        />
+      )}
+      {colorSheetVisible && (
+        <ColorSheet
+          value={color}
+          onCancel={() => setColorSheetVisible(false)}
+          onSave={value => {
+            setColor(value);
+            setColorSheetVisible(false);
+          }}
+        />
+      )}
+      {scheduleSheetVisible && (
+        <ScheduleSheet
+          visible={scheduleSheetVisible}
+          value={{
+            mode: scheduleMode === 'ONE_TIME' ? 'EVERYDAY' : scheduleMode,
+            weekdays: selectedWeekdays,
+            quota: quotaCount,
+          }}
+          onCancel={() => setScheduleSheetVisible(false)}
+          onSave={value => {
+            setScheduleMode(value.mode);
+            setSelectedWeekdays(value.weekdays);
+            setQuotaCount(value.quota);
+            setScheduleSheetVisible(false);
+          }}
+        />
+      )}
+      {targetDateSheetVisible && (
+        <DateSheet
+          visible={targetDateSheetVisible}
+          title={t('habit_do_it_on')}
+          value={targetDate}
+          onCancel={() => setTargetDateSheetVisible(false)}
+          onSave={value => {
+            if (value) setTargetDate(value);
+            setTargetDateSheetVisible(false);
+          }}
+        />
+      )}
+      {endDateSheetVisible && (
+        <DateSheet
+          visible={endDateSheetVisible}
+          title={t('habit_end_on_section')}
+          value={endDate}
+          allowOff
+          onCancel={() => setEndDateSheetVisible(false)}
+          onSave={value => {
+            setEndDate(value);
+            setEndDateSheetVisible(false);
+          }}
+        />
+      )}
+      {timeEditorVisible && (
+        <ReminderTimeModal
+          isRTL={isRTL}
+          visible={timeEditorVisible}
+          title={t('habit_set_reminder')}
+          value={reminderTime}
+          onCancel={() => setTimeEditorVisible(false)}
+          onSave={value => {
+            setReminderTime(value);
+            setTimeEditorVisible(false);
+          }}
+        />
+      )}
     </ScreenContainer>
   );
 }

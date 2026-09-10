@@ -1,5 +1,5 @@
 import React from 'react';
-import { StyleSheet, Text, TextInput } from 'react-native';
+import { Modal, StyleSheet, Text, TextInput } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import TestRenderer, { act } from 'react-test-renderer';
 import { CreateHabitScreen } from '../src/screens/today/CreateHabitScreen';
@@ -9,6 +9,9 @@ import { setSelectedLanguage, t } from '../src/localization';
 import { HabitAlertTypeSelector } from '../src/screens/today/components/HabitAlertTypeSelector';
 import { AppHeader } from '../src/components/common/AppHeader';
 import { AppButton } from '../src/components/common/AppButton';
+import { DateSheet } from '../src/screens/today/components/createHabit/DateSheet';
+import { ScheduleSheet } from '../src/screens/today/components/createHabit/ScheduleSheet';
+import { IconSheet } from '../src/screens/today/components/createHabit/IconSheet';
 
 jest.mock(
   'lucide-react-native',
@@ -73,6 +76,7 @@ describe('Create Habit custom workflow', () => {
   });
 
   afterEach(() => {
+    jest.restoreAllMocks();
     act(() => {
       setSelectedLanguage('English');
     });
@@ -133,6 +137,40 @@ describe('Create Habit custom workflow', () => {
     expect(copy).not.toContain('CHOOSE FROM PRESETS');
     expect(copy).not.toContain('Habits in trend');
 
+    act(() => renderer.unmount());
+  });
+
+  test('entering and typing in the form do not mount hidden sheets or format their dates', () => {
+    const { renderer } = renderCreateHabit();
+    const format = jest.spyOn(Date.prototype, 'toLocaleDateString');
+    pressByLabel(renderer, '＋  CREATE YOUR OWN');
+    act(() => renderer.root.findByType(TextInput).props.onChangeText('Walk'));
+    expect(renderer.root.findAllByType(Modal)).toHaveLength(0);
+    expect(renderer.root.findAllByType(DateSheet)).toHaveLength(0);
+    expect(renderer.root.findAllByType(ScheduleSheet)).toHaveLength(0);
+    expect(format).not.toHaveBeenCalled();
+    act(() => renderer.unmount());
+  });
+
+  test('icon sheets mount on demand and cancel/reopen restores the saved value', () => {
+    const { renderer } = renderCreateHabit();
+    pressByLabel(renderer, '＋  CREATE YOUR OWN');
+    pressByLabel(renderer, t('habit_choose_icon'));
+    const original = renderer.root.findByType(IconSheet).props.value;
+    const options = renderer.root.findAll(
+      node =>
+        node.props.accessibilityRole === 'radio' &&
+        typeof node.props.accessibilityLabel === 'string' &&
+        typeof node.props.onPress === 'function',
+    );
+    act(() => options[1].props.onPress());
+    act(() => renderer.root.findByType(IconSheet).props.onCancel());
+    expect(renderer.root.findAllByType(IconSheet)).toHaveLength(0);
+    pressByLabel(renderer, t('habit_choose_icon'));
+    expect(renderer.root.findByType(IconSheet).props.value).toBe(original);
+    act(() => renderer.root.findByType(IconSheet).props.onSave('BookOpen'));
+    pressByLabel(renderer, t('habit_choose_icon'));
+    expect(renderer.root.findByType(IconSheet).props.value).toBe('BookOpen');
     act(() => renderer.unmount());
   });
 
