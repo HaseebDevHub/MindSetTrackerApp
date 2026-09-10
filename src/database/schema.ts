@@ -1,6 +1,6 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
-export const DATABASE_SCHEMA_VERSION = 5;
+export const DATABASE_SCHEMA_VERSION = 6;
 
 export const habitV2Columns = [
   { name: 'title', type: 'string' as const },
@@ -32,10 +32,15 @@ export const habitV4Columns = [
   { name: 'archived_date_key', type: 'string' as const, isOptional: true },
 ];
 
+export const habitV6Columns = [
+  { name: 'reminder_type', type: 'string' as const, isOptional: true },
+];
+
 export const habitColumns = [
   ...habitV2Columns,
   ...habitV3Columns,
   ...habitV4Columns,
+  ...habitV6Columns,
 ];
 
 export const habitCompletionV2Columns = [

@@ -8,6 +8,7 @@ import {
   encodeWeekdays,
   normalizeGoalMode,
   normalizeHabitType,
+  normalizeHabitAlertType,
   normalizeScheduleMode,
 } from '../../utils/habitSchedule';
 import { getDateStatus, isDateKey, toDateKey } from '../../utils/dates';
@@ -50,6 +51,7 @@ function setHabitFields(
   record.note = habit.note ?? null;
   record.isReminderEnabled = habit.reminderEnabled ?? false;
   record.reminderTime = habit.reminderTime ?? null;
+  record.reminderType = normalizeHabitAlertType(habit.reminderType);
   record.isArchived = habit.archived ?? false;
   record.archivedDateKey = habit.archivedAt ?? null;
   record.createdDateKey = habit.createdAt ?? toDateKey(new Date());
@@ -70,6 +72,9 @@ function setHabitFields(
 }
 
 function applyHabitUpdates(record: Habit, updates: HabitUpdateInput) {
+  if (Object.prototype.hasOwnProperty.call(updates, 'reminderType')) {
+    record.reminderType = normalizeHabitAlertType(updates.reminderType);
+  }
   if (updates.title !== undefined) record.title = updates.title.trim();
   if (updates.timeOfDay !== undefined) record.timeOfDay = updates.timeOfDay;
   if (updates.frequency !== undefined) record.frequency = updates.frequency;

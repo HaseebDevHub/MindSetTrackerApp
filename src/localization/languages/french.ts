@@ -2,6 +2,34 @@ import { english, type TranslationDictionary } from './english';
 
 export const french: TranslationDictionary = {
   ...english,
+  habit_alert_type: 'Type d’alerte',
+  habit_alert_reminder: 'Rappel',
+  habit_alert_alarm: 'Alarme',
+  habit_alert_reminder_description:
+    'Une notification normale à l’heure choisie.',
+  habit_alert_alarm_description:
+    'Une alarme sonore avec vibration qui peut apparaître sur l’écran verrouillé.',
+  habit_alert_ios_description:
+    'Sur iOS, Alarme utilise une notification mise en évidence avec Reporter et Arrêter. Les alarmes en plein écran ne sont pas disponibles dans cette version. Ouvrez régulièrement l’app pour maintenir les prochaines alertes.',
+  habit_alarm_enabled_accessibility: 'Alarme activée',
+  habit_alarm_access_title: 'Autorisations d’alarme',
+  habit_alarm_exact_message:
+    'L’accès aux alarmes exactes est désactivé. L’alarme peut vous avertir, mais avec du retard. Activez cet accès pour une heure précise.',
+  habit_alarm_fullscreen_message:
+    'L’accès au plein écran est désactivé. L’alarme utilisera une notification mise en évidence ; touchez-la pour ouvrir l’alarme.',
+  habit_alarm_settings: 'Ouvrir les réglages',
+  habit_alarm_use_reminder: 'Utiliser un rappel',
+  habit_alarm_fallback: 'Continuer avec une notification',
+  habit_alarm_title: 'Alarme d’habitude',
+  habit_alarm_body: 'Il est temps de « {{title}} »',
+  habit_alarm_snooze: 'Reporter · 10 minutes',
+  habit_alarm_dismiss: 'Arrêter',
+  habit_alarm_unavailable: 'Cette alarme n’est plus active.',
+  habit_alarm_error: 'Impossible de terminer cette action. Veuillez réessayer.',
+  habit_alarm_channel: 'Alarmes d’habitudes',
+  habit_alarm_loading: 'Chargement de l’alarme…',
+  habit_alarm_status_fallback:
+    'Certaines alarmes utilisent des notifications. Vérifiez les autorisations dans les réglages de l’habitude.',
   splash_tagline: "SUIVI D'HABITUDES ET PLANIFICATEUR D'OBJECTIFS",
   splash_logo: 'Mindset Tracker',
   splash_day_in_app: 'Jour {{day}} avec Mindset Tracker',
@@ -308,7 +336,7 @@ export const french: TranslationDictionary = {
   habit_advanced: 'Réglages avancés',
   habit_reminder: 'RAPPEL',
   habit_reminder_title: 'Rappel pour cette habitude',
-  habit_reminder_hint: '{{time}} • préférence uniquement',
+  habit_reminder_hint: '{{time}} • les jours prévus',
   habit_end_on_section: 'SE TERMINE',
   habit_end_date: 'Date de fin',
   habit_off: 'Désactivé',

@@ -82,6 +82,9 @@ function isHabitRecord(value: unknown): value is HabitBackupRecord {
     isNonEmptyString(value.iconName) &&
     isNullableString(value.note) &&
     typeof value.isReminderEnabled === 'boolean' &&
+    (value.reminderType === undefined ||
+      value.reminderType === 'reminder' ||
+      value.reminderType === 'alarm') &&
     (value.reminderTime === null ||
       (isString(value.reminderTime) && isValidLocalTime(value.reminderTime))) &&
     typeof value.isArchived === 'boolean' &&
@@ -225,7 +228,7 @@ function validateCurrentBackup(value: unknown): MindsetTrackerBackup {
       'Backup version is not supported.',
     );
   }
-  if (value.databaseSchemaVersion !== 5) {
+  if (value.databaseSchemaVersion !== 5 && value.databaseSchemaVersion !== 6) {
     throw new BackupValidationError(
       'incompatible_backup',
       'Database schema version is not supported.',

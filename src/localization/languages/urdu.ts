@@ -2,6 +2,33 @@ import { english, type TranslationDictionary } from './english';
 
 export const urdu: TranslationDictionary = {
   ...english,
+  habit_alert_type: 'الرٹ کی قسم',
+  habit_alert_reminder: 'یاد دہانی',
+  habit_alert_alarm: 'الارم',
+  habit_alert_reminder_description: 'منتخب وقت پر ایک عام اطلاع۔',
+  habit_alert_alarm_description:
+    'آواز اور وائبریشن والا الارم جو لاک اسکرین پر بھی ظاہر ہو سکتا ہے۔',
+  habit_alert_ios_description:
+    'iOS پر الارم نمایاں اطلاع، اسنوز اور بند کرنے کے بٹن استعمال کرتا ہے۔ اس ورژن میں پوری اسکرین کا الارم دستیاب نہیں۔ آئندہ الرٹس برقرار رکھنے کے لیے ایپ باقاعدگی سے کھولیں۔',
+  habit_alarm_enabled_accessibility: 'الارم فعال ہے',
+  habit_alarm_access_title: 'الارم کی اجازت',
+  habit_alarm_exact_message:
+    'عین وقت پر الارم کی اجازت بند ہے۔ اطلاع پھر بھی آ سکتی ہے، لیکن تاخیر ممکن ہے۔ درست وقت کے لیے اجازت دیں۔',
+  habit_alarm_fullscreen_message:
+    'پوری اسکرین کی اجازت بند ہے۔ الارم نمایاں اطلاع کی صورت میں آئے گا؛ الارم کھولنے کے لیے اسے دبائیں۔',
+  habit_alarm_settings: 'ترتیبات کھولیں',
+  habit_alarm_use_reminder: 'یاد دہانی استعمال کریں',
+  habit_alarm_fallback: 'اطلاع کے ساتھ جاری رکھیں',
+  habit_alarm_title: 'عادت کا الارم',
+  habit_alarm_body: '“{{title}}” کا وقت ہو گیا',
+  habit_alarm_snooze: 'اسنوز · 10 منٹ',
+  habit_alarm_dismiss: 'بند کریں',
+  habit_alarm_unavailable: 'یہ الارم اب فعال نہیں ہے۔',
+  habit_alarm_error: 'الارم کی کارروائی مکمل نہیں ہو سکی۔ دوبارہ کوشش کریں۔',
+  habit_alarm_channel: 'عادتوں کے الارم',
+  habit_alarm_loading: 'الارم لوڈ ہو رہا ہے…',
+  habit_alarm_status_fallback:
+    'کچھ الارم اطلاع کی صورت میں آئیں گے۔ عادت کی ترتیبات میں الارم کی اجازت دیکھیں۔',
   splash_tagline: 'عادت ٹریکر اور ہدف منصوبہ ساز',
   splash_logo: 'مائنڈ سیٹ ٹریکر',
   splash_day_in_app: 'Mindset Tracker میں آپ کا دن {{day}}',
@@ -296,7 +323,7 @@ export const urdu: TranslationDictionary = {
   habit_advanced: 'اعلیٰ ترتیبات',
   habit_reminder: 'یاد دہانی',
   habit_reminder_title: 'اس عادت کی یاد دہانی',
-  habit_reminder_hint: '{{time}} • صرف ترجیح',
+  habit_reminder_hint: '{{time}} • عادت کے مقررہ دنوں پر',
   habit_end_on_section: 'اختتام',
   habit_end_date: 'اختتامی تاریخ',
   habit_off: 'بند',

@@ -54,6 +54,7 @@ export function getNextReminderTimestamp(time: string, now = new Date()) {
 export function isManagedNotificationId(id: string) {
   return (
     Object.values(GLOBAL_NOTIFICATION_IDS).includes(id) ||
-    id.startsWith('habit-reminder-')
+    id.startsWith('habit-reminder-') ||
+    id.startsWith('habit-alarm-')
   );
 }

@@ -10,11 +10,16 @@ import {
   habitV2Columns,
   habitV3Columns,
   habitV4Columns,
+  habitV6Columns,
   journeyTaskCompletionColumns,
 } from './schema';
 
 const migrations = schemaMigrations({
   migrations: [
+    {
+      toVersion: 6,
+      steps: [addColumns({ table: 'habits', columns: habitV6Columns })],
+    },
     {
       toVersion: 2,
       steps: [

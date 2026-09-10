@@ -11,6 +11,7 @@ export const STORAGE_KEYS = {
   ONBOARDING_FIRST_HABIT_SKIPPED: 'onboarding.firstHabitSkipped',
   NOTIFICATION_REMINDER_TIME: 'notifications.reminderTime',
   NOTIFICATION_SETTINGS_V1: 'notifications.settings.v1',
+  ALARM_ACTION_RECEIPTS: 'notifications.alarmActions.v1',
   NOTIFICATION_REMINDER_LIMIT_MIGRATED:
     'notifications.reminderLimitMigrated.v1',
   NOTIFICATION_REMINDER_LIMIT_NOTICE: 'notifications.reminderLimitNotice.v1',
@@ -43,6 +44,7 @@ export type StorageSchema = {
   [STORAGE_KEYS.ONBOARDING_FIRST_HABIT_SKIPPED]: boolean;
   [STORAGE_KEYS.NOTIFICATION_REMINDER_TIME]: string;
   [STORAGE_KEYS.NOTIFICATION_SETTINGS_V1]: string;
+  [STORAGE_KEYS.ALARM_ACTION_RECEIPTS]: string;
   [STORAGE_KEYS.NOTIFICATION_REMINDER_LIMIT_MIGRATED]: boolean;
   [STORAGE_KEYS.NOTIFICATION_REMINDER_LIMIT_NOTICE]: boolean;
   [STORAGE_KEYS.GENERAL_WEEK_START]: number;

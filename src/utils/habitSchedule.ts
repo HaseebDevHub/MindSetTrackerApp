@@ -1,11 +1,16 @@
 import type {
   HabitGoalMode,
+  HabitAlertType,
   HabitItem,
   HabitScheduleMode,
   HabitType,
 } from '../types/models';
 import { isDateKey } from './dates';
 export { DEFAULT_HABIT_COLOR } from '../constants/habitColors';
+
+export function normalizeHabitAlertType(value: unknown): HabitAlertType {
+  return value === 'alarm' ? 'alarm' : 'reminder';
+}
 
 export function normalizeHabitType(value: unknown): HabitType {
   return value === 'NEGATIVE' || value === 'ONE_TIME' ? value : 'REGULAR';

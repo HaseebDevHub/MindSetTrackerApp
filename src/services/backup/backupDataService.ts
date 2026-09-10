@@ -5,6 +5,7 @@ import type Habit from '../../database/models/Habit';
 import type HabitCompletion from '../../database/models/HabitCompletion';
 import type JourneyTaskCompletion from '../../database/models/JourneyTaskCompletion';
 import { DATABASE_SCHEMA_VERSION } from '../../database/schema';
+import { normalizeHabitAlertType } from '../../utils/habitSchedule';
 import { backupSyncStorage } from '../../storage/backupSyncStorage';
 import { BACKUP_VERSION } from './backupConstants';
 import { runWithBackupRestoreGate } from './backupOperationGate';
@@ -20,8 +21,7 @@ import type {
   MindsetTrackerBackup,
 } from './backupTypes';
 
-const byId = <T extends { id: string }>(a: T, b: T) =>
-  a.id.localeCompare(b.id);
+const byId = <T extends { id: string }>(a: T, b: T) => a.id.localeCompare(b.id);
 
 function mapHabit(record: Habit): HabitBackupRecord {
   return {
@@ -33,6 +33,7 @@ function mapHabit(record: Habit): HabitBackupRecord {
     note: record.note,
     isReminderEnabled: record.isReminderEnabled,
     reminderTime: record.reminderTime,
+    reminderType: normalizeHabitAlertType(record.reminderType),
     isArchived: record.isArchived,
     archivedDateKey: record.archivedDateKey,
     createdDateKey: record.createdDateKey,
@@ -97,9 +98,7 @@ export async function exportBackup(): Promise<MindsetTrackerBackup> {
       ]);
     return {
       habits: habits.map(mapHabit).sort(byId),
-      habitCompletions: habitCompletions
-        .map(mapHabitCompletion)
-        .sort(byId),
+      habitCompletions: habitCompletions.map(mapHabitCompletion).sort(byId),
       activeJourneys: activeJourneys.map(mapActiveJourney).sort(byId),
       journeyTaskCompletions: journeyTaskCompletions
         .map(mapJourneyCompletion)
@@ -133,6 +132,7 @@ function assignHabit(record: Habit, value: HabitBackupRecord) {
   record.note = value.note;
   record.isReminderEnabled = value.isReminderEnabled;
   record.reminderTime = value.reminderTime;
+  record.reminderType = normalizeHabitAlertType(value.reminderType);
   record.isArchived = value.isArchived;
   record.archivedDateKey = value.archivedDateKey;
   record.createdDateKey = value.createdDateKey;
@@ -203,8 +203,9 @@ async function replaceDatabaseSnapshot(backup: MindsetTrackerBackup) {
     const habitCompletionCollection =
       database.get<HabitCompletion>('habit_completions');
     const journeyCollection = database.get<ActiveJourney>('active_journeys');
-    const journeyCompletionCollection =
-      database.get<JourneyTaskCompletion>('journey_task_completions');
+    const journeyCompletionCollection = database.get<JourneyTaskCompletion>(
+      'journey_task_completions',
+    );
     const [habits, habitCompletions, journeys, journeyCompletions] =
       await Promise.all([
         habitCollection.query().fetch(),
@@ -233,9 +234,7 @@ async function replaceDatabaseSnapshot(backup: MindsetTrackerBackup) {
           assignHabitCompletion(record, value);
         }),
       (record, value) =>
-        record.prepareUpdate(updated =>
-          assignHabitCompletion(updated, value),
-        ),
+        record.prepareUpdate(updated => assignHabitCompletion(updated, value)),
     );
     const journeyOperations = reconcileRecords(
       journeys,

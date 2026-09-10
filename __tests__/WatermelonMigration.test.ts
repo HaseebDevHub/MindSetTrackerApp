@@ -68,6 +68,7 @@ describe('MMKV to WatermelonDB habit migration', () => {
     expect(await repository.loadAllHabits()).toEqual([
       {
         ...legacyHabit,
+        reminderType: 'reminder',
         completedDates: ['2026-08-20', '2026-08-21'],
         streakCount: 0,
       },

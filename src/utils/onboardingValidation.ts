@@ -53,6 +53,9 @@ export function isValidHabit(value: unknown): value is HabitItem {
     habit.iconName.length > 0 &&
     (habit.reminderEnabled === undefined ||
       typeof habit.reminderEnabled === 'boolean') &&
+    (habit.reminderType === undefined ||
+      habit.reminderType === 'reminder' ||
+      habit.reminderType === 'alarm') &&
     (habit.reminderTime === undefined ||
       isValidLocalTime(habit.reminderTime)) &&
     (habit.frequency === undefined ||

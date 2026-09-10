@@ -67,6 +67,12 @@ jest.mock('@notifee/react-native', () => {
       android: { alarm: 1 },
     })),
     getTriggerNotifications: jest.fn(async () => []),
+    getDisplayedNotifications: jest.fn(async () => []),
+    cancelDisplayedNotification: jest.fn(async () => undefined),
+    getNotificationCategories: jest.fn(async () => []),
+    setNotificationCategories: jest.fn(async () => undefined),
+    onBackgroundEvent: jest.fn(),
+    onForegroundEvent: jest.fn(() => () => undefined),
     createTriggerNotification: jest.fn(async () => undefined),
     cancelTriggerNotification: jest.fn(async () => undefined),
     openNotificationSettings: jest.fn(async () => undefined),
@@ -76,7 +82,14 @@ jest.mock('@notifee/react-native', () => {
   return {
     __esModule: true,
     default: api,
-    AlarmType: { SET_EXACT_AND_ALLOW_WHILE_IDLE: 3 },
+    AlarmType: {
+      SET_EXACT_AND_ALLOW_WHILE_IDLE: 3,
+      SET_AND_ALLOW_WHILE_IDLE: 1,
+    },
+    AndroidCategory: { ALARM: 'alarm' },
+    AndroidDefaults: { LIGHTS: 4 },
+    AndroidVisibility: { PUBLIC: 1 },
+    EventType: { DELIVERED: 3, ACTION_PRESS: 2, DISMISSED: 0, PRESS: 1 },
     AndroidImportance: { HIGH: 4 },
     AndroidNotificationSetting: { DISABLED: 0, ENABLED: 1 },
     AuthorizationStatus: {

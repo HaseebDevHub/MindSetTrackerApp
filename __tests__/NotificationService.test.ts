@@ -15,6 +15,8 @@ import {
 } from '../src/services/notificationService';
 import type { HabitItem } from '../src/types/models';
 import type { NotificationPreferences } from '../src/types/notification';
+import { Platform } from 'react-native';
+import { getSnoozeId } from '../src/utils/habitAlerts';
 
 const preferences: NotificationPreferences = {
   version: 1,
@@ -52,6 +54,10 @@ function createTransport() {
     getTriggerNotifications: jest.fn(async () => [...triggers]),
     createTriggerNotification: jest.fn(
       async (notification: Notification, trigger: Trigger) => {
+        const previous = triggers.findIndex(
+          item => item.notification.id === notification.id,
+        );
+        if (previous >= 0) triggers.splice(previous, 1);
         triggers.push({ notification, trigger: trigger as TimestampTrigger });
         return notification.id ?? '';
       },
@@ -67,6 +73,108 @@ function createTransport() {
 }
 
 describe('notification scheduling service', () => {
+  afterEach(() => jest.restoreAllMocks());
+  test.each([true, false])(
+    'Alarm uses full screen only when allowed (%s), while globals remain normal',
+    async fullScreen => {
+      jest.replaceProperty(Platform, 'OS', 'android');
+      const { transport, triggers } = createTransport();
+      const service = createNotificationService(
+        transport,
+        async () => fullScreen,
+      );
+      const now = new Date(2026, 8, 8, 7);
+      const alarm = { ...habits[0], reminderType: 'alarm' as const };
+      await service.synchronize(preferences, [alarm], 'English', now);
+      const occurrence = triggers.find(
+        item => item.notification.data?.alertType === 'alarm',
+      )!;
+      expect(occurrence.notification.android).toMatchObject({
+        channelId: 'mindset-habit-alarms',
+        category: 'alarm',
+        loopSound: true,
+      });
+      expect(Boolean(occurrence.notification.android?.fullScreenAction)).toBe(
+        fullScreen,
+      );
+      expect(
+        occurrence.notification.android?.actions?.map(
+          item => item.pressAction.id,
+        ),
+      ).toEqual(['habit-alarm-snooze', 'habit-alarm-dismiss']);
+      expect(occurrence.trigger).not.toHaveProperty('repeatFrequency');
+      expect(triggers[0].notification.android?.channelId).toBe(
+        'mindset-reminders',
+      );
+      expect(triggers[0].trigger).toHaveProperty('repeatFrequency');
+    },
+  );
+  test('Android without exact access uses inexact AlarmManager only for Alarm', async () => {
+    jest.replaceProperty(Platform, 'OS', 'android');
+    const { transport, triggers } = createTransport();
+    (transport.getNotificationSettings as jest.Mock).mockResolvedValue({
+      ...authorizedSettings(),
+      android: { alarm: AndroidNotificationSetting.DISABLED },
+    });
+    await createNotificationService(transport, async () => false).synchronize(
+      preferences,
+      [{ ...habits[0], reminderType: 'alarm' }],
+    );
+    expect((triggers[3].trigger as TimestampTrigger).alarmManager).toEqual({
+      type: 1,
+    });
+    expect(
+      (triggers[0].trigger as TimestampTrigger).alarmManager,
+    ).toBeUndefined();
+  });
+  test('replaces both type directions, clears stale snoozes and displayed alarms, and cancels disabled/deleted habits', async () => {
+    const { transport, triggers } = createTransport();
+    const service = createNotificationService(transport, async () => false);
+    const now = new Date(2026, 8, 8, 7);
+    await service.synchronize(preferences, [habits[0]], 'English', now);
+    await service.synchronize(
+      preferences,
+      [{ ...habits[0], reminderType: 'alarm' }],
+      'English',
+      now,
+    );
+    expect(
+      triggers.some(item =>
+        item.notification.id?.startsWith('habit-reminder-'),
+      ),
+    ).toBe(false);
+    const alarm = triggers[3];
+    triggers.push({
+      ...alarm,
+      notification: { ...alarm.notification, id: getSnoozeId(habits[0].id) },
+    });
+    transport.getDisplayedNotifications = jest.fn(async () => [
+      { notification: alarm.notification, trigger: alarm.trigger },
+    ]);
+    transport.cancelDisplayedNotification = jest.fn(async () => undefined);
+    await service.synchronize(
+      preferences,
+      [{ ...habits[0], reminderType: 'reminder', reminderTime: '16:00' }],
+      'English',
+      now,
+    );
+    expect(
+      triggers.some(item => item.notification.id?.startsWith('habit-alarm-')),
+    ).toBe(false);
+    expect(transport.cancelDisplayedNotification).toHaveBeenCalledWith(
+      alarm.notification.id,
+    );
+    expect(triggers[3].notification.body).toBe('Time for “Habit 1”');
+    await service.synchronize(
+      preferences,
+      [{ ...habits[0], reminderEnabled: false }],
+      'English',
+      now,
+    );
+    expect(triggers).toHaveLength(3);
+    await service.synchronize(preferences, [], 'English', now);
+    expect(triggers).toHaveLength(3);
+  });
   test('falls back when Android exact-alarm access is disabled', () => {
     const settings = {
       ...authorizedSettings(),
@@ -77,10 +185,10 @@ describe('notification scheduling service', () => {
     expect(isExactAlarmEnabled(settings, 'ios')).toBe(true);
   });
 
-  test('caps managed schedules at three globals and two habits', () => {
+  test('caps managed schedules at three globals and twenty occurrences for each of two habits', () => {
     expect(
       buildDesiredNotificationSchedules(preferences, habits, 'English'),
-    ).toHaveLength(5);
+    ).toHaveLength(43);
   });
 
   test('creates missing schedules and does not duplicate unchanged ones', async () => {
@@ -94,15 +202,13 @@ describe('notification scheduling service', () => {
       'English',
       now,
     );
-    expect(first.scheduledCount).toBe(5);
-    expect(triggers).toHaveLength(5);
-    expect(triggers[0].notification.android?.smallIcon).toBe(
-      'ic_notification',
-    );
+    expect(first.scheduledCount).toBe(43);
+    expect(triggers).toHaveLength(43);
+    expect(triggers[0].notification.android?.smallIcon).toBe('ic_notification');
 
     await service.synchronize(preferences, habits, 'English', now);
-    expect(triggers).toHaveLength(5);
-    expect(transport.createTriggerNotification).toHaveBeenCalledTimes(5);
+    expect(triggers).toHaveLength(43);
+    expect(transport.createTriggerNotification).toHaveBeenCalledTimes(43);
   });
 
   test('cancels only managed schedules when permission is denied', async () => {

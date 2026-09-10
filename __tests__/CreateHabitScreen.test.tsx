@@ -5,7 +5,10 @@ import TestRenderer, { act } from 'react-test-renderer';
 import { CreateHabitScreen } from '../src/screens/today/CreateHabitScreen';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { useAppStore } from '../src/store/useAppStore';
-import { setSelectedLanguage } from '../src/localization';
+import { setSelectedLanguage, t } from '../src/localization';
+import { HabitAlertTypeSelector } from '../src/screens/today/components/HabitAlertTypeSelector';
+import { AppHeader } from '../src/components/common/AppHeader';
+import { AppButton } from '../src/components/common/AppButton';
 
 jest.mock(
   'lucide-react-native',
@@ -133,6 +136,110 @@ describe('Create Habit custom workflow', () => {
     act(() => renderer.unmount());
   });
 
+  test('rapid selections immediately followed by continue use the last tapped type', () => {
+    const { renderer } = renderCreateHabit();
+    const tabs = renderer.root.findAll(
+      node =>
+        node.props.accessibilityRole === 'tab' &&
+        typeof node.props.onPress === 'function',
+    );
+    const create = renderer.root.findByType(AppButton);
+    act(() => {
+      tabs[1].props.onPress();
+      tabs[2].props.onPress();
+      tabs[0].props.onPress();
+      tabs[1].props.onPress();
+      create.props.onPress();
+    });
+    expect(
+      renderer.root
+        .findAllByType(TextInput)
+        .some(node => node.props.placeholder === 'e.g. Avoid smoking'),
+    ).toBe(true);
+    expect(useAppStore.getState().habits).toHaveLength(0);
+    act(() => renderer.unmount());
+  });
+
+  test.each(['English', 'Urdu'] as const)(
+    'only the last selected tab stays active in %s',
+    language => {
+      setSelectedLanguage(language);
+      const { renderer } = renderCreateHabit();
+      const tabs = () =>
+        renderer.root.findAll(
+          node =>
+            node.props.accessibilityRole === 'tab' &&
+            typeof node.props.onPress === 'function',
+        );
+      for (const index of [1, 2, 0, 2, 2, 1, 0]) {
+        act(() => tabs()[index].props.onPress());
+        expect(
+          tabs().map(node => node.props.accessibilityState.selected),
+        ).toEqual([0, 1, 2].map(candidate => candidate === index));
+      }
+      act(() => renderer.unmount());
+    },
+  );
+
+  test('reselecting the current type preserves the entered form draft', () => {
+    const { renderer } = renderCreateHabit();
+    pressByLabel(renderer, 'NEGATIVE');
+    pressByLabel(renderer, '＋  CREATE YOUR OWN');
+    const inputs = renderer.root.findAllByType(TextInput);
+    act(() => {
+      inputs[0].props.onChangeText('Avoid sweets');
+      inputs[1].props.onChangeText('Feel healthier');
+    });
+    act(() => renderer.root.findByType(AppHeader).props.onBack());
+    pressByLabel(renderer, 'NEGATIVE');
+    pressByLabel(renderer, 'NEGATIVE');
+    pressByLabel(renderer, '＋  CREATE YOUR OWN');
+    expect(
+      renderer.root.findAllByType(TextInput).map(node => node.props.value),
+    ).toEqual(['Avoid sweets', 'Feel healthier']);
+    act(() => renderer.unmount());
+  });
+
+  test.each([
+    ['REGULAR', 'NEGATIVE'],
+    ['REGULAR', 'ONE_TIME'],
+    ['NEGATIVE', 'REGULAR'],
+    ['NEGATIVE', 'ONE_TIME'],
+    ['ONE_TIME', 'REGULAR'],
+    ['ONE_TIME', 'NEGATIVE'],
+  ] as const)(
+    'switching %s to %s saves the correct type and schedule',
+    async (from, to) => {
+      const labels = {
+        REGULAR: 'REGULAR',
+        NEGATIVE: 'NEGATIVE',
+        ONE_TIME: 'ONE-TIME TODO',
+      };
+      const { renderer } = renderCreateHabit();
+      pressByLabel(renderer, labels[from]);
+      pressByLabel(renderer, '＋  CREATE YOUR OWN');
+      act(() =>
+        renderer.root
+          .findAllByType(TextInput)[0]
+          .props.onChangeText('My habit'),
+      );
+      act(() => renderer.root.findByType(AppHeader).props.onBack());
+      pressByLabel(renderer, labels[to]);
+      pressByLabel(renderer, '＋  CREATE YOUR OWN');
+      const save = renderer.root
+        .findAllByType(AppButton)
+        .find(node => node.props.title === t('common_save'))!;
+      await act(async () => save.props.onPress());
+      expect(useAppStore.getState().habits[0]).toMatchObject({
+        title: 'My habit',
+        habitType: to,
+        scheduleMode: to === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY',
+        goalMode: 'OFF',
+      });
+      act(() => renderer.unmount());
+    },
+  );
+
   test('creates a negative habit once after a rapid double save', async () => {
     const { renderer, goBack, popTo } = renderCreateHabit();
     pressByLabel(renderer, 'NEGATIVE');
@@ -159,6 +266,7 @@ describe('Create Habit custom workflow', () => {
       habitType: 'NEGATIVE',
       scheduleMode: 'EVERYDAY',
       goalMode: 'OFF',
+      reminderType: 'reminder',
     });
     expect(goBack).not.toHaveBeenCalled();
     expect(popTo).toHaveBeenCalledWith(
@@ -224,6 +332,39 @@ describe('Create Habit custom workflow', () => {
       ).length,
     ).toBeGreaterThan(0);
 
+    act(() => renderer.unmount());
+  });
+
+  test('edits the persisted alarm type and saves switching back to Reminder', async () => {
+    useAppStore.setState({
+      habits: [
+        {
+          id: 'edit-alarm',
+          title: 'Walk',
+          timeOfDay: 'ANYTIME',
+          iconName: 'Footprints',
+          completedDates: [],
+          streakCount: 0,
+          reminderEnabled: true,
+          reminderType: 'alarm',
+          reminderTime: '09:00',
+        },
+      ],
+    });
+    const { renderer } = renderCreateHabit(jest.fn(), 'edit-alarm');
+    expect(renderer.root.findByType(HabitAlertTypeSelector).props.value).toBe(
+      'alarm',
+    );
+    act(() =>
+      renderer.root
+        .findByType(HabitAlertTypeSelector)
+        .props.onChange('reminder'),
+    );
+    const save = renderer.root.findAll(
+      node => node.props.accessibilityLabel === 'SAVE CHANGES',
+    )[0];
+    await act(async () => save.props.onPress());
+    expect(useAppStore.getState().habits[0].reminderType).toBe('reminder');
     act(() => renderer.unmount());
   });
 });

@@ -2,6 +2,35 @@ import { english, type TranslationDictionary } from './english';
 
 export const german: TranslationDictionary = {
   ...english,
+  habit_alert_type: 'Art des Hinweises',
+  habit_alert_reminder: 'Erinnerung',
+  habit_alert_alarm: 'Alarm',
+  habit_alert_reminder_description:
+    'Eine normale Benachrichtigung zur gewählten Zeit.',
+  habit_alert_alarm_description:
+    'Ein Alarm mit Ton und Vibration, der auf dem Sperrbildschirm erscheinen kann.',
+  habit_alert_ios_description:
+    'Unter iOS verwendet Alarm eine hervorgehobene Mitteilung mit Schlummern und Beenden. Vollbildalarme sind in dieser Version nicht verfügbar. Öffne die App regelmäßig, damit kommende Hinweise geplant bleiben.',
+  habit_alarm_enabled_accessibility: 'Alarm aktiviert',
+  habit_alarm_access_title: 'Alarmzugriff',
+  habit_alarm_exact_message:
+    'Der Zugriff auf genaue Alarme ist deaktiviert. Dein Alarm kann dich weiterhin benachrichtigen, aber möglicherweise verspätet. Aktiviere den Zugriff für eine genaue Uhrzeit.',
+  habit_alarm_fullscreen_message:
+    'Der Vollbildzugriff ist deaktiviert. Du erhältst eine hervorgehobene Mitteilung. Tippe darauf, um den Alarm zu öffnen.',
+  habit_alarm_settings: 'Einstellungen öffnen',
+  habit_alarm_use_reminder: 'Erinnerung verwenden',
+  habit_alarm_fallback: 'Mit Benachrichtigung fortfahren',
+  habit_alarm_title: 'Gewohnheitsalarm',
+  habit_alarm_body: 'Zeit für „{{title}}“',
+  habit_alarm_snooze: 'Schlummern · 10 Minuten',
+  habit_alarm_dismiss: 'Beenden',
+  habit_alarm_unavailable: 'Dieser Alarm ist nicht mehr aktiv.',
+  habit_alarm_error:
+    'Die Alarmaktion konnte nicht ausgeführt werden. Bitte versuche es erneut.',
+  habit_alarm_channel: 'Gewohnheitsalarme',
+  habit_alarm_loading: 'Alarm wird geladen…',
+  habit_alarm_status_fallback:
+    'Einige Alarme verwenden Benachrichtigungen. Prüfe den Alarmzugriff in den Einstellungen der Gewohnheit.',
   splash_tagline: 'HABIT-TRACKER & ZIELPLANER',
   splash_logo: 'Mindset Tracker',
   splash_day_in_app: 'Dein Tag {{day}} in Mindset Tracker',
@@ -307,7 +336,7 @@ export const german: TranslationDictionary = {
   habit_advanced: 'Erweiterte Einstellungen',
   habit_reminder: 'ERINNERUNG',
   habit_reminder_title: 'Erinnerung für diese Gewohnheit',
-  habit_reminder_hint: '{{time}} • nur Einstellung',
+  habit_reminder_hint: '{{time}} • an geplanten Gewohnheitstagen',
   habit_end_on_section: 'ENDET AM',
   habit_end_date: 'Enddatum',
   habit_off: 'Aus',

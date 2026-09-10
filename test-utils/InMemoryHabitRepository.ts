@@ -6,9 +6,11 @@ import type {
 import type { HabitItem } from '../src/types/models';
 import type { HabitActionType } from '../src/types/models';
 import { getDateStatus, isDateKey, toDateKey } from '../src/utils/dates';
+import { normalizeHabitAlertType } from '../src/utils/habitSchedule';
 
 const cloneHabit = (habit: HabitItem): HabitItem => ({
   ...habit,
+  reminderType: normalizeHabitAlertType(habit.reminderType),
   completedDates: [...habit.completedDates],
   progressEntries: habit.progressEntries?.map(entry => ({ ...entry })),
 });

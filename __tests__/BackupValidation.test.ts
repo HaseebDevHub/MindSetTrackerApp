@@ -72,6 +72,20 @@ const makeBackup = (): MindsetTrackerBackup => ({
 });
 
 describe('backup validation', () => {
+  test('accepts schema-5 legacy and schema-6 alarm backups without changing backup version', () => {
+    expect(
+      validateBackup(makeBackup()).data.habits[0].reminderType,
+    ).toBeUndefined();
+    const backup = makeBackup();
+    backup.databaseSchemaVersion = 6;
+    backup.data.habits[0].reminderType = 'alarm';
+    expect(
+      parseBackup(JSON.stringify(backup)).data.habits[0].reminderType,
+    ).toBe('alarm');
+    expect(() =>
+      validateBackup({ ...backup, databaseSchemaVersion: 7 }),
+    ).toThrow(BackupValidationError);
+  });
   test('accepts and parses every supported collection and habit field', () => {
     expect(parseBackup(JSON.stringify(makeBackup()))).toEqual(makeBackup());
   });

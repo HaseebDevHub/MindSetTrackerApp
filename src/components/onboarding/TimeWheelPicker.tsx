@@ -1,4 +1,5 @@
 import React, {
+  memo,
   useCallback,
   useLayoutEffect,
   useMemo,
@@ -33,7 +34,7 @@ function indexForOffset(offset: number, itemCount: number) {
   return Math.max(0, Math.min(itemCount - 1, Math.round(offset / ITEM_HEIGHT)));
 }
 
-function Wheel({
+const Wheel = memo(function TimeWheel({
   items,
   value,
   onChange,
@@ -45,6 +46,9 @@ function Wheel({
   const styles = useStyles();
   const ref = useRef<FlatList<string>>(null);
   const index = Math.max(0, items.indexOf(value));
+  // A starting offset, not a controlled scroll position. Updating this while
+  // dragging interrupts the native gesture/deceleration on both platforms.
+  const initialOffset = useRef({ x: 0, y: index * ITEM_HEIGHT }).current;
   const activeIndexRef = useRef(index);
   const [activeIndex, setActiveIndex] = useState(index);
 
@@ -95,29 +99,6 @@ function Wheel({
     [items.length, selectIndex],
   );
 
-  const onEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const next = indexForOffset(
-        event.nativeEvent.contentOffset.y,
-        items.length,
-      );
-      selectIndex(next);
-      ref.current?.scrollToOffset({
-        offset: next * ITEM_HEIGHT,
-        animated: true,
-      });
-    },
-    [items.length, selectIndex],
-  );
-
-  const onDragEnd = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const velocity = Math.abs(event.nativeEvent.velocity?.y ?? 0);
-      if (velocity < 0.05) onEnd(event);
-    },
-    [onEnd],
-  );
-
   const getItemLayout = useCallback(
     (_data: ArrayLike<string> | null | undefined, itemIndex: number) => ({
       length: ITEM_HEIGHT,
@@ -135,7 +116,9 @@ function Wheel({
       keyExtractor={item => item}
       renderItem={renderItem}
       getItemLayout={getItemLayout}
-      contentOffset={{ x: 0, y: index * ITEM_HEIGHT }}
+      contentOffset={initialOffset}
+      initialScrollIndex={initialOffset.y / ITEM_HEIGHT}
+      removeClippedSubviews={false}
       snapToInterval={ITEM_HEIGHT}
       snapToAlignment="start"
       decelerationRate="fast"
@@ -147,11 +130,13 @@ function Wheel({
       style={styles.wheel}
       onScroll={onScroll}
       scrollEventThrottle={16}
-      onMomentumScrollEnd={onEnd}
-      onScrollEndDrag={onDragEnd}
+      // Native snapping owns settling. Starting another animation here can
+      // interrupt momentum or produce a scroll-end/scrollToOffset loop.
+      onMomentumScrollEnd={onScroll}
+      onScrollEndDrag={onScroll}
     />
   );
-}
+});
 
 export function TimeWheelPicker({
   value,
@@ -165,6 +150,47 @@ export function TimeWheelPicker({
   const styles = useStyles();
   const [hour, minute] = useMemo(() => value.split(':'), [value]);
   const twelveHour = useMemo(() => toTwelveHourTime(value), [value]);
+  const latestValue = useRef(value);
+  useLayoutEffect(() => {
+    latestValue.current = value;
+  }, [value]);
+
+  const changePart = useCallback(
+    (part: 'hour' | 'minute' | 'period', next: string) => {
+      let updated: string;
+      if (use12Hour) {
+        const current = toTwelveHourTime(latestValue.current);
+        updated = fromTwelveHourTime(
+          part === 'hour' ? next : current.hour,
+          part === 'minute' ? next : current.minute,
+          part === 'period' ? (next as DayPeriod) : current.period,
+        );
+      } else {
+        const [currentHour, currentMinute] = latestValue.current.split(':');
+        updated = `${part === 'hour' ? next : currentHour}:${
+          part === 'minute' ? next : currentMinute
+        }`;
+      }
+      // Multiple wheels may emit before React commits the controlled value.
+      // Compose with the latest selection, not a stale render's other fields.
+      if (updated === latestValue.current) return;
+      latestValue.current = updated;
+      onChange(updated);
+    },
+    [onChange, use12Hour],
+  );
+  const changeHour = useCallback(
+    (next: string) => changePart('hour', next),
+    [changePart],
+  );
+  const changeMinute = useCallback(
+    (next: string) => changePart('minute', next),
+    [changePart],
+  );
+  const changePeriod = useCallback(
+    (next: string) => changePart('period', next),
+    [changePart],
+  );
 
   if (use12Hour) {
     return (
@@ -173,34 +199,18 @@ export function TimeWheelPicker({
         <Wheel
           items={twelveHourHours}
           value={twelveHour.hour}
-          onChange={next =>
-            onChange(
-              fromTwelveHourTime(next, twelveHour.minute, twelveHour.period),
-            )
-          }
+          onChange={changeHour}
         />
         <Text style={styles.colon}>:</Text>
         <Wheel
           items={minutes}
           value={twelveHour.minute}
-          onChange={next =>
-            onChange(
-              fromTwelveHourTime(twelveHour.hour, next, twelveHour.period),
-            )
-          }
+          onChange={changeMinute}
         />
         <Wheel
           items={periods}
           value={twelveHour.period}
-          onChange={next =>
-            onChange(
-              fromTwelveHourTime(
-                twelveHour.hour,
-                twelveHour.minute,
-                next as DayPeriod,
-              ),
-            )
-          }
+          onChange={changePeriod}
         />
       </View>
     );
@@ -209,17 +219,9 @@ export function TimeWheelPicker({
   return (
     <View style={styles.container}>
       <View pointerEvents="none" style={styles.selection} />
-      <Wheel
-        items={hours}
-        value={hour}
-        onChange={next => onChange(`${next}:${minute}`)}
-      />
+      <Wheel items={hours} value={hour} onChange={changeHour} />
       <Text style={styles.colon}>:</Text>
-      <Wheel
-        items={minutes}
-        value={minute}
-        onChange={next => onChange(`${hour}:${next}`)}
-      />
+      <Wheel items={minutes} value={minute} onChange={changeMinute} />
     </View>
   );
 }

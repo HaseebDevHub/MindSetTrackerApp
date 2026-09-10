@@ -36,7 +36,11 @@ import {
   hasHabitRelapseOnDate,
   isHabitCompleteOnDate,
 } from '../utils/habitAnalytics';
-import { normalizeGoalMode, normalizeHabitType } from '../utils/habitSchedule';
+import {
+  normalizeGoalMode,
+  normalizeHabitType,
+  normalizeHabitAlertType,
+} from '../utils/habitSchedule';
 import { getJourneyMetrics } from '../utils/journeyAnalytics';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 import {
@@ -298,6 +302,7 @@ export function createAppStore(
       const habit: HabitItem = {
         ...baseHabit,
         reminderEnabled: baseHabit.reminderEnabled ?? false,
+        reminderType: normalizeHabitAlertType(baseHabit.reminderType),
         reminderTime: baseHabit.reminderTime ?? get().wakeTime,
         frequency: baseHabit.frequency ?? 'EVERYDAY',
         createdAt: baseHabit.createdAt ?? toDateKey(dependencies.now()),
@@ -519,6 +524,7 @@ export function createAppStore(
         const created = await dependencies.repository.createHabit({
           ...habit,
           reminderEnabled: reminderLimitReached ? false : habit.reminderEnabled,
+          reminderType: normalizeHabitAlertType(habit.reminderType),
           frequency: habit.frequency ?? 'EVERYDAY',
           createdAt: habit.createdAt ?? toDateKey(dependencies.now()),
         });

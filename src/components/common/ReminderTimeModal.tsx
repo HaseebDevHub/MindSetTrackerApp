@@ -48,7 +48,9 @@ export function ReminderTimeModal({
         <View accessibilityViewIsModal style={styles.sheet}>
           <View style={styles.handle} />
           <Text style={[styles.title, isRTL && styles.titleRTL]}>{title}</Text>
-          <TimeWheelPicker use12Hour value={draft} onChange={setDraft} />
+          {visible && (
+            <TimeWheelPicker use12Hour value={draft} onChange={setDraft} />
+          )}
           <View style={[styles.actions, isRTL && styles.actionsRTL]}>
             <AppButton
               title={t('common_cancel')}

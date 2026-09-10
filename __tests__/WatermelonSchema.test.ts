@@ -8,12 +8,13 @@ import schema, {
   habitV2Columns,
   habitV3Columns,
   habitV4Columns,
+  habitV6Columns,
   journeyTaskCompletionColumns,
 } from '../src/database/schema';
 
 describe('WatermelonDB habit schema', () => {
-  test('defines a fresh version-5 normalized schema', () => {
-    expect(schema.version).toBe(5);
+  test('defines a fresh version-6 normalized schema', () => {
+    expect(schema.version).toBe(6);
     expect(Object.keys(schema.tables)).toEqual([
       'habits',
       'habit_completions',
@@ -42,11 +43,20 @@ describe('WatermelonDB habit schema', () => {
 
   test('upgrades the empty version-1 database without resetting existing data', () => {
     expect(migrations.minVersion).toBe(1);
-    expect(migrations.maxVersion).toBe(5);
-    expect(migrations.sortedMigrations).toHaveLength(4);
+    expect(migrations.maxVersion).toBe(6);
+    expect(migrations.sortedMigrations).toHaveLength(5);
 
-    const [version2, version3, version4, version5] =
+    const [version2, version3, version4, version5, version6] =
       migrations.sortedMigrations;
+    expect(version6).toMatchObject({
+      toVersion: 6,
+      steps: [
+        { type: 'add_columns', table: 'habits', columns: habitV6Columns },
+      ],
+    });
+    expect(habitV6Columns).toEqual([
+      { name: 'reminder_type', type: 'string', isOptional: true },
+    ]);
     expect(version2.toVersion).toBe(2);
     expect(version2.steps.map(step => step.type)).toEqual([
       'create_table',
@@ -75,7 +85,9 @@ describe('WatermelonDB habit schema', () => {
     ]);
     expect(version4).toMatchObject({
       toVersion: 4,
-      steps: [{ type: 'add_columns', table: 'habits', columns: habitV4Columns }],
+      steps: [
+        { type: 'add_columns', table: 'habits', columns: habitV4Columns },
+      ],
     });
     expect(version5).toMatchObject({
       toVersion: 5,

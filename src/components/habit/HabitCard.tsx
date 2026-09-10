@@ -6,7 +6,7 @@ import Animated, {
   useSharedValue,
   withSpring,
 } from 'react-native-reanimated';
-import { Bell, Check, MoreHorizontal } from 'lucide-react-native';
+import { AlarmClock, Bell, Check, MoreHorizontal } from 'lucide-react-native';
 import { getHabitIcon } from '../../constants/habitIcons';
 import { normalizeHabitColor } from '../../constants/habitColors';
 import { useTheme } from '../../context/ThemeContext';
@@ -92,6 +92,7 @@ export const HabitCard = React.memo(function HabitCardComponent({
     });
   };
   const Icon = getHabitIcon(habit.iconName);
+  const AlertIcon = habit.reminderType === 'alarm' ? AlarmClock : Bell;
   const habitType = normalizeHabitType(habit.habitType);
   const quotaProgress = getHabitQuotaProgress(
     habit,
@@ -171,10 +172,14 @@ export const HabitCard = React.memo(function HabitCardComponent({
           {habit.reminderEnabled ? (
             <View
               accessible
-              accessibilityLabel={t('habit_reminder_enabled_accessibility')}
+              accessibilityLabel={t(
+                habit.reminderType === 'alarm'
+                  ? 'habit_alarm_enabled_accessibility'
+                  : 'habit_reminder_enabled_accessibility',
+              )}
               style={styles.reminderIndicator}
             >
-              <Bell
+              <AlertIcon
                 color={
                   completed ? colors.completedHabitForeground : colors.onPrimary
                 }

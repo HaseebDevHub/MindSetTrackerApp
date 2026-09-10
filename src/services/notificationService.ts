@@ -24,20 +24,29 @@ import {
   MAX_HABIT_REMINDERS,
   NOTIFICATION_CHANNEL_ID,
   getActiveReminderHabits,
-  getHabitNotificationId,
   getNextReminderTimestamp,
   isManagedNotificationId,
 } from '../utils/notifications';
 import { isValidLocalTime } from '../utils/time';
+import {
+  getHabitAlertOccurrences,
+  getHabitOccurrenceId,
+  habitAlertFingerprint,
+  NOTIFICATION_SMALL_ICON,
+} from '../utils/habitAlerts';
+import { normalizeHabitAlertType } from '../utils/habitSchedule';
+import { ensureAlarmSupport, asAlarmNotification } from './alarmNotification';
+import { serializeHabitAlerts } from './habitAlertQueue';
 
 type DesiredSchedule = {
   id: string;
   time: string;
   title: string;
   body: string;
+  habit?: HabitItem;
+  dateKey?: string;
+  timestamp?: number;
 };
-
-const NOTIFICATION_SMALL_ICON = 'ic_notification';
 
 export type NotificationTransport = {
   createChannel: typeof notifee.createChannel;
@@ -48,6 +57,8 @@ export type NotificationTransport = {
   cancelTriggerNotification: typeof notifee.cancelTriggerNotification;
   openNotificationSettings: typeof notifee.openNotificationSettings;
   openAlarmPermissionSettings: typeof notifee.openAlarmPermissionSettings;
+  getDisplayedNotifications?: typeof notifee.getDisplayedNotifications;
+  cancelDisplayedNotification?: typeof notifee.cancelDisplayedNotification;
 };
 
 const defaultTransport: NotificationTransport = {
@@ -61,6 +72,8 @@ const defaultTransport: NotificationTransport = {
   openNotificationSettings: channelId =>
     notifee.openNotificationSettings(channelId),
   openAlarmPermissionSettings: () => notifee.openAlarmPermissionSettings(),
+  getDisplayedNotifications: () => notifee.getDisplayedNotifications(),
+  cancelDisplayedNotification: id => notifee.cancelDisplayedNotification(id),
 };
 
 const globalTitleKeys: Record<GlobalReminderSlot, Parameters<typeof t>[0]> = {
@@ -91,6 +104,7 @@ export function buildDesiredNotificationSchedules(
   preferences: NotificationPreferences,
   habits: HabitItem[],
   language: AppLanguage = getSelectedLanguage(),
+  now = new Date(),
 ) {
   if (!preferences.masterEnabled) return [];
   const schedules: DesiredSchedule[] = [];
@@ -111,31 +125,46 @@ export function buildDesiredNotificationSchedules(
       .slice(0, MAX_HABIT_REMINDERS)
       .forEach(habit => {
         if (!isValidLocalTime(habit.reminderTime)) return;
-        schedules.push({
-          id: getHabitNotificationId(habit.id),
-          time: habit.reminderTime,
-          title: t(
-            'notification_habit_notification_title',
-            undefined,
-            language,
-          ),
-          body: t(
-            'notification_habit_notification_body',
-            { title: habit.title },
-            language,
-          ),
-        });
+        for (const occurrence of getHabitAlertOccurrences(habit, now))
+          schedules.push({
+            id: getHabitOccurrenceId(habit, occurrence.dateKey),
+            habit,
+            ...occurrence,
+            time: habit.reminderTime,
+            title: t(
+              normalizeHabitAlertType(habit.reminderType) === 'alarm'
+                ? 'habit_alarm_title'
+                : 'notification_habit_notification_title',
+              undefined,
+              language,
+            ),
+            body: t(
+              normalizeHabitAlertType(habit.reminderType) === 'alarm'
+                ? 'habit_alarm_body'
+                : 'notification_habit_notification_body',
+              { title: habit.title },
+              language,
+            ),
+          });
       });
   }
   return schedules;
 }
 
-function scheduleFingerprint(schedule: DesiredSchedule, exact: boolean) {
+function scheduleFingerprint(
+  schedule: DesiredSchedule,
+  exact: boolean,
+  fullScreen: boolean,
+) {
   return JSON.stringify({
     time: schedule.time,
     title: schedule.title,
     body: schedule.body,
     exact,
+    fullScreen,
+    timestamp: schedule.timestamp,
+    habit: schedule.habit && habitAlertFingerprint(schedule.habit),
+    timezone: new Date().getTimezoneOffset(),
     smallIcon: NOTIFICATION_SMALL_ICON,
   });
 }
@@ -148,7 +177,18 @@ function createNotification(
     id: schedule.id,
     title: schedule.title,
     body: schedule.body,
-    data: { scheduleFingerprint: fingerprint },
+    data: {
+      scheduleFingerprint: fingerprint,
+      ...(schedule.habit
+        ? {
+            habitId: schedule.habit.id,
+            alertType: normalizeHabitAlertType(schedule.habit.reminderType),
+            configFingerprint: habitAlertFingerprint(schedule.habit),
+            dateKey: schedule.dateKey!,
+            occurrenceTime: String(schedule.timestamp),
+          }
+        : {}),
+    },
     android: {
       channelId: NOTIFICATION_CHANNEL_ID,
       importance: AndroidImportance.HIGH,
@@ -174,6 +214,7 @@ function isAuthorized(status: NotificationPermissionStatus) {
 
 export function createNotificationService(
   transport: NotificationTransport = defaultTransport,
+  prepareAlarms = ensureAlarmSupport,
 ) {
   async function ensureChannel(language: AppLanguage = getSelectedLanguage()) {
     if (Platform.OS !== 'android') return NOTIFICATION_CHANNEL_ID;
@@ -208,7 +249,7 @@ export function createNotificationService(
     );
   }
 
-  async function synchronize(
+  async function synchronizeUnlocked(
     preferences: NotificationPreferences,
     habits: HabitItem[],
     language: AppLanguage = getSelectedLanguage(),
@@ -218,6 +259,31 @@ export function createNotificationService(
     const settings = await transport.getNotificationSettings();
     const permissionStatus = mapPermissionStatus(settings);
     const scheduled = await transport.getTriggerNotifications();
+    const displayed = (await transport.getDisplayedNotifications?.()) ?? [];
+    const enabledHabits =
+      preferences.masterEnabled &&
+      preferences.habitRemindersEnabled &&
+      isAuthorized(permissionStatus)
+        ? getActiveReminderHabits(habits).slice(0, MAX_HABIT_REMINDERS)
+        : [];
+    const isCurrentHabitNotification = (notification: Notification) =>
+      enabledHabits.some(
+        habit =>
+          habit.id === notification.data?.habitId &&
+          habitAlertFingerprint(habit) === notification.data?.configFingerprint,
+      );
+    for (const item of displayed) {
+      const notification = item.notification;
+      if (
+        notification.id &&
+        isManagedNotificationId(notification.id) &&
+        (notification.data?.habitId
+          ? !isCurrentHabitNotification(notification)
+          : !isAuthorized(permissionStatus) || !preferences.masterEnabled)
+      ) {
+        await transport.cancelDisplayedNotification?.(notification.id);
+      }
+    }
     if (!isAuthorized(permissionStatus)) {
       await cancelManagedNotifications(scheduled);
       return {
@@ -232,8 +298,52 @@ export function createNotificationService(
       preferences,
       habits,
       language,
+      now,
     );
+    const fullScreen = enabledHabits.some(item => item.reminderType === 'alarm')
+      ? await prepareAlarms(language)
+      : false;
     const desiredIds = new Set(desired.map(item => item.id));
+    // Snoozes are temporary occurrences, not replacements for the primary schedule.
+    const snoozes = scheduled.filter(
+      item =>
+        item.notification.id?.startsWith('habit-alarm-snooze-') &&
+        isCurrentHabitNotification(item.notification),
+    );
+    snoozes.forEach(item => desiredIds.add(item.notification.id!));
+    for (const item of snoozes) {
+      const habit = enabledHabits.find(
+        candidate => candidate.id === item.notification.data?.habitId,
+      )!;
+      const refreshed = asAlarmNotification(
+        {
+          ...item.notification,
+          title: t('habit_alarm_title', undefined, language),
+          body: t('habit_alarm_body', { title: habit.title }, language),
+        },
+        fullScreen,
+        language,
+      );
+      const trigger: TimestampTrigger = {
+        ...(item.trigger as TimestampTrigger),
+        ...(Platform.OS === 'android'
+          ? {
+              alarmManager: {
+                type: exactAlarmEnabled
+                  ? AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE
+                  : AlarmType.SET_AND_ALLOW_WHILE_IDLE,
+              },
+            }
+          : {}),
+      };
+      if (
+        trigger.timestamp > now.getTime() &&
+        (JSON.stringify(refreshed) !== JSON.stringify(item.notification) ||
+          JSON.stringify(trigger) !== JSON.stringify(item.trigger))
+      ) {
+        await transport.createTriggerNotification(refreshed, trigger);
+      }
+    }
     const existingById = new Map(
       scheduled
         .filter(item => item.notification.id)
@@ -254,27 +364,41 @@ export function createNotificationService(
     );
 
     for (const schedule of desired) {
-      const fingerprint = scheduleFingerprint(schedule, exactAlarmEnabled);
+      const fingerprint = scheduleFingerprint(
+        schedule,
+        exactAlarmEnabled,
+        fullScreen,
+      );
       const existing = existingById.get(schedule.id);
       if (existing?.notification.data?.scheduleFingerprint === fingerprint)
         continue;
       if (existing) await transport.cancelTriggerNotification(schedule.id);
-      const timestamp = getNextReminderTimestamp(schedule.time, now);
+      const timestamp =
+        schedule.timestamp ?? getNextReminderTimestamp(schedule.time, now);
       if (!timestamp) continue;
       const trigger: TimestampTrigger = {
         type: TriggerType.TIMESTAMP,
         timestamp,
-        repeatFrequency: RepeatFrequency.DAILY,
+        ...(!schedule.habit ? { repeatFrequency: RepeatFrequency.DAILY } : {}),
         ...(Platform.OS === 'android' && exactAlarmEnabled
           ? {
               alarmManager: {
                 type: AlarmType.SET_EXACT_AND_ALLOW_WHILE_IDLE,
               },
             }
+          : Platform.OS === 'android' &&
+            schedule.habit?.reminderType === 'alarm'
+          ? { alarmManager: { type: AlarmType.SET_AND_ALLOW_WHILE_IDLE } }
           : {}),
       };
       await transport.createTriggerNotification(
-        createNotification(schedule, fingerprint),
+        schedule.habit?.reminderType === 'alarm'
+          ? asAlarmNotification(
+              createNotification(schedule, fingerprint),
+              fullScreen,
+              language,
+            )
+          : createNotification(schedule, fingerprint),
         trigger,
       );
     }
@@ -282,7 +406,7 @@ export function createNotificationService(
     return {
       permissionStatus,
       exactAlarmEnabled,
-      scheduledCount: desired.length,
+      scheduledCount: desired.length + snoozes.length,
     };
   }
 
@@ -290,7 +414,8 @@ export function createNotificationService(
     ensureChannel,
     getPermissionStatus,
     requestPermission,
-    synchronize,
+    synchronize: (...args: Parameters<typeof synchronizeUnlocked>) =>
+      serializeHabitAlerts(() => synchronizeUnlocked(...args)),
     cancelManagedNotifications,
     openNotificationSettings: () =>
       transport.openNotificationSettings(

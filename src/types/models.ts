@@ -16,6 +16,7 @@ export type HabitScheduleMode =
   | 'ONE_TIME';
 export type HabitGoalMode = 'OFF' | 'DURATION' | 'REPEAT';
 export type HabitActionType = 'COMPLETION' | 'RELAPSE' | 'PROGRESS';
+export type HabitAlertType = 'reminder' | 'alarm';
 
 export type HabitProgressEntry = {
   dateKey: string;
@@ -34,6 +35,7 @@ export interface HabitItem {
   note?: string;
   reminderEnabled?: boolean;
   reminderTime?: string;
+  reminderType?: HabitAlertType;
   archived?: boolean;
   archivedAt?: string;
   frequency?: HabitFrequency;

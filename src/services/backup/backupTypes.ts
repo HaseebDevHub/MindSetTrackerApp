@@ -1,6 +1,7 @@
 import type {
   AchievementUnlock,
   HabitActionType,
+  HabitAlertType,
   HabitFrequency,
   HabitGoalMode,
   HabitItem,
@@ -20,6 +21,7 @@ export type HabitBackupRecord = {
   note: string | null;
   isReminderEnabled: boolean;
   reminderTime: string | null;
+  reminderType?: HabitAlertType;
   isArchived: boolean;
   archivedDateKey: string | null;
   createdDateKey: string;
@@ -80,7 +82,7 @@ export type BackupPreferences = {
 
 export type MindsetTrackerBackupV1 = {
   backupVersion: 1;
-  databaseSchemaVersion: 5;
+  databaseSchemaVersion: 5 | 6;
   exportedAt: string;
   data: {
     habits: HabitBackupRecord[];

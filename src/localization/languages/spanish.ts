@@ -2,6 +2,35 @@ import { english, type TranslationDictionary } from './english';
 
 export const spanish: TranslationDictionary = {
   ...english,
+  habit_alert_type: 'Tipo de aviso',
+  habit_alert_reminder: 'Recordatorio',
+  habit_alert_alarm: 'Alarma',
+  habit_alert_reminder_description:
+    'Una notificación normal a la hora elegida.',
+  habit_alert_alarm_description:
+    'Una alarma con sonido y vibración que puede aparecer en la pantalla bloqueada.',
+  habit_alert_ios_description:
+    'En iOS, Alarma usa una notificación destacada con Posponer y Descartar. Las alarmas a pantalla completa no están disponibles en esta versión. Abre la app regularmente para mantener programados los próximos avisos.',
+  habit_alarm_enabled_accessibility: 'Alarma activada',
+  habit_alarm_access_title: 'Permisos de alarma',
+  habit_alarm_exact_message:
+    'El permiso para alarmas exactas está desactivado. La alarma puede avisarte, pero podría retrasarse. Actívalo para que suene a la hora indicada.',
+  habit_alarm_fullscreen_message:
+    'El acceso a pantalla completa está desactivado. Recibirás una notificación destacada; tócala para abrir la alarma.',
+  habit_alarm_settings: 'Abrir ajustes',
+  habit_alarm_use_reminder: 'Usar recordatorio',
+  habit_alarm_fallback: 'Continuar con notificación',
+  habit_alarm_title: 'Alarma de hábito',
+  habit_alarm_body: 'Es hora de «{{title}}»',
+  habit_alarm_snooze: 'Posponer · 10 minutos',
+  habit_alarm_dismiss: 'Descartar',
+  habit_alarm_unavailable: 'Esta alarma ya no está activa.',
+  habit_alarm_error:
+    'No se pudo completar la acción de la alarma. Inténtalo de nuevo.',
+  habit_alarm_channel: 'Alarmas de hábitos',
+  habit_alarm_loading: 'Cargando alarma…',
+  habit_alarm_status_fallback:
+    'Algunas alarmas usan notificaciones. Revisa los permisos de alarma en los ajustes del hábito.',
   splash_tagline: 'SEGUIMIENTO DE HÁBITOS Y PLANIFICADOR DE METAS',
   splash_logo: 'Mindset Tracker',
   splash_day_in_app: 'Tu día {{day}} en Mindset Tracker',
@@ -307,7 +336,7 @@ export const spanish: TranslationDictionary = {
   habit_advanced: 'Ajustes avanzados',
   habit_reminder: 'RECORDATORIO',
   habit_reminder_title: 'Recordatorio para este hábito',
-  habit_reminder_hint: '{{time}} • solo preferencia',
+  habit_reminder_hint: '{{time}} • los días programados',
   habit_end_on_section: 'FINALIZA',
   habit_end_date: 'Fecha de finalización',
   habit_off: 'Desactivado',

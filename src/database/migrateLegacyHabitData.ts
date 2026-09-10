@@ -4,6 +4,7 @@ import { onboardingStorage } from '../storage/onboardingStorage';
 import { storage } from '../storage/storage';
 import { STORAGE_KEYS } from '../storage/storageKeys';
 import type { HabitItem } from '../types/models';
+import { normalizeHabitAlertType } from '../utils/habitSchedule';
 import { isDateKey, toDateKey } from '../utils/dates';
 import { habitRepository } from './repositories/habitRepository';
 import type { HabitRepository } from './repositories/types';
@@ -31,6 +32,7 @@ function normalizeHabit(habit: HabitItem, todayKey: string): HabitItem {
     title: habit.title.trim(),
     frequency: habit.frequency ?? 'EVERYDAY',
     reminderEnabled: habit.reminderEnabled ?? false,
+    reminderType: normalizeHabitAlertType(habit.reminderType),
     archived: habit.archived ?? false,
     createdAt:
       habit.createdAt ??

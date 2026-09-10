@@ -1,4 +1,33 @@
 export const english = {
+  habit_alert_type: 'Alert type',
+  habit_alert_reminder: 'Reminder',
+  habit_alert_alarm: 'Alarm',
+  habit_alert_reminder_description:
+    'A normal notification at the selected time.',
+  habit_alert_alarm_description:
+    'An alarm with sound and vibration that may appear over the lock screen.',
+  habit_alert_ios_description:
+    'On iOS, Alarm uses a prominent notification with Snooze and Dismiss. Full-screen alarms are not available in this version. Open the app regularly to keep upcoming alerts scheduled.',
+  habit_alarm_enabled_accessibility: 'Alarm enabled',
+  habit_alarm_access_title: 'Alarm access',
+  habit_alarm_exact_message:
+    'Exact alarm access is off. Your alarm can still notify you, but delivery may be delayed. Enable access for precise timing.',
+  habit_alarm_fullscreen_message:
+    'Full-screen access is off. Your alarm will use a prominent notification; tap it to open the alarm screen.',
+  habit_alarm_settings: 'Open settings',
+  habit_alarm_use_reminder: 'Use Reminder instead',
+  habit_alarm_fallback: 'Continue with notification',
+  habit_alarm_title: 'Habit alarm',
+  habit_alarm_body: 'Time for “{{title}}”',
+  habit_alarm_snooze: 'Snooze · 10 minutes',
+  habit_alarm_dismiss: 'Dismiss',
+  habit_alarm_unavailable: 'This alarm is no longer active.',
+  habit_alarm_error:
+    'The alarm action could not be completed. Please try again.',
+  habit_alarm_channel: 'Habit alarms',
+  habit_alarm_loading: 'Loading alarm…',
+  habit_alarm_status_fallback:
+    'Some alarms use notification fallback. Review alarm access in the habit’s settings.',
   splash_tagline: 'HABIT TRACKER & GOAL PLANNER',
   splash_logo: 'Mindset Tracker',
   splash_day_in_app: 'Your day {{day}} in Mindset Tracker',
@@ -297,7 +326,7 @@ export const english = {
   habit_advanced: 'Advanced settings',
   habit_reminder: 'REMINDER',
   habit_reminder_title: 'Reminder for this habit',
-  habit_reminder_hint: '{{time}} • preference only',
+  habit_reminder_hint: '{{time}} • on scheduled habit days',
   habit_end_on_section: 'END ON',
   habit_end_date: 'End date',
   habit_off: 'Off',

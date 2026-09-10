@@ -5,6 +5,7 @@ import {
   decodeWeekdays,
   normalizeGoalMode,
   normalizeHabitType,
+  normalizeHabitAlertType,
   normalizeScheduleMode,
 } from '../../utils/habitSchedule';
 import { normalizeHabitColor } from '../../constants/habitColors';
@@ -22,6 +23,7 @@ export function mapHabitRecord(
     note: habit.note ?? undefined,
     reminderEnabled: habit.isReminderEnabled,
     reminderTime: habit.reminderTime ?? undefined,
+    reminderType: normalizeHabitAlertType(habit.reminderType),
     archived: habit.isArchived,
     archivedAt: habit.archivedDateKey ?? undefined,
     createdAt: habit.createdDateKey,

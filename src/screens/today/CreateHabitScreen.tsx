@@ -1,4 +1,11 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react';
 import {
   Alert,
   Modal,
@@ -68,6 +75,8 @@ import {
 import { canEnableHabitReminder } from '../../utils/notifications';
 import { formatLocalTime } from '../../utils/time';
 import useStyles from './TodayScreenStyle';
+import { HabitAlertTypeSelector } from './components/HabitAlertTypeSelector';
+import { normalizeHabitAlertType } from '../../utils/habitSchedule';
 
 type Props = NativeStackScreenProps<TodayStackParamList, 'CreateHabit'>;
 
@@ -520,6 +529,94 @@ function DateSheet({
   );
 }
 
+// Keep selection local: switching tabs should not rerender/reset the entire
+// habit form or subscribe to database changes.
+const HabitTypeSelection = memo(function TypeSelection({
+  initialType,
+  onBack,
+  onContinue,
+}: {
+  initialType: HabitType;
+  onBack: () => void;
+  onContinue: (type: HabitType) => void;
+}) {
+  const styles = useStyles();
+  const { colors } = useTheme();
+  const { t, isRTL } = useTranslation();
+  const [selectedType, setSelectedType] = useState(initialType);
+  const selectedRef = useRef(initialType);
+  const selectType = useCallback((next: HabitType) => {
+    if (selectedRef.current === next) return;
+    selectedRef.current = next;
+    setSelectedType(next);
+  }, []);
+  const definition = habitTypes.find(item => item.value === selectedType)!;
+
+  return (
+    <ScreenContainer scroll style={styles.createTypeScreen}>
+      <AppHeader
+        title={t('habit_create_title')}
+        onBack={onBack}
+        isRTL={isRTL}
+      />
+      <View style={[styles.habitTypeRow, isRTL && styles.rowRTL]}>
+        {habitTypes.map(({ value, labelKey, icon: Icon }) => {
+          const selected = value === selectedType;
+          return (
+            <Pressable
+              key={value}
+              accessibilityRole="tab"
+              accessibilityState={{ selected }}
+              accessibilityLabel={t(labelKey).replace('\n', ' ')}
+              hitSlop={4}
+              onPress={() => selectType(value)}
+              style={({ pressed }) => [
+                styles.habitTypeCard,
+                selected && styles.habitTypeCardActive,
+                selected && value === 'NEGATIVE' && styles.habitTypeNegative,
+                pressed && styles.reminderPressed,
+              ]}
+            >
+              <Icon
+                pointerEvents="none"
+                color={selected ? colors.onPrimary : colors.textSecondary}
+                size={31}
+              />
+              <Text
+                pointerEvents="none"
+                style={[
+                  styles.habitTypeLabel,
+                  isRTL && styles.centeredTextRTL,
+                  selected && styles.accentActiveText,
+                ]}
+              >
+                {t(labelKey)}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={styles.habitTypeDescription}>
+        <Text
+          style={[styles.habitTypeDescriptionTitle, isRTL && styles.textRTL]}
+        >
+          {t(definition.labelKey).replace('\n', ' ')}
+        </Text>
+        <Text
+          style={[styles.habitTypeDescriptionText, isRTL && styles.textRTL]}
+        >
+          {t(definition.descriptionKey)}
+        </Text>
+      </View>
+      <AppButton
+        title={t('habit_create_own')}
+        onPress={() => onContinue(selectedRef.current)}
+        style={styles.createOwnButton}
+      />
+    </ScreenContainer>
+  );
+});
+
 export function CreateHabitScreen({ navigation, route }: Props) {
   const { colors } = useTheme();
   const { isRTL, locale, t } = useTranslation();
@@ -563,6 +660,9 @@ export function CreateHabitScreen({ navigation, route }: Props) {
     existing?.motivationalText ?? '',
   );
   const [reminder, setReminder] = useState(existing?.reminderEnabled ?? false);
+  const [reminderType, setReminderType] = useState(() =>
+    normalizeHabitAlertType(existing?.reminderType),
+  );
   const [reminderTime, setReminderTime] = useState(
     () => existing?.reminderTime ?? reminderSettingsStorage.getWakeUpDefault(),
   );
@@ -605,17 +705,23 @@ export function CreateHabitScreen({ navigation, route }: Props) {
     setReminder(enabled);
   };
 
-  const chooseType = (value: HabitType) => {
-    setHabitType(value);
-    setScheduleMode(value === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY');
-    setSelectedWeekdays([]);
-    setQuotaCount(3);
-    setGoalMode('OFF');
-    setGoalTarget(10);
-    setMotivationalText('');
-    setEndDate(undefined);
-    setTargetDate(toDateKey(new Date()));
-  };
+  const continueWithType = useCallback(
+    (value: HabitType) => {
+      if (value !== habitType) {
+        setHabitType(value);
+        setScheduleMode(value === 'ONE_TIME' ? 'ONE_TIME' : 'EVERYDAY');
+        setSelectedWeekdays([]);
+        setQuotaCount(3);
+        setGoalMode('OFF');
+        setGoalTarget(10);
+        setMotivationalText('');
+        setEndDate(undefined);
+        setTargetDate(toDateKey(new Date()));
+      }
+      setEditingDetails(true);
+    },
+    [habitType],
+  );
 
   const save = async () => {
     const trimmedTitle = title.trim();
@@ -670,6 +776,7 @@ export function CreateHabitScreen({ navigation, route }: Props) {
           : undefined,
       reminderEnabled: reminderAllowed && reminder,
       reminderTime,
+      reminderType,
     };
     const saved = existing
       ? await update(existing.id, values)
@@ -764,63 +871,11 @@ export function CreateHabitScreen({ navigation, route }: Props) {
 
   if (!editingDetails) {
     return (
-      <ScreenContainer scroll style={styles.createTypeScreen}>
-        <AppHeader
-          title={t('habit_create_title')}
-          onBack={navigation.goBack}
-          isRTL={isRTL}
-        />
-        <View style={[styles.habitTypeRow, isRTL && styles.rowRTL]}>
-          {habitTypes.map(({ value, labelKey, icon: Icon }) => {
-            const selected = value === habitType;
-            return (
-              <Pressable
-                key={value}
-                accessibilityRole="tab"
-                accessibilityState={{ selected }}
-                accessibilityLabel={t(labelKey).replace('\n', ' ')}
-                onPress={() => chooseType(value)}
-                style={[
-                  styles.habitTypeCard,
-                  selected && styles.habitTypeCardActive,
-                  selected && value === 'NEGATIVE' && styles.habitTypeNegative,
-                ]}
-              >
-                <Icon
-                  color={selected ? colors.onPrimary : colors.textSecondary}
-                  size={31}
-                />
-                <Text
-                  style={[
-                    styles.habitTypeLabel,
-                    isRTL && styles.centeredTextRTL,
-                    selected && styles.accentActiveText,
-                  ]}
-                >
-                  {t(labelKey)}
-                </Text>
-              </Pressable>
-            );
-          })}
-        </View>
-        <View style={styles.habitTypeDescription}>
-          <Text
-            style={[styles.habitTypeDescriptionTitle, isRTL && styles.textRTL]}
-          >
-            {t(typeDefinition.labelKey).replace('\n', ' ')}
-          </Text>
-          <Text
-            style={[styles.habitTypeDescriptionText, isRTL && styles.textRTL]}
-          >
-            {t(typeDefinition.descriptionKey)}
-          </Text>
-        </View>
-        <AppButton
-          title={t('habit_create_own')}
-          onPress={() => setEditingDetails(true)}
-          style={styles.createOwnButton}
-        />
-      </ScreenContainer>
+      <HabitTypeSelection
+        initialType={habitType}
+        onBack={navigation.goBack}
+        onContinue={continueWithType}
+      />
     );
   }
 
@@ -1106,6 +1161,12 @@ export function CreateHabitScreen({ navigation, route }: Props) {
               thumbColor={colors.onPrimary}
             />
           </View>
+          {reminder && (
+            <HabitAlertTypeSelector
+              value={reminderType}
+              onChange={setReminderType}
+            />
+          )}
           {habitType !== 'ONE_TIME' ? (
             <>
               <Text style={[styles.label, isRTL && styles.textRTL]}>

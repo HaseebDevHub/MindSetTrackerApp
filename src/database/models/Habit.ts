@@ -4,6 +4,7 @@ import type Query from '@nozbe/watermelondb/Query';
 import { children, field, text } from '@nozbe/watermelondb/decorators';
 import type {
   HabitFrequency,
+  HabitAlertType,
   HabitGoalMode,
   HabitScheduleMode,
   HabitType,
@@ -28,6 +29,7 @@ export default class Habit extends Model {
   @text('note') note!: string | null;
   @field('is_reminder_enabled') isReminderEnabled!: boolean;
   @field('reminder_time') reminderTime!: string | null;
+  @field('reminder_type') reminderType!: HabitAlertType | null;
   @field('is_archived') isArchived!: boolean;
   @field('archived_date_key') archivedDateKey!: string | null;
   @field('created_date_key') createdDateKey!: string;

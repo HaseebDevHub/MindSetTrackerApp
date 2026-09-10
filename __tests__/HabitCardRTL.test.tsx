@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import TestRenderer, { act } from 'react-test-renderer';
 import { ThemeProvider } from '../src/context/ThemeContext';
 import { HabitCard } from '../src/components/habit/HabitCard';
-import { setSelectedLanguage } from '../src/localization';
+import { setSelectedLanguage, t } from '../src/localization';
 
 jest.mock('react-native-reanimated', () => {
   const { View: NativeView } = require('react-native');
@@ -77,3 +77,51 @@ test('mirrors a habit card and right-aligns Urdu content', () => {
   act(() => renderer!.unmount());
   setSelectedLanguage('English');
 });
+
+test.each(['dark', 'light'] as const)(
+  'renders mode-specific indicators across completion and direction in %s',
+  mode => {
+    for (const language of ['English', 'Urdu'] as const)
+      for (const completed of [false, true])
+        for (const type of ['reminder', 'alarm'] as const)
+          for (const enabled of [false, true]) {
+            setSelectedLanguage(language);
+            let renderer: TestRenderer.ReactTestRenderer;
+            act(() => {
+              renderer = TestRenderer.create(
+                <ThemeProvider initialMode={mode}>
+                  <HabitCard
+                    habit={{
+                      id: 'indicator',
+                      title: 'Walk',
+                      iconName: 'Footprints',
+                      timeOfDay: 'ANYTIME',
+                      completedDates: [],
+                      streakCount: 0,
+                      reminderType: type,
+                      reminderEnabled: enabled,
+                    }}
+                    completed={completed}
+                    completionDisabled={completed}
+                    selectedDate="2026-09-08"
+                    onToggle={jest.fn()}
+                    onMenu={jest.fn()}
+                  />
+                </ThemeProvider>,
+              );
+            });
+            const label = t(
+              type === 'alarm'
+                ? 'habit_alarm_enabled_accessibility'
+                : 'habit_reminder_enabled_accessibility',
+            );
+            expect(
+              renderer!.root
+                .findAllByType(View)
+                .some(node => node.props.accessibilityLabel === label),
+            ).toBe(enabled);
+            act(() => renderer.unmount());
+          }
+    setSelectedLanguage('English');
+  },
+);
