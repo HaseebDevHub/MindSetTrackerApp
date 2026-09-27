@@ -5,7 +5,7 @@ import { ThemeProvider } from '../src/context/ThemeContext';
 import { setSelectedLanguage } from '../src/localization';
 import { ActiveJourneyScreen } from '../src/screens/journey/ActiveJourneyScreen';
 import { useAppStore } from '../src/store/useAppStore';
-import { toDateKey } from '../src/utils/dates';
+import { addDays, toDateKey } from '../src/utils/dates';
 import { FlashList } from '@shopify/flash-list';
 import { journeys } from '../src/data/journeyPlans';
 import type { JourneyDay } from '../src/utils/journeyAnalytics';
@@ -132,6 +132,98 @@ describe('Active Journey screen', () => {
     },
   );
 
+  test.each([undefined, 0, 1, 2])(
+    'shows and toggles the fifth habit on day 16 for version %s',
+    async planVersion => {
+      const todayKey = toDateKey(new Date());
+      const toggleJourneyTask = jest.fn(async () => true);
+      useAppStore.setState({
+        isHydrated: true,
+        activeJourneys: [
+          {
+            id: 'existing-day-16',
+            journeyId: 'walk',
+            planVersion,
+            startedDateKey: toDateKey(addDays(new Date(), -15)),
+            isActive: true,
+            taskCompletions: [
+              { taskId: 'walk-ten-minutes', dateKey: todayKey },
+            ],
+          },
+        ],
+        toggleJourneyTask,
+      });
+      let renderer: TestRenderer.ReactTestRenderer;
+      let card: TestRenderer.ReactTestRenderer | undefined;
+      await act(async () => {
+        renderer = TestRenderer.create(
+          <ThemeProvider initialMode="dark">
+            <ActiveJourneyScreen
+              navigation={{ goBack: jest.fn(), navigate: jest.fn() } as never}
+              route={
+                { params: { activeJourneyId: 'existing-day-16' } } as never
+              }
+            />
+          </ThemeProvider>,
+        );
+      });
+      try {
+        const list = () => renderer!.root.findByType(FlashList);
+        expect(list().props.data).toHaveLength(3);
+        for (let batch = 0; batch < 5; batch += 1) {
+          act(() =>
+            list().props.onScrollBeginDrag({
+              nativeEvent: {
+                contentOffset: { x: 0, y: 1200 },
+                contentSize: { width: 400, height: 2000 },
+                layoutMeasurement: { width: 400, height: 800 },
+              },
+            }),
+          );
+        }
+        expect(list().props.data).toHaveLength(18);
+        const day = list().props.data[15] as JourneyDay;
+        expect(day).toMatchObject({ dayNumber: 16, status: 'current' });
+        expect(day.tasks).toHaveLength(5);
+        // Render the paginated cell explicitly; the FlatList mock has no native viewport.
+        await act(async () => {
+          card = TestRenderer.create(
+            <ThemeProvider initialMode="dark">
+              {list().props.renderItem({
+                item: day,
+                index: 15,
+                target: 'Cell',
+              })}
+            </ThemeProvider>,
+          );
+        });
+        const controls = card!.root.findAll(
+          node =>
+            node.props.accessibilityRole === 'checkbox' &&
+            node.parent?.props.accessibilityRole !== 'checkbox',
+        );
+        expect(controls).toHaveLength(5);
+        expect(
+          controls.map(node => node.props.accessibilityState.checked),
+        ).toEqual([true, false, false, false, false]);
+        expect(
+          controls.every(node => !node.props.accessibilityState.disabled),
+        ).toBe(true);
+        await act(async () => controls[4].props.onPress());
+        expect(toggleJourneyTask).toHaveBeenCalledWith(
+          'existing-day-16',
+          'walk-plan-route',
+          todayKey,
+        );
+      } finally {
+        act(() => {
+          card?.unmount();
+          renderer!.unmount();
+        });
+      }
+    },
+  );
+
   test.each(['dark', 'light'] as const)(
     'renders dynamic tasks and controls in %s mode',
     async mode => {
@@ -181,8 +273,6 @@ describe('Active Journey screen', () => {
         expect.arrayContaining([
           'Walk everyday for health',
           'Take a 10 minute walk',
-          'Add a little movement',
-          'Stretch after walking',
         ]),
       );
 

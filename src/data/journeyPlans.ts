@@ -35,6 +35,22 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_walk_task_stretch_subtitle',
         iconName: 'BicepsFlexed',
       },
+      {
+        id: 'walk-break-sitting',
+        title: 'Break up a long sitting period',
+        titleKey: 'journey_walk_break_sitting_title',
+        subtitle: 'Take a brief movement break; seated movement counts',
+        subtitleKey: 'journey_walk_break_sitting_subtitle',
+        iconName: 'Activity',
+      },
+      {
+        id: 'walk-plan-route',
+        title: 'Plan your next walk',
+        titleKey: 'journey_walk_plan_route_title',
+        subtitle: 'Choose a comfortable route and a realistic time',
+        subtitleKey: 'journey_walk_plan_route_subtitle',
+        iconName: 'NotebookPen',
+      },
     ],
     colors: ['#2563EB', '#0EA5E9'],
   },
@@ -72,6 +88,14 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_sleep_task_bedtime_subtitle',
         iconName: 'BedDouble',
       },
+      {
+        id: 'sleep-wake-time',
+        title: 'Keep a consistent wake-up time',
+        titleKey: 'journey_sleep_wake_time_title',
+        subtitle: 'Aim for a similar wake-up time each day',
+        subtitleKey: 'journey_sleep_wake_time_subtitle',
+        iconName: 'AlarmClock',
+      },
     ],
     colors: ['#4338CA', '#7C3AED'],
   },
@@ -107,6 +131,22 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitle: 'Notice added sugar before choosing',
         subtitleKey: 'journey_sugar_task_label_subtitle',
         iconName: 'NotebookPen',
+      },
+      {
+        id: 'sugar-plain-breakfast',
+        title: 'Choose a lower-sugar breakfast',
+        titleKey: 'journey_sugar_plain_breakfast_title',
+        subtitle: 'Try plain oats or wholegrain cereal with fruit',
+        subtitleKey: 'journey_sugar_plain_breakfast_subtitle',
+        iconName: 'Utensils',
+      },
+      {
+        id: 'sugar-less-sauce',
+        title: 'Choose a less sugary sauce',
+        titleKey: 'journey_sugar_less_sauce_title',
+        subtitle: 'Compare labels or use herbs and spices for flavour',
+        subtitleKey: 'journey_sugar_less_sauce_subtitle',
+        iconName: 'Utensils',
       },
     ],
     colors: ['#DC2626', '#F97316'],
@@ -145,6 +185,14 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_meditation_task_reflect_subtitle',
         iconName: 'NotebookPen',
       },
+      {
+        id: 'meditation-notice-senses',
+        title: 'Notice your surroundings',
+        titleKey: 'journey_meditation_notice_senses_title',
+        subtitle: 'Pause to notice a sound, a sight and a physical sensation',
+        subtitleKey: 'journey_meditation_notice_senses_subtitle',
+        iconName: 'Brain',
+      },
     ],
     colors: ['#0891B2', '#10B981'],
   },
@@ -180,6 +228,22 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         titleKey: 'journey_confidence_task_win_title',
         subtitle: 'Give today’s progress credit',
         subtitleKey: 'journey_confidence_task_win_subtitle',
+        iconName: 'HeartPulse',
+      },
+      {
+        id: 'confidence-kind-thought',
+        title: 'Practise a kinder thought',
+        titleKey: 'journey_confidence_kind_thought_title',
+        subtitle: 'Respond to self-criticism as you would to a friend',
+        subtitleKey: 'journey_confidence_kind_thought_subtitle',
+        iconName: 'HeartPulse',
+      },
+      {
+        id: 'confidence-express-need',
+        title: 'Express one need kindly',
+        titleKey: 'journey_confidence_express_need_title',
+        subtitle: 'Practise asking for help or setting a small boundary',
+        subtitleKey: 'journey_confidence_express_need_subtitle',
         iconName: 'HeartPulse',
       },
     ],
@@ -219,6 +283,23 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_fasting_task_window_subtitle',
         iconName: 'AlarmClock',
       },
+      {
+        id: 'fasting-add-vegetables',
+        title: 'Include vegetables in a meal',
+        titleKey: 'journey_fasting_add_vegetables_title',
+        subtitle:
+          'Choose a vegetable you enjoy; fresh, frozen or canned counts',
+        subtitleKey: 'journey_fasting_add_vegetables_subtitle',
+        iconName: 'Utensils',
+      },
+      {
+        id: 'fasting-wholegrain',
+        title: 'Choose a wholegrain option',
+        titleKey: 'journey_fasting_wholegrain_title',
+        subtitle: 'Try wholegrain bread, oats, brown rice or wholewheat pasta',
+        subtitleKey: 'journey_fasting_wholegrain_subtitle',
+        iconName: 'Utensils',
+      },
     ],
     colors: ['#D97706', '#65A30D'],
   },
@@ -254,6 +335,15 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitle: 'Keep it outside arm’s reach',
         subtitleKey: 'journey_phone_task_bedtime_subtitle',
         iconName: 'Moon',
+      },
+      {
+        id: 'phone-quiet-notifications',
+        title: 'Keep nonessential notifications quiet',
+        titleKey: 'journey_phone_quiet_notifications_title',
+        subtitle:
+          'Silence distracting alerts while keeping essential calls available',
+        subtitleKey: 'journey_phone_quiet_notifications_subtitle',
+        iconName: 'AlarmClock',
       },
     ],
     colors: ['#475569', '#2563EB'],
@@ -299,6 +389,14 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_morning_breakfast_subtitle',
         iconName: 'Utensils',
       },
+      {
+        id: 'morning-wake-time',
+        title: 'Wake at a regular time',
+        titleKey: 'journey_morning_wake_time_title',
+        subtitle: 'Choose a wake-up time that supports enough sleep',
+        subtitleKey: 'journey_morning_wake_time_subtitle',
+        iconName: 'AlarmClock',
+      },
     ],
     colors: ['#EA580C', '#F59E0B'],
   },
@@ -335,32 +433,36 @@ const definitions: Omit<Journey, 'schedule'>[] = [
         subtitleKey: 'journey_office_task_stretch_subtitle',
         iconName: 'BicepsFlexed',
       },
+      {
+        id: 'office-screen-break',
+        title: 'Take a break from the screen',
+        titleKey: 'journey_office_screen_break_title',
+        subtitle: 'Switch briefly to a task that lets your eyes look away',
+        subtitleKey: 'journey_office_screen_break_subtitle',
+        iconName: 'BookOpen',
+      },
     ],
     colors: ['#059669', '#0D9488'],
   },
 ];
 
+export const CURRENT_JOURNEY_PLAN_VERSION = 2;
 // Introduction days are editorial pacing, not clinically validated habit deadlines.
-const introductionDays: Record<Journey['id'], number[]> = {
-  walk: [1, 8, 4],
-  sleep: [1, 4, 7],
-  sugar: [1, 5, 10],
-  meditation: [1, 5, 9],
-  confidence: [1, 8, 4],
-  fasting: [1, 5, 12],
-  phone: [1, 5, 9],
-  morning: [1, 6, 12, 2],
-  office: [1, 4, 8],
-};
+const introductionDays = [1, 2, 5, 8, 16];
 
-export const journeys: Journey[] = definitions.map(journey => ({
-  ...journey,
-  schedule: Array.from({ length: journey.durationDays }, (_, index) => ({
-    dayNumber: index + 1,
-    taskIds: journey.tasks
-      .filter(
-        (_task, taskIndex) => introductionDays[journey.id][taskIndex] <= index + 1,
-      )
-      .map(task => task.id),
-  })),
-}));
+export const journeys: Journey[] = definitions.map(journey => {
+  // Keep breakfast second without changing the original task order used by old plans.
+  const orderedTasks =
+    journey.id === 'morning'
+      ? [0, 3, 1, 2, 4].map(index => journey.tasks[index])
+      : journey.tasks;
+  return {
+    ...journey,
+    schedule: Array.from({ length: journey.durationDays }, (_, index) => ({
+      dayNumber: index + 1,
+      taskIds: orderedTasks
+        .filter((_task, position) => introductionDays[position] <= index + 1)
+        .map(task => task.id),
+    })),
+  };
+});

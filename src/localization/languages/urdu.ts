@@ -2,6 +2,44 @@ import { english, type TranslationDictionary } from './english';
 
 export const urdu: TranslationDictionary = {
   ...english,
+  journey_walk_break_sitting_title: 'زیادہ دیر بیٹھنے کے دوران وقفہ لیں',
+  journey_walk_break_sitting_subtitle:
+    'تھوڑی دیر حرکت کریں؛ بیٹھ کر حرکت کرنا بھی مفید ہے',
+  journey_walk_plan_route_title: 'اگلی چہل قدمی کا منصوبہ بنائیں',
+  journey_walk_plan_route_subtitle: 'آرام دہ راستہ اور مناسب وقت منتخب کریں',
+  journey_sleep_wake_time_title: 'جاگنے کا وقت باقاعدہ رکھیں',
+  journey_sleep_wake_time_subtitle:
+    'ہر روز تقریباً ایک ہی وقت پر جاگنے کی کوشش کریں',
+  journey_sugar_plain_breakfast_title: 'کم شکر والا ناشتہ منتخب کریں',
+  journey_sugar_plain_breakfast_subtitle:
+    'سادہ دلیہ یا ثابت اناج کے سیریل کے ساتھ پھل آزمائیں',
+  journey_sugar_less_sauce_title: 'کم شکر والی چٹنی منتخب کریں',
+  journey_sugar_less_sauce_subtitle:
+    'لیبل کا موازنہ کریں یا ذائقے کے لیے جڑی بوٹیاں اور مصالحے استعمال کریں',
+  journey_meditation_notice_senses_title: 'اپنے اردگرد توجہ دیں',
+  journey_meditation_notice_senses_subtitle:
+    'رک کر ایک آواز، کوئی منظر اور جسمانی احساس محسوس کریں',
+  journey_confidence_kind_thought_title: 'اپنے لیے ایک مہربان خیال اپنائیں',
+  journey_confidence_kind_thought_subtitle:
+    'خود پر تنقید کا جواب ایسے دیں جیسے کسی دوست کو دیتے ہیں',
+  journey_confidence_express_need_title: 'اپنی ایک ضرورت نرمی سے بیان کریں',
+  journey_confidence_express_need_subtitle:
+    'مدد مانگنے یا ایک چھوٹی حد مقرر کرنے کی مشق کریں',
+  journey_fasting_add_vegetables_title: 'کھانے میں سبزیاں شامل کریں',
+  journey_fasting_add_vegetables_subtitle:
+    'پسندیدہ سبزی منتخب کریں؛ تازہ، منجمد یا ڈبہ بند سب قابل قبول ہیں',
+  journey_fasting_wholegrain_title: 'ثابت اناج کی کوئی غذا منتخب کریں',
+  journey_fasting_wholegrain_subtitle:
+    'ثابت اناج کی روٹی، جئی، بھورے چاول یا ثابت گندم کا پاستا آزمائیں',
+  journey_phone_quiet_notifications_title: 'غیر ضروری اطلاعات خاموش رکھیں',
+  journey_phone_quiet_notifications_subtitle:
+    'توجہ ہٹانے والی اطلاعات بند کریں، ضروری کالیں جاری رکھیں',
+  journey_morning_wake_time_title: 'باقاعدہ وقت پر جاگیں',
+  journey_morning_wake_time_subtitle:
+    'جاگنے کا ایسا وقت منتخب کریں جس سے نیند پوری ہو',
+  journey_office_screen_break_title: 'اسکرین سے وقفہ لیں',
+  journey_office_screen_break_subtitle:
+    'کچھ دیر ایسا کام کریں جس میں نظر اسکرین سے ہٹ سکے',
   journey_swipe_up_to_load_more: 'مزید لوڈ کرنے کے لیے اوپر سوائپ کریں',
   journey_days_finished: 'مکمل دن',
   journey_day_label: 'دن {{day}}',

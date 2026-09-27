@@ -2,6 +2,46 @@ import { english, type TranslationDictionary } from './english';
 
 export const spanish: TranslationDictionary = {
   ...english,
+  journey_walk_break_sitting_title: 'Interrumpe un periodo largo sentado',
+  journey_walk_break_sitting_subtitle:
+    'Haz una pausa activa; moverte sentado también cuenta',
+  journey_walk_plan_route_title: 'Planifica tu próxima caminata',
+  journey_walk_plan_route_subtitle:
+    'Elige una ruta cómoda y un horario realista',
+  journey_sleep_wake_time_title: 'Mantén una hora regular para despertar',
+  journey_sleep_wake_time_subtitle:
+    'Intenta despertarte a una hora similar cada día',
+  journey_sugar_plain_breakfast_title: 'Elige un desayuno con menos azúcar',
+  journey_sugar_plain_breakfast_subtitle:
+    'Prueba avena natural o cereales integrales con fruta',
+  journey_sugar_less_sauce_title: 'Elige una salsa con menos azúcar',
+  journey_sugar_less_sauce_subtitle:
+    'Compara etiquetas o usa hierbas y especias para dar sabor',
+  journey_meditation_notice_senses_title: 'Observa lo que te rodea',
+  journey_meditation_notice_senses_subtitle:
+    'Haz una pausa y nota un sonido, algo que ves y una sensación',
+  journey_confidence_kind_thought_title: 'Practica un pensamiento amable',
+  journey_confidence_kind_thought_subtitle:
+    'Responde a la autocrítica como lo harías con un amigo',
+  journey_confidence_express_need_title: 'Expresa una necesidad con amabilidad',
+  journey_confidence_express_need_subtitle:
+    'Practica pedir ayuda o establecer un pequeño límite',
+  journey_fasting_add_vegetables_title: 'Incluye verduras en una comida',
+  journey_fasting_add_vegetables_subtitle:
+    'Elige una verdura que te guste: fresca, congelada o en conserva',
+  journey_fasting_wholegrain_title: 'Elige una opción integral',
+  journey_fasting_wholegrain_subtitle:
+    'Prueba pan integral, avena, arroz integral o pasta integral',
+  journey_phone_quiet_notifications_title:
+    'Silencia las notificaciones no esenciales',
+  journey_phone_quiet_notifications_subtitle:
+    'Silencia alertas que distraen y permite llamadas importantes',
+  journey_morning_wake_time_title: 'Despierta a una hora regular',
+  journey_morning_wake_time_subtitle:
+    'Elige una hora que te permita dormir lo suficiente',
+  journey_office_screen_break_title: 'Haz una pausa de la pantalla',
+  journey_office_screen_break_subtitle:
+    'Cambia brevemente a una tarea que te permita apartar la vista',
   journey_swipe_up_to_load_more: 'Desliza hacia arriba para cargar más',
   journey_days_finished: 'DÍAS COMPLETADOS',
   journey_day_label: 'DÍA {{day}}',

@@ -1,3 +1,5 @@
+import { journeys } from '../src/data/journeyPlans';
+import { getJourneyMetrics } from '../src/utils/journeyAnalytics';
 import type { MindsetTrackerBackup } from '../src/services/backup/backupTypes';
 import {
   BackupValidationError,
@@ -181,5 +183,45 @@ test('round-trips the progressive plan version and rejects unknown plans', () =>
   backup.data.activeJourneys[0].planVersion = 1;
   expect(parseBackup(JSON.stringify(backup))).toEqual(backup);
   backup.data.activeJourneys[0].planVersion = 2;
+  expect(parseBackup(JSON.stringify(backup))).toEqual(backup);
+  backup.data.activeJourneys[0].planVersion = 3;
   expect(() => validateBackup(backup)).toThrow(BackupValidationError);
 });
+
+test.each([undefined, 0, 1, 2])(
+  'restores version %s checks under the current schedule',
+  planVersion => {
+    const backup = makeBackup();
+    backup.databaseSchemaVersion = 7;
+    const journey = journeys.find(item => item.id === 'walk')!;
+    backup.data.activeJourneys[0].journeyId = journey.id;
+    backup.data.activeJourneys[0].planVersion = planVersion;
+    backup.data.journeyTaskCompletions[0].taskId = 'walk-plan-route';
+    backup.data.journeyTaskCompletions[0].dateKey = '2026-09-16';
+    const restored = parseBackup(JSON.stringify(backup));
+    const saved = restored.data.activeJourneys[0];
+    const completions = restored.data.journeyTaskCompletions;
+    expect(completions).toEqual(backup.data.journeyTaskCompletions);
+    expect(
+      getJourneyMetrics(
+        {
+          id: saved.id,
+          journeyId: journey.id,
+          startedDateKey: saved.startedDateKey,
+          planVersion: saved.planVersion,
+          isActive: saved.isActive,
+          taskCompletions: completions
+            .filter(item => item.activeJourneyId === saved.id)
+            .map(({ taskId, dateKey }) => ({ taskId, dateKey })),
+        },
+        journey,
+        '2026-09-16',
+      ),
+    ).toMatchObject({
+      dayNumber: 16,
+      totalTasks: 5,
+      completedToday: 1,
+      percentage: 20,
+    });
+  },
+);

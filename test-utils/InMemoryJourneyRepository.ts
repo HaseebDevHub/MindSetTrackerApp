@@ -1,4 +1,5 @@
 import type { JourneyRepository } from '../src/database/repositories/types';
+import { CURRENT_JOURNEY_PLAN_VERSION } from '../src/data/journeyPlans';
 import type { ActiveJourneyItem, JourneyId } from '../src/types/models';
 
 const clone = (item: ActiveJourneyItem): ActiveJourneyItem => ({
@@ -42,7 +43,7 @@ export class InMemoryJourneyRepository implements JourneyRepository {
       id: `active-journey-${this.nextId++}`,
       journeyId,
       startedDateKey,
-      planVersion: 1,
+      planVersion: CURRENT_JOURNEY_PLAN_VERSION,
       isActive: true,
       taskCompletions: [],
     };

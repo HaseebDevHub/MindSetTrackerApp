@@ -127,7 +127,7 @@ describe('progressive enrollment persistence', () => {
     const started = (await store.getState().startJourney('morning'))!;
     expect(started).toMatchObject({
       startedDateKey: '2026-09-27',
-      planVersion: 1,
+      planVersion: 2,
     });
     expect(
       await store.getState().toggleJourneyTask(started.id, 'morning-breakfast'),
@@ -158,7 +158,7 @@ describe('progressive enrollment persistence', () => {
     expect(restored.getState().activeJourneys[0]).toMatchObject({
       id: started.id,
       startedDateKey: '2026-09-27',
-      planVersion: 1,
+      planVersion: 2,
       taskCompletions: [
         { taskId: 'morning-drink-water', dateKey: '2026-09-27' },
         { taskId: 'morning-drink-water', dateKey: '2026-09-28' },
@@ -202,3 +202,83 @@ describe('progressive enrollment persistence', () => {
     expect(repository.toggleCalls).toBe(0);
   });
 });
+
+test('new-plan habits unlock by date and persist daily checks through day 16', async () => {
+  const repository = new InMemoryJourneyRepository();
+  let now = new Date(2026, 8, 1, 12);
+  const dependencies = {
+    repository: new InMemoryHabitRepository(),
+    journeyRepository: repository,
+    runLegacyMigration: async () => undefined,
+    now: () => now,
+  };
+  const store = createAppStore(dependencies);
+  await store.getState().initialize();
+  const started = (await store.getState().startJourney('walk'))!;
+  expect(started.planVersion).toBe(2);
+  expect(
+    await store.getState().toggleJourneyTask(started.id, 'walk-plan-route'),
+  ).toBe(false);
+  now = new Date(2026, 8, 15, 12);
+  expect(
+    await store.getState().toggleJourneyTask(started.id, 'walk-break-sitting'),
+  ).toBe(true);
+  expect(
+    await store.getState().toggleJourneyTask(started.id, 'walk-plan-route'),
+  ).toBe(false);
+  now = new Date(2026, 8, 16, 12);
+  expect(
+    await store.getState().toggleJourneyTask(started.id, 'walk-plan-route'),
+  ).toBe(true);
+  const restored = createAppStore(dependencies);
+  await restored.getState().initialize();
+  expect(restored.getState().activeJourneys[0].taskCompletions).toEqual([
+    { taskId: 'walk-break-sitting', dateKey: '2026-09-15' },
+    { taskId: 'walk-plan-route', dateKey: '2026-09-16' },
+  ]);
+  now = new Date(2026, 8, 17, 12);
+  expect(
+    await restored.getState().toggleJourneyTask(started.id, 'walk-plan-route'),
+  ).toBe(true);
+  expect(restored.getState().activeJourneys[0].taskCompletions).toHaveLength(3);
+  expect(
+    await restored.getState().toggleJourneyTask(started.id, 'walk-plan-route'),
+  ).toBe(true);
+  expect(restored.getState().activeJourneys[0].taskCompletions).toHaveLength(2);
+});
+
+test.each([undefined, 0, 1, 2])(
+  'version %s can complete new habits after reactivation and reload',
+  async planVersion => {
+    const saved = {
+      ...active('existing-walk', 'walk'),
+      planVersion,
+      startedDateKey: '2026-08-20',
+      taskCompletions: [{ taskId: 'walk-ten-minutes', dateKey: '2026-09-04' }],
+    };
+    const repository = new InMemoryJourneyRepository([saved]);
+    const store = makeStore(repository);
+    await store.getState().initialize();
+    await store.getState().removeActiveJourney(saved.id);
+    expect(await store.getState().startJourney('walk')).toMatchObject({
+      id: saved.id,
+      startedDateKey: saved.startedDateKey,
+      taskCompletions: saved.taskCompletions,
+    });
+    expect(
+      await store.getState().toggleJourneyTask(saved.id, 'walk-plan-route'),
+    ).toBe(true);
+    const restored = makeStore(repository);
+    await restored.getState().initialize();
+    expect(restored.getState().activeJourneys[0].taskCompletions).toEqual([
+      ...saved.taskCompletions,
+      { taskId: 'walk-plan-route', dateKey: '2026-09-04' },
+    ]);
+    expect(
+      await restored.getState().toggleJourneyTask(saved.id, 'walk-plan-route'),
+    ).toBe(true);
+    expect(restored.getState().activeJourneys[0].taskCompletions).toEqual(
+      saved.taskCompletions,
+    );
+  },
+);

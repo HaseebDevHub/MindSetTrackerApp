@@ -2,6 +2,48 @@ import { english, type TranslationDictionary } from './english';
 
 export const french: TranslationDictionary = {
   ...english,
+  journey_walk_break_sitting_title: 'Interrompez une longue période assise',
+  journey_walk_break_sitting_subtitle:
+    'Faites une pause active ; bouger assis compte aussi',
+  journey_walk_plan_route_title: 'Planifiez votre prochaine marche',
+  journey_walk_plan_route_subtitle:
+    'Choisissez un trajet confortable et un horaire réaliste',
+  journey_sleep_wake_time_title: 'Gardez une heure de réveil régulière',
+  journey_sleep_wake_time_subtitle:
+    'Essayez de vous lever à une heure similaire chaque jour',
+  journey_sugar_plain_breakfast_title:
+    'Choisissez un petit-déjeuner moins sucré',
+  journey_sugar_plain_breakfast_subtitle:
+    'Essayez des flocons d’avoine nature ou des céréales complètes avec un fruit',
+  journey_sugar_less_sauce_title: 'Choisissez une sauce moins sucrée',
+  journey_sugar_less_sauce_subtitle:
+    'Comparez les étiquettes ou utilisez des herbes et des épices',
+  journey_meditation_notice_senses_title: 'Observez ce qui vous entoure',
+  journey_meditation_notice_senses_subtitle:
+    'Prenez un instant pour remarquer un son, une image et une sensation',
+  journey_confidence_kind_thought_title: 'Formulez une pensée bienveillante',
+  journey_confidence_kind_thought_subtitle:
+    'Répondez à votre autocritique comme à un ami',
+  journey_confidence_express_need_title:
+    'Exprimez un besoin avec bienveillance',
+  journey_confidence_express_need_subtitle:
+    'Entraînez-vous à demander de l’aide ou à poser une petite limite',
+  journey_fasting_add_vegetables_title: 'Ajoutez des légumes à un repas',
+  journey_fasting_add_vegetables_subtitle:
+    'Choisissez un légume apprécié, frais, surgelé ou en conserve',
+  journey_fasting_wholegrain_title: 'Choisissez une option complète',
+  journey_fasting_wholegrain_subtitle:
+    'Essayez du pain complet, de l’avoine, du riz complet ou des pâtes complètes',
+  journey_phone_quiet_notifications_title:
+    'Coupez les notifications non essentielles',
+  journey_phone_quiet_notifications_subtitle:
+    'Coupez les alertes gênantes en gardant les appels essentiels',
+  journey_morning_wake_time_title: 'Levez-vous à une heure régulière',
+  journey_morning_wake_time_subtitle:
+    'Choisissez une heure de réveil permettant de dormir suffisamment',
+  journey_office_screen_break_title: 'Faites une pause loin de l’écran',
+  journey_office_screen_break_subtitle:
+    'Passez brièvement à une tâche qui permet de regarder ailleurs',
   journey_swipe_up_to_load_more: 'Balayez vers le haut pour en charger plus',
   journey_days_finished: 'JOURS TERMINÉS',
   journey_day_label: 'JOUR {{day}}',

@@ -43,10 +43,10 @@ describe('journey progress calculations', () => {
     expect(metrics).toMatchObject({
       dayNumber: 3,
       completedToday: 1,
-      totalTasks: 3,
-      percentage: 33,
+      totalTasks: 2,
+      percentage: 50,
       streak: 2,
-      consistency: 78,
+      consistency: 80,
     });
   });
 

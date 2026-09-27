@@ -1,4 +1,5 @@
 import type { ActiveJourneyItem, Journey, JourneyTask } from '../types/models';
+import { CURRENT_JOURNEY_PLAN_VERSION } from '../data/journeyPlans';
 import { addDays, fromDateKey, isDateKey, toDateKey } from './dates';
 
 export type JourneyDay = {
@@ -13,13 +14,16 @@ export type JourneyDay = {
 export function getJourneyDayTasks(
   journey: Journey,
   dayNumber: number,
-  planVersion = 1,
+  planVersion = CURRENT_JOURNEY_PLAN_VERSION,
 ) {
   if (dayNumber < 1 || dayNumber > journey.durationDays) return [];
-  // Old enrollments keep their original requirements; never infer completion
-  // from a newly shortened plan or discard their stored history.
-  if (planVersion !== 1)
-    return journey.tasks.filter(task => task.id !== 'morning-breakfast');
+  // All supported enrollments use the current schedule; stored checks stay intact.
+  if (
+    planVersion !== 0 &&
+    planVersion !== 1 &&
+    planVersion !== CURRENT_JOURNEY_PLAN_VERSION
+  )
+    return [];
   const ids = journey.schedule[dayNumber - 1]?.taskIds ?? [];
   return ids.flatMap(id => {
     const task = journey.tasks.find(item => item.id === id);

@@ -137,7 +137,8 @@ function isActiveJourneyRecord(
     isDateKey(value.startedDateKey) &&
     (value.planVersion === undefined ||
       value.planVersion === 0 ||
-      value.planVersion === 1) &&
+      value.planVersion === 1 ||
+      value.planVersion === 2) &&
     typeof value.isActive === 'boolean' &&
     isNullableDateKey(value.removedDateKey)
   );

@@ -1,4 +1,5 @@
 import { Q, type Database } from '@nozbe/watermelondb';
+import { CURRENT_JOURNEY_PLAN_VERSION } from '../../data/journeyPlans';
 import type {
   ActiveJourneyItem,
   JourneyId,
@@ -110,7 +111,7 @@ async function startJourney(journeyId: JourneyId, startedDateKey: string) {
       return database.get<ActiveJourney>('active_journeys').create(item => {
         item.journeyId = journeyId;
         item.startedDateKey = startedDateKey;
-        item.planVersion = 1;
+        item.planVersion = CURRENT_JOURNEY_PLAN_VERSION;
         item.isActive = true;
         item.removedDateKey = null;
       });

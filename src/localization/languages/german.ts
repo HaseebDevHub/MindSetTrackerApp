@@ -2,6 +2,46 @@ import { english, type TranslationDictionary } from './english';
 
 export const german: TranslationDictionary = {
   ...english,
+  journey_walk_break_sitting_title: 'Langes Sitzen unterbrechen',
+  journey_walk_break_sitting_subtitle:
+    'Kurz bewegen; Bewegung im Sitzen zählt auch',
+  journey_walk_plan_route_title: 'Den nächsten Spaziergang planen',
+  journey_walk_plan_route_subtitle:
+    'Eine angenehme Strecke und eine passende Zeit wählen',
+  journey_sleep_wake_time_title: 'Zu einer regelmäßigen Zeit aufstehen',
+  journey_sleep_wake_time_subtitle:
+    'Möglichst jeden Tag zu einer ähnlichen Zeit aufstehen',
+  journey_sugar_plain_breakfast_title: 'Ein zuckerärmeres Frühstück wählen',
+  journey_sugar_plain_breakfast_subtitle:
+    'Zum Beispiel ungesüßte Haferflocken oder Vollkornmüsli mit Obst',
+  journey_sugar_less_sauce_title: 'Eine weniger süße Soße wählen',
+  journey_sugar_less_sauce_subtitle:
+    'Etiketten vergleichen oder mit Kräutern und Gewürzen abschmecken',
+  journey_meditation_notice_senses_title: 'Die Umgebung bewusst wahrnehmen',
+  journey_meditation_notice_senses_subtitle:
+    'Kurz einen Klang, etwas Sichtbares und eine Körperempfindung wahrnehmen',
+  journey_confidence_kind_thought_title: 'Einen freundlicheren Gedanken üben',
+  journey_confidence_kind_thought_subtitle:
+    'Auf Selbstkritik wie bei einem guten Freund reagieren',
+  journey_confidence_express_need_title: 'Ein Bedürfnis freundlich ausdrücken',
+  journey_confidence_express_need_subtitle:
+    'Um Hilfe bitten oder eine kleine Grenze setzen üben',
+  journey_fasting_add_vegetables_title: 'Gemüse zu einer Mahlzeit hinzufügen',
+  journey_fasting_add_vegetables_subtitle:
+    'Ein Lieblingsgemüse wählen: frisch, tiefgekühlt oder aus der Dose',
+  journey_fasting_wholegrain_title: 'Eine Vollkornvariante wählen',
+  journey_fasting_wholegrain_subtitle:
+    'Vollkornbrot, Haferflocken, Naturreis oder Vollkornnudeln probieren',
+  journey_phone_quiet_notifications_title:
+    'Unwichtige Benachrichtigungen stummschalten',
+  journey_phone_quiet_notifications_subtitle:
+    'Ablenkende Hinweise stummschalten, wichtige Anrufe zulassen',
+  journey_morning_wake_time_title: 'Zu einer regelmäßigen Zeit aufwachen',
+  journey_morning_wake_time_subtitle:
+    'Eine Aufstehzeit wählen, die ausreichend Schlaf ermöglicht',
+  journey_office_screen_break_title: 'Eine Bildschirmpause machen',
+  journey_office_screen_break_subtitle:
+    'Kurz zu einer Tätigkeit wechseln, bei der der Blick vom Bildschirm geht',
   journey_swipe_up_to_load_more: 'Nach oben wischen, um mehr zu laden',
   journey_days_finished: 'TAGE ABGESCHLOSSEN',
   journey_day_label: 'TAG {{day}}',

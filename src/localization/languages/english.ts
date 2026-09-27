@@ -1,4 +1,43 @@
 export const english = {
+  journey_walk_break_sitting_title: 'Break up a long sitting period',
+  journey_walk_break_sitting_subtitle:
+    'Take a brief movement break; seated movement counts',
+  journey_walk_plan_route_title: 'Plan your next walk',
+  journey_walk_plan_route_subtitle:
+    'Choose a comfortable route and a realistic time',
+  journey_sleep_wake_time_title: 'Keep a consistent wake-up time',
+  journey_sleep_wake_time_subtitle: 'Aim for a similar wake-up time each day',
+  journey_sugar_plain_breakfast_title: 'Choose a lower-sugar breakfast',
+  journey_sugar_plain_breakfast_subtitle:
+    'Try plain oats or wholegrain cereal with fruit',
+  journey_sugar_less_sauce_title: 'Choose a less sugary sauce',
+  journey_sugar_less_sauce_subtitle:
+    'Compare labels or use herbs and spices for flavour',
+  journey_meditation_notice_senses_title: 'Notice your surroundings',
+  journey_meditation_notice_senses_subtitle:
+    'Pause to notice a sound, a sight and a physical sensation',
+  journey_confidence_kind_thought_title: 'Practise a kinder thought',
+  journey_confidence_kind_thought_subtitle:
+    'Respond to self-criticism as you would to a friend',
+  journey_confidence_express_need_title: 'Express one need kindly',
+  journey_confidence_express_need_subtitle:
+    'Practise asking for help or setting a small boundary',
+  journey_fasting_add_vegetables_title: 'Include vegetables in a meal',
+  journey_fasting_add_vegetables_subtitle:
+    'Choose a vegetable you enjoy; fresh, frozen or canned counts',
+  journey_fasting_wholegrain_title: 'Choose a wholegrain option',
+  journey_fasting_wholegrain_subtitle:
+    'Try wholegrain bread, oats, brown rice or wholewheat pasta',
+  journey_phone_quiet_notifications_title:
+    'Keep nonessential notifications quiet',
+  journey_phone_quiet_notifications_subtitle:
+    'Silence distracting alerts while keeping essential calls available',
+  journey_morning_wake_time_title: 'Wake at a regular time',
+  journey_morning_wake_time_subtitle:
+    'Choose a wake-up time that supports enough sleep',
+  journey_office_screen_break_title: 'Take a break from the screen',
+  journey_office_screen_break_subtitle:
+    'Switch briefly to a task that lets your eyes look away',
   journey_swipe_up_to_load_more: 'Swipe up to load more',
   journey_days_finished: 'DAYS FINISHED',
   journey_day_label: 'DAY {{day}}',
