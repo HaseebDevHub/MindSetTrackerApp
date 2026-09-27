@@ -1,6 +1,7 @@
 import migrations from '../src/database/migrations';
 import schema, {
   activeJourneyColumns,
+  activeJourneyV7Columns,
   habitColumns,
   habitCompletionColumns,
   habitCompletionV2Columns,
@@ -13,8 +14,8 @@ import schema, {
 } from '../src/database/schema';
 
 describe('WatermelonDB habit schema', () => {
-  test('defines a fresh version-6 normalized schema', () => {
-    expect(schema.version).toBe(6);
+  test('defines a fresh version-7 normalized schema', () => {
+    expect(schema.version).toBe(7);
     expect(Object.keys(schema.tables)).toEqual([
       'habits',
       'habit_completions',
@@ -25,9 +26,10 @@ describe('WatermelonDB habit schema', () => {
     expect(schema.tables.habit_completions.columnArray).toEqual(
       habitCompletionColumns,
     );
-    expect(schema.tables.active_journeys.columnArray).toEqual(
-      activeJourneyColumns,
-    );
+    expect(schema.tables.active_journeys.columnArray).toEqual([
+      ...activeJourneyColumns,
+      ...activeJourneyV7Columns,
+    ]);
     expect(schema.tables.journey_task_completions.columnArray).toEqual(
       journeyTaskCompletionColumns,
     );
@@ -43,11 +45,24 @@ describe('WatermelonDB habit schema', () => {
 
   test('upgrades the empty version-1 database without resetting existing data', () => {
     expect(migrations.minVersion).toBe(1);
-    expect(migrations.maxVersion).toBe(6);
-    expect(migrations.sortedMigrations).toHaveLength(5);
+    expect(migrations.maxVersion).toBe(7);
+    expect(migrations.sortedMigrations).toHaveLength(6);
 
-    const [version2, version3, version4, version5, version6] =
+    const [version2, version3, version4, version5, version6, version7] =
       migrations.sortedMigrations;
+    expect(version7).toMatchObject({
+      toVersion: 7,
+      steps: [
+        {
+          type: 'add_columns',
+          table: 'active_journeys',
+          columns: activeJourneyV7Columns,
+        },
+      ],
+    });
+    expect(activeJourneyV7Columns).toEqual([
+      { name: 'plan_version', type: 'number', isOptional: true },
+    ]);
     expect(version6).toMatchObject({
       toVersion: 6,
       steps: [

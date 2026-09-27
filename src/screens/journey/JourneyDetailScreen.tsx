@@ -15,7 +15,7 @@ import { SmallVerticalListSeparator } from '../../components/common/ListSeparato
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { ToastMessage } from '../../components/common/ToastMessage';
 import { useTheme } from '../../context/ThemeContext';
-import { journeys } from '../../data/mockData';
+import { journeys } from '../../data/journeyPlans';
 import { useTranslation } from '../../localization';
 import type { JourneyStackParamList } from '../../types/models';
 import { useAppStore } from '../../store/useAppStore';
@@ -54,7 +54,7 @@ export function JourneyDetailScreen({ navigation, route }: Props) {
   return (
     <ScreenContainer style={styles.detailPage}>
       <FlashList
-        data={journey.habits}
+        data={journey.tasks}
         keyExtractor={keyById}
         ItemSeparatorComponent={SmallVerticalListSeparator}
         renderItem={({ item: habit, index }) => (
@@ -126,8 +126,8 @@ export function JourneyDetailScreen({ navigation, route }: Props) {
               <Text style={styles.metadataDot}>•</Text>
               <View style={styles.dailyHabitsBadge}>
                 <Text style={[styles.dailyHabitsText, isRTL && styles.textRTL]}>
-                  {t('journey_daily_habits', {
-                    count: journey.habits.length,
+                  {t('journey_habits_count', {
+                    count: journey.tasks.length,
                   })}
                 </Text>
               </View>
@@ -142,7 +142,7 @@ export function JourneyDetailScreen({ navigation, route }: Props) {
               <View style={styles.habitCountBadge}>
                 <Text style={[styles.habitCountText, isRTL && styles.textRTL]}>
                   {t('journey_habits_count', {
-                    count: journey.habits.length,
+                    count: journey.tasks.length,
                   })}
                 </Text>
               </View>
@@ -150,7 +150,7 @@ export function JourneyDetailScreen({ navigation, route }: Props) {
           </>
         }
         ListFooterComponent={
-          <View style={{backgroundColor: colors.background, paddingBottom: 40}}>
+          <View style={styles.detailFooter}>
             <View style={[styles.info, isRTL && styles.rowRTL]}>
               <Sparkles color={colors.primary} size={20} />
               <Text style={[styles.infoText, isRTL && styles.textRTL]}>

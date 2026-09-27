@@ -135,6 +135,9 @@ function isActiveJourneyRecord(
     isNonEmptyString(value.journeyId) &&
     isString(value.startedDateKey) &&
     isDateKey(value.startedDateKey) &&
+    (value.planVersion === undefined ||
+      value.planVersion === 0 ||
+      value.planVersion === 1) &&
     typeof value.isActive === 'boolean' &&
     isNullableDateKey(value.removedDateKey)
   );
@@ -228,7 +231,11 @@ function validateCurrentBackup(value: unknown): MindsetTrackerBackup {
       'Backup version is not supported.',
     );
   }
-  if (value.databaseSchemaVersion !== 5 && value.databaseSchemaVersion !== 6) {
+  if (
+    value.databaseSchemaVersion !== 5 &&
+    value.databaseSchemaVersion !== 6 &&
+    value.databaseSchemaVersion !== 7
+  ) {
     throw new BackupValidationError(
       'incompatible_backup',
       'Database schema version is not supported.',

@@ -1,119 +1,115 @@
-import type { ActiveJourneyItem, Journey } from '../types/models';
-import { isDateKey } from './dates';
+import type { ActiveJourneyItem, Journey, JourneyTask } from '../types/models';
+import { addDays, fromDateKey, isDateKey, toDateKey } from './dates';
 
-const DAY_MS = 86_400_000;
-
-function dateKeyDayNumber(dateKey: string) {
-  if (!isDateKey(dateKey)) return undefined;
-  const [year, month, day] = dateKey.split('-').map(Number);
-  return Math.floor(Date.UTC(year, month - 1, day) / DAY_MS);
-}
-
-function dayNumberToDateKey(dayNumber: number) {
-  const date = new Date(dayNumber * DAY_MS);
-  const month = String(date.getUTCMonth() + 1).padStart(2, '0');
-  const day = String(date.getUTCDate()).padStart(2, '0');
-  return `${date.getUTCFullYear()}-${month}-${day}`;
-}
-
-export type JourneyMetrics = {
+export type JourneyDay = {
   dayNumber: number;
-  isCompleted: boolean;
-  completedToday: number;
-  totalTasks: number;
-  percentage: number;
-  streak: number;
-  consistency: number;
-  todayCompletedTaskIds: Set<string>;
-  nextTaskId?: string;
+  dateKey: string;
+  tasks: JourneyTask[];
+  completedTaskIds: string[];
+  finished: boolean;
+  status: 'past' | 'current' | 'future';
 };
+
+export function getJourneyDayTasks(
+  journey: Journey,
+  dayNumber: number,
+  planVersion = 1,
+) {
+  if (dayNumber < 1 || dayNumber > journey.durationDays) return [];
+  // Old enrollments keep their original requirements; never infer completion
+  // from a newly shortened plan or discard their stored history.
+  if (planVersion !== 1)
+    return journey.tasks.filter(task => task.id !== 'morning-breakfast');
+  const ids = journey.schedule[dayNumber - 1]?.taskIds ?? [];
+  return ids.flatMap(id => {
+    const task = journey.tasks.find(item => item.id === id);
+    return task ? [task] : [];
+  });
+}
+
+export function getJourneyDays(
+  enrollment: ActiveJourneyItem,
+  journey: Journey,
+  todayKey: string,
+): JourneyDay[] {
+  if (!isDateKey(enrollment.startedDateKey) || !isDateKey(todayKey)) return [];
+  const byDate = new Map<string, Set<string>>();
+  enrollment.taskCompletions.forEach(({ dateKey, taskId }) => {
+    const ids = byDate.get(dateKey) ?? new Set<string>();
+    ids.add(taskId);
+    byDate.set(dateKey, ids);
+  });
+  return Array.from({ length: journey.durationDays }, (_, index) => {
+    const dayNumber = index + 1;
+    const dateKey = toDateKey(
+      addDays(fromDateKey(enrollment.startedDateKey), index),
+    );
+    const tasks = getJourneyDayTasks(
+      journey,
+      dayNumber,
+      enrollment.planVersion ?? 0,
+    );
+    const completedTaskIds = tasks
+      .filter(task => byDate.get(dateKey)?.has(task.id))
+      .map(task => task.id);
+    return {
+      dayNumber,
+      dateKey,
+      tasks,
+      completedTaskIds,
+      finished:
+        dateKey <= todayKey &&
+        tasks.length > 0 &&
+        completedTaskIds.length === tasks.length,
+      status:
+        dateKey === todayKey
+          ? 'current'
+          : dateKey < todayKey
+          ? 'past'
+          : 'future',
+    };
+  });
+}
 
 export function getJourneyMetrics(
   enrollment: ActiveJourneyItem,
   journey: Journey,
   todayKey: string,
-): JourneyMetrics {
-  const startDay = dateKeyDayNumber(enrollment.startedDateKey);
-  const todayDay = dateKeyDayNumber(todayKey);
-  const totalTasks = journey.habits.length;
-  if (startDay === undefined || todayDay === undefined || totalTasks === 0) {
-    return {
-      dayNumber: 1,
-      isCompleted: false,
-      completedToday: 0,
-      totalTasks,
-      percentage: 0,
-      streak: 0,
-      consistency: 0,
-      todayCompletedTaskIds: new Set(),
-    };
-  }
-
-  const taskIds = new Set(journey.habits.map(task => task.id));
-  const finalDay = startDay + journey.durationDays - 1;
-  const elapsedRaw = todayDay - startDay + 1;
-  const elapsedDays = Math.max(0, Math.min(journey.durationDays, elapsedRaw));
-  const isCompleted = todayDay > finalDay;
-  const uniqueByDay = new Map<number, Set<string>>();
-
-  enrollment.taskCompletions.forEach(completion => {
-    const completionDay = dateKeyDayNumber(completion.dateKey);
-    if (
-      completionDay === undefined ||
-      completionDay < startDay ||
-      completionDay > finalDay ||
-      !taskIds.has(completion.taskId)
-    ) {
-      return;
-    }
-    const ids = uniqueByDay.get(completionDay) ?? new Set<string>();
-    ids.add(completion.taskId);
-    uniqueByDay.set(completionDay, ids);
-  });
-
-  const todayCompletedTaskIds = new Set(
-    [...(uniqueByDay.get(todayDay) ?? [])].filter(id => taskIds.has(id)),
-  );
+) {
+  const days = getJourneyDays(enrollment, journey, todayKey);
+  const current = days.find(day => day.status === 'current');
+  const elapsed = days.filter(day => day.status !== 'future');
+  const totalTasks =
+    current?.tasks.length ??
+    getJourneyDayTasks(journey, 1, enrollment.planVersion ?? 0).length;
+  const todayCompletedTaskIds = new Set(current?.completedTaskIds ?? []);
   const completedToday = todayCompletedTaskIds.size;
-  const percentage = Math.round((completedToday / totalTasks) * 100);
-
-  const effectiveEnd = Math.min(todayDay, finalDay);
-  let streakCursor = effectiveEnd;
-  if ((uniqueByDay.get(streakCursor)?.size ?? 0) !== totalTasks) {
-    streakCursor -= 1;
-  }
+  const possible = elapsed.reduce((sum, day) => sum + day.tasks.length, 0);
+  const completed = elapsed.reduce(
+    (sum, day) => sum + day.completedTaskIds.length,
+    0,
+  );
+  let cursor = elapsed.length - 1;
+  if (cursor >= 0 && !elapsed[cursor].finished) cursor -= 1;
   let streak = 0;
-  while (
-    streakCursor >= startDay &&
-    (uniqueByDay.get(streakCursor)?.size ?? 0) === totalTasks
-  ) {
+  while (cursor >= 0 && elapsed[cursor].finished) {
     streak += 1;
-    streakCursor -= 1;
+    cursor -= 1;
   }
-
-  let completedOpportunities = 0;
-  uniqueByDay.forEach((ids, day) => {
-    if (day >= startDay && day <= effectiveEnd) {
-      completedOpportunities += ids.size;
-    }
-  });
-  const possibleOpportunities = elapsedDays * totalTasks;
-  const consistency = possibleOpportunities
-    ? Math.round((completedOpportunities / possibleOpportunities) * 100)
-    : 0;
-
   return {
-    dayNumber: Math.max(1, Math.min(journey.durationDays, elapsedRaw)),
-    isCompleted,
+    dayNumber: current?.dayNumber ?? Math.max(1, elapsed.length),
+    isCompleted: days.length > 0 && days[days.length - 1].dateKey < todayKey,
     completedToday,
     totalTasks,
-    percentage,
+    percentage: totalTasks
+      ? Math.round((completedToday / totalTasks) * 100)
+      : 0,
     streak,
-    consistency,
+    consistency: possible ? Math.round((completed / possible) * 100) : 0,
+    daysFinished: days.filter(day => day.finished).length,
     todayCompletedTaskIds,
-    nextTaskId: journey.habits.find(
-      task => !todayCompletedTaskIds.has(task.id),
-    )?.id,
+    nextTaskId: current?.tasks.find(task => !todayCompletedTaskIds.has(task.id))
+      ?.id,
   };
 }
 
@@ -121,8 +117,9 @@ export function getJourneyFinalDateKey(
   startedDateKey: string,
   durationDays: number,
 ) {
-  const startDay = dateKeyDayNumber(startedDateKey);
-  return startDay === undefined
-    ? undefined
-    : dayNumberToDateKey(startDay + Math.max(1, durationDays) - 1);
+  return isDateKey(startedDateKey)
+    ? toDateKey(
+        addDays(fromDateKey(startedDateKey), Math.max(1, durationDays) - 1),
+      )
+    : undefined;
 }

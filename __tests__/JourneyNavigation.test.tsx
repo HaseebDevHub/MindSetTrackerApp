@@ -104,7 +104,7 @@ describe('Journey navigation', () => {
       expect.arrayContaining([
         'Walk everyday for health',
         'Take a 10 minute walk',
-        'Reach your daily step goal',
+        'Add a little movement',
         'START JOURNEY',
       ]),
     );

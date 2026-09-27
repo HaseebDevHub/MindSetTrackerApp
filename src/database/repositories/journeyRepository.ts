@@ -39,6 +39,7 @@ function mapRecord(
     id: record.id,
     journeyId: record.journeyId as JourneyId,
     startedDateKey: record.startedDateKey,
+    planVersion: record.planVersion ?? 0,
     isActive: record.isActive,
     removedDateKey: record.removedDateKey ?? undefined,
     taskCompletions: completions,
@@ -109,6 +110,7 @@ async function startJourney(journeyId: JourneyId, startedDateKey: string) {
       return database.get<ActiveJourney>('active_journeys').create(item => {
         item.journeyId = journeyId;
         item.startedDateKey = startedDateKey;
+        item.planVersion = 1;
         item.isActive = true;
         item.removedDateKey = null;
       });
@@ -150,7 +152,9 @@ async function setTaskCompletion(
             });
           } else if (records.length > 1) {
             await database.batch(
-              records.slice(1).map(record => record.prepareDestroyPermanently()),
+              records
+                .slice(1)
+                .map(record => record.prepareDestroyPermanently()),
             );
           }
         } else if (records.length) {

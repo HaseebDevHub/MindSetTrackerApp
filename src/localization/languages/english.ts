@@ -1,4 +1,47 @@
 export const english = {
+  journey_days_finished: 'DAYS FINISHED',
+  journey_day_label: 'DAY {{day}}',
+  journey_day_current: 'Today',
+  journey_day_future: 'Preview · available on this date',
+  journey_day_past: 'Past day · read only',
+  journey_day_finished: 'Day finished',
+  journey_day_accessibility:
+    'Day {{day}}, {{date}}, {{completed}} of {{total}} tasks, {{status}}',
+  journey_morning_breakfast_title: 'Prepare a balanced breakfast',
+  journey_morning_breakfast_subtitle:
+    'Try wholegrain food, fruit and a protein source',
+  journey_fasting_title: 'A balanced eating routine',
+  journey_fasting_description:
+    'Build regular, balanced meals without skipping food or restricting eating times.',
+  journey_fasting_task_window_title: 'Notice hunger and fullness',
+  journey_fasting_task_window_subtitle:
+    'Pause during a meal; eat enough to feel satisfied',
+  journey_sleep_task_bedtime_title: 'Keep a consistent bedtime',
+  journey_sleep_task_bedtime_subtitle:
+    'Choose a time that allows enough sleep for you',
+  journey_sleep_task_screens_subtitle:
+    'Try switching off screens 30 minutes before bed',
+  journey_meditation_task_meditate_title: 'Try a short meditation',
+  journey_meditation_task_meditate_subtitle:
+    'Sit comfortably for 3–5 minutes; stop if distressed',
+  journey_meditation_task_breathe_subtitle:
+    'Breathe naturally; no holding or forcing',
+  journey_phone_task_first_hour_title: 'Start with 10 phone-free minutes',
+  journey_phone_task_focus_subtitle:
+    'Try 15 quiet minutes; keep essential calls available',
+  journey_walk_task_walk_subtitle:
+    'Easy pace indoors or out; shorter is fine too',
+  journey_walk_task_steps_title: 'Add a little movement',
+  journey_walk_task_steps_subtitle:
+    'Try a few comfortable extra steps; adapt to your ability',
+  journey_walk_task_stretch_subtitle:
+    'Move gently within a comfortable range; never force',
+  journey_office_task_stand_title: 'Break up sitting time',
+  journey_office_task_stand_subtitle:
+    'Take a brief movement break; seated movement counts',
+  journey_sugar_title: 'Cut back on added sugar',
+  journey_sugar_task_drinks_title: 'Swap one sugary drink',
+
   habit_alert_type: 'Alert type',
   habit_alert_reminder: 'Reminder',
   habit_alert_alarm: 'Alarm',
@@ -517,7 +560,7 @@ export const english = {
   journey_included_habits: 'INCLUDED HABITS',
   journey_habits_count: '{{count}} Habits',
   journey_guidance:
-    'Complete these guided tasks each day to build a consistent, lasting routine.',
+    'Start small. New habits appear as you go; practice at your own pace.',
   journey_start: 'START JOURNEY',
   journey_continue: 'CONTINUE JOURNEY',
   journey_start_error: 'Journey could not be started. Please try again.',
@@ -567,24 +610,15 @@ export const english = {
   journey_walk_description:
     'Build a sustainable walking routine that improves energy, mood, and heart health.',
   journey_walk_task_walk_title: 'Take a 10 minute walk',
-  journey_walk_task_walk_subtitle: 'Easy pace • Outdoors or indoors',
-  journey_walk_task_steps_title: 'Reach your daily step goal',
-  journey_walk_task_steps_subtitle: 'Build steady daily movement',
   journey_walk_task_stretch_title: 'Stretch after walking',
-  journey_walk_task_stretch_subtitle: 'Cool down • 5 minutes',
   journey_sleep_title: 'Bedtime ritual for a sweet sleep',
   journey_sleep_description:
     'Wind down consistently and make restorative sleep your nightly priority.',
   journey_sleep_task_screens_title: 'No screens before bed',
-  journey_sleep_task_screens_subtitle: '45 mins prior • Wind down',
   journey_sleep_task_prepare_title: 'Prepare tomorrow',
   journey_sleep_task_prepare_subtitle: 'Clothes & agenda • 10 minutes',
-  journey_sleep_task_bedtime_title: 'Sleep before 11 PM',
-  journey_sleep_task_bedtime_subtitle: 'Goal 8 hrs • Consistent bedtime',
-  journey_sugar_title: 'Say goodbye to sugar',
   journey_sugar_description:
     'Reset your palate with practical, gentle daily choices.',
-  journey_sugar_task_drinks_title: 'Skip sugary drinks',
   journey_sugar_task_drinks_subtitle: 'Choose water or unsweetened drinks',
   journey_sugar_task_snack_title: 'Choose a whole-food snack',
   journey_sugar_task_snack_subtitle: 'Fruit, nuts, or another simple food',
@@ -594,10 +628,6 @@ export const english = {
   journey_meditation_description:
     'Create calm and improve focus through a short daily practice.',
   journey_meditation_task_breathe_title: 'Breathe for one minute',
-  journey_meditation_task_breathe_subtitle: 'Slow, steady breaths',
-  journey_meditation_task_meditate_title: 'Meditate for 10 minutes',
-  journey_meditation_task_meditate_subtitle:
-    'Sit comfortably and return to the breath',
   journey_meditation_task_reflect_title: 'Write one reflection',
   journey_meditation_task_reflect_subtitle: 'Capture one thought or feeling',
   journey_confidence_title: 'Self confidence booster',
@@ -609,22 +639,15 @@ export const english = {
   journey_confidence_task_brave_subtitle: 'Take one small step outside comfort',
   journey_confidence_task_win_title: 'Celebrate a small win',
   journey_confidence_task_win_subtitle: "Give today's progress credit",
-  journey_fasting_title: 'Fasting to lose weight easily',
-  journey_fasting_description:
-    'Explore structured eating windows mindfully and gradually.',
   journey_fasting_task_meals_title: "Plan today's meals",
   journey_fasting_task_meals_subtitle: 'Choose balanced food in advance',
   journey_fasting_task_hydrate_title: 'Hydrate regularly',
   journey_fasting_task_hydrate_subtitle: 'Drink water throughout the day',
-  journey_fasting_task_window_title: 'Log your eating window',
-  journey_fasting_task_window_subtitle: 'Record your start and finish time',
   journey_phone_title: 'Less phone, more progress',
   journey_phone_description:
     'Reclaim your attention with intentional boundaries.',
-  journey_phone_task_first_hour_title: 'Phone-free first hour',
   journey_phone_task_first_hour_subtitle: 'Start the day without scrolling',
   journey_phone_task_focus_title: 'One focused work block',
-  journey_phone_task_focus_subtitle: 'Work without notifications',
   journey_phone_task_bedtime_title: 'Park phone before bed',
   journey_phone_task_bedtime_subtitle: "Keep it outside arm's reach",
   journey_morning_title: 'Energy-boosting morning routine',
@@ -639,8 +662,6 @@ export const english = {
   journey_office_title: 'Keep fit at the office',
   journey_office_description:
     'Add healthy movement to even the busiest workday.',
-  journey_office_task_stand_title: 'Stand every hour',
-  journey_office_task_stand_subtitle: 'Reset your posture regularly',
   journey_office_task_walk_title: 'Take a walking break',
   journey_office_task_walk_subtitle: 'Step away from the desk briefly',
   journey_office_task_stretch_title: 'Stretch your shoulders',

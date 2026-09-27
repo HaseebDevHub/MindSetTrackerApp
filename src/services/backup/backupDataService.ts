@@ -68,6 +68,7 @@ function mapActiveJourney(record: ActiveJourney): ActiveJourneyBackupRecord {
     id: record.id,
     journeyId: record.journeyId,
     startedDateKey: record.startedDateKey,
+    planVersion: record.planVersion ?? 0,
     isActive: record.isActive,
     removedDateKey: record.removedDateKey,
   };
@@ -165,6 +166,7 @@ function assignActiveJourney(
 ) {
   record.journeyId = value.journeyId;
   record.startedDateKey = value.startedDateKey;
+  record.planVersion = value.planVersion ?? 0;
   record.isActive = value.isActive;
   record.removedDateKey = value.removedDateKey;
 }

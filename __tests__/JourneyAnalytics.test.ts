@@ -1,4 +1,4 @@
-import { journeys } from '../src/data/mockData';
+import { journeys } from '../src/data/journeyPlans';
 import type { ActiveJourneyItem } from '../src/types/models';
 import {
   getJourneyFinalDateKey,
@@ -20,7 +20,7 @@ function enrollment(
 }
 
 const completeDay = (dateKey: string) =>
-  journey.habits.map(task => ({ taskId: task.id, dateKey }));
+  journey.tasks.map(task => ({ taskId: task.id, dateKey }));
 
 describe('journey progress calculations', () => {
   test('uses local date keys across a DST boundary', () => {
@@ -33,8 +33,8 @@ describe('journey progress calculations', () => {
       enrollment([
         ...completeDay('2026-03-07'),
         ...completeDay('2026-03-08'),
-        { taskId: journey.habits[0].id, dateKey: '2026-03-09' },
-        { taskId: journey.habits[0].id, dateKey: '2026-03-09' },
+        { taskId: journey.tasks[0].id, dateKey: '2026-03-09' },
+        { taskId: journey.tasks[0].id, dateKey: '2026-03-09' },
         { taskId: 'unknown-task', dateKey: '2026-03-09' },
       ]),
       journey,

@@ -9,6 +9,7 @@ import { useThemedStyles } from '../../hooks/useThemedStyles';
 
 const createStyles = (colors: ThemeColors) =>
   StyleSheet.create({
+    detailFooter: { backgroundColor: colors.background, paddingBottom: 40 },
     header: {
       height: 72,
       paddingHorizontal: spacing.screen,
@@ -118,7 +119,7 @@ const createStyles = (colors: ThemeColors) =>
     },
     allTitle: { marginTop: spacing.xl },
     list: { paddingHorizontal: spacing.screen, paddingBottom: 110 },
-    detailPage: {  },
+    detailPage: {},
     detailHeader: {
       minHeight: 72,
       flexDirection: 'row',

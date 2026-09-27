@@ -106,7 +106,8 @@ export interface Journey {
   durationDays: number;
   description: string;
   descriptionKey: TranslationKey;
-  habits: JourneyTask[];
+  tasks: JourneyTask[];
+  schedule: { dayNumber: number; taskIds: string[] }[];
   colors: [string, string];
 }
 
@@ -119,6 +120,8 @@ export type ActiveJourneyItem = {
   id: string;
   journeyId: JourneyId;
   startedDateKey: string;
+  /** Missing/0 retains the original flat requirements for existing enrollments. */
+  planVersion?: number;
   isActive: boolean;
   removedDateKey?: string;
   taskCompletions: JourneyTaskCompletion[];

@@ -83,7 +83,7 @@ describe('backup validation', () => {
       parseBackup(JSON.stringify(backup)).data.habits[0].reminderType,
     ).toBe('alarm');
     expect(() =>
-      validateBackup({ ...backup, databaseSchemaVersion: 7 }),
+      validateBackup({ ...backup, databaseSchemaVersion: 8 }),
     ).toThrow(BackupValidationError);
   });
   test('accepts and parses every supported collection and habit field', () => {
@@ -173,4 +173,13 @@ describe('backup validation', () => {
     invalidNumber.data.habitCompletions[0].progressValue = Number.NaN;
     expect(() => validateBackup(invalidNumber)).toThrow(BackupValidationError);
   });
+});
+
+test('round-trips the progressive plan version and rejects unknown plans', () => {
+  const backup = makeBackup();
+  backup.databaseSchemaVersion = 7;
+  backup.data.activeJourneys[0].planVersion = 1;
+  expect(parseBackup(JSON.stringify(backup))).toEqual(backup);
+  backup.data.activeJourneys[0].planVersion = 2;
+  expect(() => validateBackup(backup)).toThrow(BackupValidationError);
 });

@@ -5,6 +5,7 @@ import {
 } from '@nozbe/watermelondb/Schema/migrations';
 import {
   activeJourneyColumns,
+  activeJourneyV7Columns,
   habitCompletionV2Columns,
   habitCompletionV3Columns,
   habitV2Columns,
@@ -16,6 +17,15 @@ import {
 
 const migrations = schemaMigrations({
   migrations: [
+    {
+      toVersion: 7,
+      steps: [
+        addColumns({
+          table: 'active_journeys',
+          columns: activeJourneyV7Columns,
+        }),
+      ],
+    },
     {
       toVersion: 6,
       steps: [addColumns({ table: 'habits', columns: habitV6Columns })],

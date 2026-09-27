@@ -2,6 +2,49 @@ import { english, type TranslationDictionary } from './english';
 
 export const german: TranslationDictionary = {
   ...english,
+  journey_days_finished: 'TAGE ABGESCHLOSSEN',
+  journey_day_label: 'TAG {{day}}',
+  journey_day_current: 'Heute',
+  journey_day_future: 'Vorschau · ab diesem Datum verfügbar',
+  journey_day_past: 'Vergangener Tag · nur Ansicht',
+  journey_day_finished: 'Tag abgeschlossen',
+  journey_day_accessibility:
+    'Tag {{day}}, {{date}}, {{completed}} von {{total}} Aufgaben, {{status}}',
+  journey_morning_breakfast_title: 'Ein ausgewogenes Frühstück vorbereiten',
+  journey_morning_breakfast_subtitle:
+    'Probiere Vollkorn, Obst und eine Proteinquelle',
+  journey_fasting_title: 'Eine ausgewogene Essroutine',
+  journey_fasting_description:
+    'Übe regelmäßige, ausgewogene Mahlzeiten, ohne Essen auszulassen oder Essenszeiten einzuschränken.',
+  journey_fasting_task_window_title: 'Hunger und Sättigung wahrnehmen',
+  journey_fasting_task_window_subtitle:
+    'Halte beim Essen kurz inne; iss genug, um satt zu sein',
+  journey_sleep_task_bedtime_title: 'Eine regelmäßige Schlafenszeit einhalten',
+  journey_sleep_task_bedtime_subtitle:
+    'Wähle eine Zeit, die dir ausreichend Schlaf ermöglicht',
+  journey_sleep_task_screens_subtitle:
+    'Versuche, Bildschirme 30 Minuten vor dem Schlafen auszuschalten',
+  journey_meditation_task_meditate_title: 'Eine kurze Meditation ausprobieren',
+  journey_meditation_task_meditate_subtitle:
+    'Sitze bequem für 3–5 Minuten; höre auf, wenn es dich belastet',
+  journey_meditation_task_breathe_subtitle:
+    'Atme natürlich, ohne Anhalten oder Erzwingen',
+  journey_phone_task_first_hour_title: 'Mit 10 Minuten ohne Handy beginnen',
+  journey_phone_task_focus_subtitle:
+    'Probiere 15 ruhige Minuten; bleibe für wichtige Anrufe erreichbar',
+  journey_walk_task_walk_subtitle:
+    'Drinnen oder draußen in leichtem Tempo; kürzer ist auch gut',
+  journey_walk_task_steps_title: 'Etwas Bewegung ergänzen',
+  journey_walk_task_steps_subtitle:
+    'Probiere ein paar zusätzliche Schritte, passend zu deinen Möglichkeiten',
+  journey_walk_task_stretch_subtitle:
+    'Bewege dich sanft im angenehmen Bereich; niemals erzwingen',
+  journey_office_task_stand_title: 'Langes Sitzen unterbrechen',
+  journey_office_task_stand_subtitle:
+    'Mache eine kurze Bewegungspause; auch im Sitzen zählt Bewegung',
+  journey_sugar_title: 'Weniger zugesetzten Zucker essen',
+  journey_sugar_task_drinks_title: 'Ein zuckerhaltiges Getränk ersetzen',
+
   habit_alert_type: 'Art des Hinweises',
   habit_alert_reminder: 'Erinnerung',
   habit_alert_alarm: 'Alarm',
@@ -528,7 +571,7 @@ export const german: TranslationDictionary = {
   journey_included_habits: 'ENTHALTENE GEWOHNHEITEN',
   journey_habits_count: '{{count}} Gewohnheiten',
   journey_guidance:
-    'Erledige diese geführten Aufgaben täglich, um eine beständige, dauerhafte Routine aufzubauen.',
+    'Beginne klein. Neue Gewohnheiten kommen nach und nach hinzu; übe in deinem Tempo.',
   journey_start: 'PROGRAMM STARTEN',
   journey_continue: 'PROGRAMM FORTSETZEN',
   journey_start_error:
@@ -581,24 +624,15 @@ export const german: TranslationDictionary = {
   journey_walk_description:
     'Baue eine nachhaltige Gehroutine auf, die Energie, Stimmung und Herzgesundheit verbessert.',
   journey_walk_task_walk_title: '10 Minuten spazieren gehen',
-  journey_walk_task_walk_subtitle: 'Leichtes Tempo • Drinnen oder draußen',
-  journey_walk_task_steps_title: 'Tägliches Schrittziel erreichen',
-  journey_walk_task_steps_subtitle: 'Bleibe jeden Tag regelmäßig in Bewegung',
   journey_walk_task_stretch_title: 'Nach dem Gehen dehnen',
-  journey_walk_task_stretch_subtitle: 'Abkühlen • 5 Minuten',
   journey_sleep_title: 'Abendritual für erholsamen Schlaf',
   journey_sleep_description:
     'Komme regelmäßig zur Ruhe und mache erholsamen Schlaf zu deiner abendlichen Priorität.',
   journey_sleep_task_screens_title: 'Keine Bildschirme vor dem Schlafen',
-  journey_sleep_task_screens_subtitle: '45 Min. vorher • Zur Ruhe kommen',
   journey_sleep_task_prepare_title: 'Morgen vorbereiten',
   journey_sleep_task_prepare_subtitle: 'Kleidung und Tagesplan • 10 Minuten',
-  journey_sleep_task_bedtime_title: 'Vor 23 Uhr schlafen',
-  journey_sleep_task_bedtime_subtitle: 'Ziel: 8 Std. • Feste Schlafenszeit',
-  journey_sugar_title: 'Sag dem Zucker Lebewohl',
   journey_sugar_description:
     'Gewöhne deinen Geschmack mit praktischen, sanften Alltagsentscheidungen um.',
-  journey_sugar_task_drinks_title: 'Zuckerhaltige Getränke meiden',
   journey_sugar_task_drinks_subtitle: 'Wasser oder ungesüßte Getränke wählen',
   journey_sugar_task_snack_title: 'Einen natürlichen Snack wählen',
   journey_sugar_task_snack_subtitle:
@@ -610,10 +644,6 @@ export const german: TranslationDictionary = {
   journey_meditation_description:
     'Finde Ruhe und verbessere deine Konzentration mit einer kurzen täglichen Übung.',
   journey_meditation_task_breathe_title: 'Eine Minute lang atmen',
-  journey_meditation_task_breathe_subtitle: 'Langsame, gleichmäßige Atemzüge',
-  journey_meditation_task_meditate_title: '10 Minuten meditieren',
-  journey_meditation_task_meditate_subtitle:
-    'Bequem sitzen und zum Atem zurückkehren',
   journey_meditation_task_reflect_title: 'Eine Reflexion aufschreiben',
   journey_meditation_task_reflect_subtitle:
     'Einen Gedanken oder ein Gefühl festhalten',
@@ -628,22 +658,15 @@ export const german: TranslationDictionary = {
     'Einen kleinen Schritt aus der Komfortzone machen',
   journey_confidence_task_win_title: 'Einen kleinen Erfolg feiern',
   journey_confidence_task_win_subtitle: 'Den heutigen Fortschritt würdigen',
-  journey_fasting_title: 'Mit Fasten leichter abnehmen',
-  journey_fasting_description:
-    'Erkunde strukturierte Essensfenster achtsam und schrittweise.',
   journey_fasting_task_meals_title: 'Heutige Mahlzeiten planen',
   journey_fasting_task_meals_subtitle: 'Ausgewogene Speisen im Voraus wählen',
   journey_fasting_task_hydrate_title: 'Regelmäßig trinken',
   journey_fasting_task_hydrate_subtitle: 'Über den Tag verteilt Wasser trinken',
-  journey_fasting_task_window_title: 'Essensfenster protokollieren',
-  journey_fasting_task_window_subtitle: 'Start- und Endzeit festhalten',
   journey_phone_title: 'Weniger Handy, mehr Fortschritt',
   journey_phone_description:
     'Gewinne deine Aufmerksamkeit mit bewussten Grenzen zurück.',
-  journey_phone_task_first_hour_title: 'Erste Stunde ohne Handy',
   journey_phone_task_first_hour_subtitle: 'Den Tag ohne Scrollen beginnen',
   journey_phone_task_focus_title: 'Ein konzentrierter Arbeitsblock',
-  journey_phone_task_focus_subtitle: 'Ohne Benachrichtigungen arbeiten',
   journey_phone_task_bedtime_title: 'Handy vor dem Schlafen weglegen',
   journey_phone_task_bedtime_subtitle: 'Außer Reichweite aufbewahren',
   journey_morning_title: 'Energiespendende Morgenroutine',
@@ -658,8 +681,6 @@ export const german: TranslationDictionary = {
   journey_office_title: 'Im Büro fit bleiben',
   journey_office_description:
     'Bringe gesunde Bewegung selbst in den geschäftigsten Arbeitstag.',
-  journey_office_task_stand_title: 'Jede Stunde aufstehen',
-  journey_office_task_stand_subtitle: 'Die Haltung regelmäßig neu ausrichten',
   journey_office_task_walk_title: 'Eine Gehpause machen',
   journey_office_task_walk_subtitle: 'Den Schreibtisch kurz verlassen',
   journey_office_task_stretch_title: 'Schultern dehnen',

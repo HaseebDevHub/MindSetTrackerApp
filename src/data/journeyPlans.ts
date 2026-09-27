@@ -1,6 +1,6 @@
 import type { Journey } from '../types/models';
 
-export const journeys: Journey[] = [
+const definitions: Omit<Journey, 'schedule'>[] = [
   {
     id: 'walk',
     title: 'Walk everyday for health',
@@ -10,20 +10,20 @@ export const journeys: Journey[] = [
     description:
       'Build a sustainable walking routine that improves energy, mood, and heart health.',
     descriptionKey: 'journey_walk_description',
-    habits: [
+    tasks: [
       {
         id: 'walk-ten-minutes',
         title: 'Take a 10 minute walk',
         titleKey: 'journey_walk_task_walk_title',
-        subtitle: 'Easy pace • Outdoors or indoors',
+        subtitle: 'Easy pace indoors or out; shorter is fine too',
         subtitleKey: 'journey_walk_task_walk_subtitle',
         iconName: 'Footprints',
       },
       {
         id: 'walk-step-goal',
-        title: 'Reach your daily step goal',
+        title: 'Add a little movement',
         titleKey: 'journey_walk_task_steps_title',
-        subtitle: 'Build steady daily movement',
+        subtitle: 'Try a few comfortable extra steps; adapt to your ability',
         subtitleKey: 'journey_walk_task_steps_subtitle',
         iconName: 'Activity',
       },
@@ -31,7 +31,7 @@ export const journeys: Journey[] = [
         id: 'walk-stretch',
         title: 'Stretch after walking',
         titleKey: 'journey_walk_task_stretch_title',
-        subtitle: 'Cool down • 5 minutes',
+        subtitle: 'Move gently within a comfortable range; never force',
         subtitleKey: 'journey_walk_task_stretch_subtitle',
         iconName: 'BicepsFlexed',
       },
@@ -47,12 +47,12 @@ export const journeys: Journey[] = [
     description:
       'Wind down consistently and make restorative sleep your nightly priority.',
     descriptionKey: 'journey_sleep_description',
-    habits: [
+    tasks: [
       {
         id: 'sleep-no-screens',
         title: 'No screens before bed',
         titleKey: 'journey_sleep_task_screens_title',
-        subtitle: '45 mins prior • Wind down',
+        subtitle: 'Try switching off screens 30 minutes before bed',
         subtitleKey: 'journey_sleep_task_screens_subtitle',
         iconName: 'Moon',
       },
@@ -66,9 +66,9 @@ export const journeys: Journey[] = [
       },
       {
         id: 'sleep-before-eleven',
-        title: 'Sleep before 11 PM',
+        title: 'Keep a consistent bedtime',
         titleKey: 'journey_sleep_task_bedtime_title',
-        subtitle: 'Goal 8 hrs • Consistent bedtime',
+        subtitle: 'Choose a time that allows enough sleep for you',
         subtitleKey: 'journey_sleep_task_bedtime_subtitle',
         iconName: 'BedDouble',
       },
@@ -77,16 +77,16 @@ export const journeys: Journey[] = [
   },
   {
     id: 'sugar',
-    title: 'Say goodbye to sugar',
+    title: 'Cut back on added sugar',
     titleKey: 'journey_sugar_title',
     duration: '21 Days',
     durationDays: 21,
     description: 'Reset your palate with practical, gentle daily choices.',
     descriptionKey: 'journey_sugar_description',
-    habits: [
+    tasks: [
       {
         id: 'sugar-skip-drinks',
-        title: 'Skip sugary drinks',
+        title: 'Swap one sugary drink',
         titleKey: 'journey_sugar_task_drinks_title',
         subtitle: 'Choose water or unsweetened drinks',
         subtitleKey: 'journey_sugar_task_drinks_subtitle',
@@ -120,20 +120,20 @@ export const journeys: Journey[] = [
     description:
       'Create calm and improve focus through a short daily practice.',
     descriptionKey: 'journey_meditation_description',
-    habits: [
+    tasks: [
       {
         id: 'meditation-breathe',
         title: 'Breathe for one minute',
         titleKey: 'journey_meditation_task_breathe_title',
-        subtitle: 'Slow, steady breaths',
+        subtitle: 'Breathe naturally; no holding or forcing',
         subtitleKey: 'journey_meditation_task_breathe_subtitle',
         iconName: 'Brain',
       },
       {
         id: 'meditation-ten-minutes',
-        title: 'Meditate for 10 minutes',
+        title: 'Try a short meditation',
         titleKey: 'journey_meditation_task_meditate_title',
-        subtitle: 'Sit comfortably and return to the breath',
+        subtitle: 'Sit comfortably for 3–5 minutes; stop if distressed',
         subtitleKey: 'journey_meditation_task_meditate_subtitle',
         iconName: 'Brain',
       },
@@ -157,7 +157,7 @@ export const journeys: Journey[] = [
     description:
       'Strengthen a kinder and more confident relationship with yourself.',
     descriptionKey: 'journey_confidence_description',
-    habits: [
+    tasks: [
       {
         id: 'confidence-name-strength',
         title: 'Name one strength',
@@ -187,13 +187,14 @@ export const journeys: Journey[] = [
   },
   {
     id: 'fasting',
-    title: 'Fasting to lose weight easily',
+    title: 'A balanced eating routine',
     titleKey: 'journey_fasting_title',
     duration: '30 Days',
     durationDays: 30,
-    description: 'Explore structured eating windows mindfully and gradually.',
+    description:
+      'Build regular, balanced meals without skipping food or restricting eating times.',
     descriptionKey: 'journey_fasting_description',
-    habits: [
+    tasks: [
       {
         id: 'fasting-plan-meals',
         title: 'Plan today’s meals',
@@ -212,9 +213,9 @@ export const journeys: Journey[] = [
       },
       {
         id: 'fasting-log-window',
-        title: 'Log your eating window',
+        title: 'Notice hunger and fullness',
         titleKey: 'journey_fasting_task_window_title',
-        subtitle: 'Record your start and finish time',
+        subtitle: 'Pause during a meal; eat enough to feel satisfied',
         subtitleKey: 'journey_fasting_task_window_subtitle',
         iconName: 'AlarmClock',
       },
@@ -229,10 +230,10 @@ export const journeys: Journey[] = [
     durationDays: 14,
     description: 'Reclaim your attention with intentional boundaries.',
     descriptionKey: 'journey_phone_description',
-    habits: [
+    tasks: [
       {
         id: 'phone-free-first-hour',
-        title: 'Phone-free first hour',
+        title: 'Start with 10 phone-free minutes',
         titleKey: 'journey_phone_task_first_hour_title',
         subtitle: 'Start the day without scrolling',
         subtitleKey: 'journey_phone_task_first_hour_subtitle',
@@ -242,7 +243,7 @@ export const journeys: Journey[] = [
         id: 'phone-focus-block',
         title: 'One focused work block',
         titleKey: 'journey_phone_task_focus_title',
-        subtitle: 'Work without notifications',
+        subtitle: 'Try 15 quiet minutes; keep essential calls available',
         subtitleKey: 'journey_phone_task_focus_subtitle',
         iconName: 'BriefcaseBusiness',
       },
@@ -265,7 +266,7 @@ export const journeys: Journey[] = [
     durationDays: 21,
     description: 'Start your day with momentum, clarity, and energy.',
     descriptionKey: 'journey_morning_description',
-    habits: [
+    tasks: [
       {
         id: 'morning-drink-water',
         title: 'Drink water',
@@ -290,6 +291,14 @@ export const journeys: Journey[] = [
         subtitleKey: 'journey_morning_task_priority_subtitle',
         iconName: 'NotebookPen',
       },
+      {
+        id: 'morning-breakfast',
+        title: 'Prepare a balanced breakfast',
+        titleKey: 'journey_morning_breakfast_title',
+        subtitle: 'Try wholegrain food, fruit and a protein source',
+        subtitleKey: 'journey_morning_breakfast_subtitle',
+        iconName: 'Utensils',
+      },
     ],
     colors: ['#EA580C', '#F59E0B'],
   },
@@ -301,12 +310,12 @@ export const journeys: Journey[] = [
     durationDays: 14,
     description: 'Add healthy movement to even the busiest workday.',
     descriptionKey: 'journey_office_description',
-    habits: [
+    tasks: [
       {
         id: 'office-stand-hourly',
-        title: 'Stand every hour',
+        title: 'Break up sitting time',
         titleKey: 'journey_office_task_stand_title',
-        subtitle: 'Reset your posture regularly',
+        subtitle: 'Take a brief movement break; seated movement counts',
         subtitleKey: 'journey_office_task_stand_subtitle',
         iconName: 'Activity',
       },
@@ -330,3 +339,28 @@ export const journeys: Journey[] = [
     colors: ['#059669', '#0D9488'],
   },
 ];
+
+// Introduction days are editorial pacing, not clinically validated habit deadlines.
+const introductionDays: Record<Journey['id'], number[]> = {
+  walk: [1, 8, 4],
+  sleep: [1, 4, 7],
+  sugar: [1, 5, 10],
+  meditation: [1, 5, 9],
+  confidence: [1, 8, 4],
+  fasting: [1, 5, 12],
+  phone: [1, 5, 9],
+  morning: [1, 6, 12, 2],
+  office: [1, 4, 8],
+};
+
+export const journeys: Journey[] = definitions.map(journey => ({
+  ...journey,
+  schedule: Array.from({ length: journey.durationDays }, (_, index) => ({
+    dayNumber: index + 1,
+    taskIds: journey.tasks
+      .filter(
+        (_task, taskIndex) => introductionDays[journey.id][taskIndex] <= index + 1,
+      )
+      .map(task => task.id),
+  })),
+}));

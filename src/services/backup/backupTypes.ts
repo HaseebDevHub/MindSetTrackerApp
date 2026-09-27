@@ -50,6 +50,7 @@ export type ActiveJourneyBackupRecord = {
   id: string;
   journeyId: string;
   startedDateKey: string;
+  planVersion?: number;
   isActive: boolean;
   removedDateKey: string | null;
 };
@@ -82,7 +83,7 @@ export type BackupPreferences = {
 
 export type MindsetTrackerBackupV1 = {
   backupVersion: 1;
-  databaseSchemaVersion: 5 | 6;
+  databaseSchemaVersion: 5 | 6 | 7;
   exportedAt: string;
   data: {
     habits: HabitBackupRecord[];

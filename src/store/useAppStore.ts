@@ -11,7 +11,7 @@ import type {
   HabitUpdateInput,
   JourneyRepository,
 } from '../database/repositories/types';
-import { journeys } from '../data/mockData';
+import { journeys } from '../data/journeyPlans';
 import { t } from '../localization';
 import { achievementStorage } from '../storage/achievementStorage';
 import { appUsageStorage } from '../storage/appUsageStorage';
@@ -41,7 +41,10 @@ import {
   normalizeHabitType,
   normalizeHabitAlertType,
 } from '../utils/habitSchedule';
-import { getJourneyMetrics } from '../utils/journeyAnalytics';
+import {
+  getJourneyDayTasks,
+  getJourneyMetrics,
+} from '../utils/journeyAnalytics';
 import { DEFAULT_WAKE_UP_TIME } from '../utils/time';
 import {
   canEnableHabitReminder,
@@ -102,6 +105,7 @@ export interface AppState {
   toggleJourneyTask: (
     activeJourneyId: string,
     taskId: string,
+    dateKey?: string,
   ) => Promise<boolean>;
   removeActiveJourney: (activeJourneyId: string) => Promise<boolean>;
   dismissCelebration: () => void;
@@ -716,9 +720,10 @@ export function createAppStore(
         return undefined;
       }
     },
-    toggleJourneyTask: async (activeJourneyId, taskId) => {
+    toggleJourneyTask: async (activeJourneyId, taskId, dateKey) => {
       if (!get().isHydrated || isBackupRestoreInProgress()) return false;
       const todayKey = toDateKey(dependencies.now());
+      if (dateKey && dateKey !== todayKey) return false;
       const queueKey = `${activeJourneyId}\u0000${taskId}\u0000${todayKey}`;
       const previous =
         journeyToggleQueues.get(queueKey) ?? Promise.resolve(true);
@@ -732,9 +737,18 @@ export function createAppStore(
             ? journeys.find(item => item.id === enrollment.journeyId)
             : undefined;
           if (!enrollment?.isActive || !journey) return false;
-          if (!journey.habits.some(task => task.id === taskId)) return false;
           const metrics = getJourneyMetrics(enrollment, journey, todayKey);
-          if (metrics.isCompleted) return false;
+          if (
+            metrics.isCompleted ||
+            todayKey < enrollment.startedDateKey ||
+            toDateKey(dependencies.now()) !== todayKey ||
+            !getJourneyDayTasks(
+              journey,
+              metrics.dayNumber,
+              enrollment.planVersion ?? 0,
+            ).some(task => task.id === taskId)
+          )
+            return false;
           const completed = !metrics.todayCompletedTaskIds.has(taskId);
           try {
             const persisted =

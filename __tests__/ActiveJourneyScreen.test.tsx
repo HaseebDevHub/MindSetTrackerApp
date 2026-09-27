@@ -7,6 +7,14 @@ import { ActiveJourneyScreen } from '../src/screens/journey/ActiveJourneyScreen'
 import { useAppStore } from '../src/store/useAppStore';
 import { toDateKey } from '../src/utils/dates';
 
+jest.mock('@shopify/flash-list', () => ({
+  FlashList: require('react-native').FlatList,
+}));
+jest.mock('@react-navigation/native', () => ({
+  useFocusEffect: (effect: () => void) =>
+    require('react').useEffect(effect, [effect]),
+}));
+
 jest.mock('lucide-react-native', () => {
   const { View } = require('react-native');
   return new Proxy(
@@ -85,7 +93,7 @@ describe('Active Journey screen', () => {
         expect.arrayContaining([
           'Walk everyday for health',
           'Take a 10 minute walk',
-          'Reach your daily step goal',
+          'Add a little movement',
           'Stretch after walking',
         ]),
       );
@@ -97,6 +105,7 @@ describe('Active Journey screen', () => {
       expect(toggleJourneyTask).toHaveBeenCalledWith(
         'active-walk',
         'walk-ten-minutes',
+        toDateKey(new Date()),
       );
 
       act(() =>
@@ -198,5 +207,88 @@ describe('Active Journey screen', () => {
       flexDirection: 'row-reverse',
     });
     act(() => renderer!.unmount());
+  });
+});
+
+describe('progressive timeline interaction', () => {
+  test('expands previews, disables future tasks, guards rapid taps and reports save errors', async () => {
+    let finishSave: (saved: boolean) => void = () => undefined;
+    const save = new Promise<boolean>(resolve => {
+      finishSave = resolve;
+    });
+    const toggleJourneyTask = jest.fn(() => save);
+    useAppStore.setState({
+      activeJourneys: [
+        {
+          id: 'progressive',
+          journeyId: 'morning',
+          startedDateKey: toDateKey(new Date()),
+          planVersion: 1,
+          isActive: true,
+          taskCompletions: [],
+        },
+      ],
+      toggleJourneyTask,
+    });
+    let renderer: TestRenderer.ReactTestRenderer;
+    await act(async () => {
+      renderer = TestRenderer.create(
+        <ThemeProvider initialMode="light">
+          <ActiveJourneyScreen
+            navigation={{ goBack: jest.fn(), navigate: jest.fn() } as never}
+            route={{ params: { activeJourneyId: 'progressive' } } as never}
+          />
+        </ThemeProvider>,
+      );
+    });
+    const controls = (role: string) =>
+      renderer!.root.findAll(
+        node =>
+          node.props.accessibilityRole === role &&
+          node.parent?.props.accessibilityRole !== role,
+      );
+    const dayButton = (day: number) =>
+      controls('button').find(
+        node =>
+          node.props.accessibilityRole === 'button' &&
+          String(node.props.accessibilityLabel).startsWith(`Day ${day},`),
+      )!;
+    expect(dayButton(1).props.accessibilityState.expanded).toBe(true);
+    expect(dayButton(2).props.accessibilityState.expanded).toBe(false);
+    act(() => dayButton(2).props.onPress());
+    expect(dayButton(2).props.accessibilityState.expanded).toBe(true);
+    let checkboxes = controls('checkbox');
+    expect(checkboxes).toHaveLength(3);
+    expect(
+      checkboxes.map(node => node.props.accessibilityState.disabled),
+    ).toEqual([false, true, true]);
+    act(() => dayButton(2).props.onPress());
+    expect(dayButton(2).props.accessibilityState.expanded).toBe(false);
+    checkboxes = controls('checkbox');
+    act(() => {
+      checkboxes[0].props.onPress();
+      checkboxes[0].props.onPress();
+    });
+    expect(toggleJourneyTask).toHaveBeenCalledTimes(1);
+    const pendingTask = controls('checkbox')[0];
+    expect(pendingTask.props.accessibilityState).toMatchObject({
+      busy: true,
+      disabled: true,
+      checked: false,
+    });
+    await act(async () => finishSave(false));
+    const { ToastMessage } = require('../src/components/common/ToastMessage');
+    expect(renderer!.root.findByType(ToastMessage).props).toMatchObject({
+      visible: true,
+      type: 'error',
+    });
+    act(() => useAppStore.setState({ activeJourneys: [] }));
+    expect(
+      renderer!.root
+        .findAllByType(Text)
+        .some(node => String(node.props.children).includes('unavailable')),
+    ).toBe(true);
+    act(() => renderer!.unmount());
+    useAppStore.setState({ toggleJourneyTask: originalToggle });
   });
 });

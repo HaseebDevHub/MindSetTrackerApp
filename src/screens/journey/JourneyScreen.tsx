@@ -10,7 +10,7 @@ import {
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { ToastMessage } from '../../components/common/ToastMessage';
 import { useTheme } from '../../context/ThemeContext';
-import { journeys } from '../../data/mockData';
+import { journeys } from '../../data/journeyPlans';
 import { useTranslation } from '../../localization';
 import { useAppStore } from '../../store/useAppStore';
 import type {

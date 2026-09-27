@@ -1,6 +1,6 @@
 import { appSchema, tableSchema } from '@nozbe/watermelondb';
 
-export const DATABASE_SCHEMA_VERSION = 6;
+export const DATABASE_SCHEMA_VERSION = 7;
 
 export const habitV2Columns = [
   { name: 'title', type: 'string' as const },
@@ -62,6 +62,10 @@ export const habitCompletionColumns = [
   ...habitCompletionV3Columns,
 ];
 
+export const activeJourneyV7Columns = [
+  { name: 'plan_version', type: 'number' as const, isOptional: true },
+];
+
 export const activeJourneyColumns = [
   { name: 'journey_id', type: 'string' as const, isIndexed: true },
   { name: 'started_date_key', type: 'string' as const },
@@ -88,7 +92,7 @@ const schema = appSchema({
     }),
     tableSchema({
       name: 'active_journeys',
-      columns: activeJourneyColumns,
+      columns: [...activeJourneyColumns, ...activeJourneyV7Columns],
     }),
     tableSchema({
       name: 'journey_task_completions',

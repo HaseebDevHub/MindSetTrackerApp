@@ -1,8 +1,5 @@
 import type { JourneyRepository } from '../src/database/repositories/types';
-import type {
-  ActiveJourneyItem,
-  JourneyId,
-} from '../src/types/models';
+import type { ActiveJourneyItem, JourneyId } from '../src/types/models';
 
 const clone = (item: ActiveJourneyItem): ActiveJourneyItem => ({
   ...item,
@@ -45,6 +42,7 @@ export class InMemoryJourneyRepository implements JourneyRepository {
       id: `active-journey-${this.nextId++}`,
       journeyId,
       startedDateKey,
+      planVersion: 1,
       isActive: true,
       taskCompletions: [],
     };
@@ -71,10 +69,7 @@ export class InMemoryJourneyRepository implements JourneyRepository {
     return true;
   }
 
-  async removeActiveJourney(
-    activeJourneyId: string,
-    removedDateKey: string,
-  ) {
+  async removeActiveJourney(activeJourneyId: string, removedDateKey: string) {
     this.removeCalls += 1;
     if (this.failRemove) throw new Error('remove failed');
     const enrollment = this.enrollments.get(activeJourneyId);

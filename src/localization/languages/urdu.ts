@@ -2,6 +2,49 @@ import { english, type TranslationDictionary } from './english';
 
 export const urdu: TranslationDictionary = {
   ...english,
+  journey_days_finished: 'مکمل دن',
+  journey_day_label: 'دن {{day}}',
+  journey_day_current: 'آج',
+  journey_day_future: 'پیش نظارہ · اس تاریخ کو دستیاب',
+  journey_day_past: 'گزرا دن · صرف دیکھیں',
+  journey_day_finished: 'دن مکمل',
+  journey_day_accessibility:
+    'دن {{day}}، {{date}}، {{total}} میں سے {{completed}} کام، {{status}}',
+  journey_morning_breakfast_title: 'متوازن ناشتہ تیار کریں',
+  journey_morning_breakfast_subtitle:
+    'ثابت اناج، پھل اور پروٹین والی غذا آزمائیں',
+  journey_fasting_title: 'متوازن کھانے کا معمول',
+  journey_fasting_description:
+    'کھانا چھوڑے یا اوقات محدود کیے بغیر باقاعدہ، متوازن کھانے کا معمول بنائیں۔',
+  journey_fasting_task_window_title: 'بھوک اور پیٹ بھرنے پر توجہ دیں',
+  journey_fasting_task_window_subtitle:
+    'کھانے کے دوران رک کر غور کریں؛ تسلی ہونے تک مناسب کھائیں',
+  journey_sleep_task_bedtime_title: 'سونے کا وقت باقاعدہ رکھیں',
+  journey_sleep_task_bedtime_subtitle:
+    'ایسا وقت چنیں جس سے آپ کو کافی نیند مل سکے',
+  journey_sleep_task_screens_subtitle:
+    'سونے سے 30 منٹ پہلے اسکرین بند کرنے کی کوشش کریں',
+  journey_meditation_task_meditate_title: 'مختصر مراقبہ آزمائیں',
+  journey_meditation_task_meditate_subtitle:
+    '3–5 منٹ آرام سے بیٹھیں؛ پریشانی ہو تو رک جائیں',
+  journey_meditation_task_breathe_subtitle:
+    'قدرتی انداز میں سانس لیں؛ روکیں یا زور نہ دیں',
+  journey_phone_task_first_hour_title: 'شروع میں 10 منٹ فون سے دور رہیں',
+  journey_phone_task_focus_subtitle:
+    '15 پرسکون منٹ آزمائیں؛ ضروری کالیں دستیاب رکھیں',
+  journey_walk_task_walk_subtitle:
+    'اندر یا باہر آرام سے چلیں؛ کم وقت بھی ٹھیک ہے',
+  journey_walk_task_steps_title: 'تھوڑی مزید حرکت کریں',
+  journey_walk_task_steps_subtitle:
+    'اپنی صلاحیت کے مطابق چند اضافی قدم آزمائیں',
+  journey_walk_task_stretch_subtitle:
+    'آرام دہ حد میں نرمی سے حرکت کریں؛ زور نہ دیں',
+  journey_office_task_stand_title: 'مسلسل بیٹھنے میں وقفہ کریں',
+  journey_office_task_stand_subtitle:
+    'مختصر حرکت کا وقفہ لیں؛ بیٹھ کر حرکت بھی مفید ہے',
+  journey_sugar_title: 'اضافی شکر کم کریں',
+  journey_sugar_task_drinks_title: 'ایک میٹھے مشروب کا متبادل چنیں',
+
   habit_alert_type: 'الرٹ کی قسم',
   habit_alert_reminder: 'یاد دہانی',
   habit_alert_alarm: 'الارم',
@@ -511,7 +554,7 @@ export const urdu: TranslationDictionary = {
   journey_included_habits: 'شامل عادتیں',
   journey_habits_count: '{{count}} عادتیں',
   journey_guidance:
-    'ایک مستقل اور پائیدار روٹین بنانے کے لیے یہ رہنمائی والی سرگرمیاں روزانہ مکمل کریں۔',
+    'چھوٹے قدم سے شروع کریں۔ آگے بڑھنے کے ساتھ نئی عادتیں آئیں گی؛ اپنی رفتار سے مشق کریں۔',
   journey_start: 'سفر شروع کریں',
   journey_continue: 'سفر جاری رکھیں',
   journey_start_error: 'سفر شروع نہیں ہو سکا۔ دوبارہ کوشش کریں۔',
@@ -561,24 +604,15 @@ export const urdu: TranslationDictionary = {
   journey_walk_description:
     'چلنے کی ایک پائیدار روٹین بنائیں جو توانائی، مزاج اور دل کی صحت بہتر کرے۔',
   journey_walk_task_walk_title: '10 منٹ چہل قدمی کریں',
-  journey_walk_task_walk_subtitle: 'آسان رفتار • گھر کے اندر یا باہر',
-  journey_walk_task_steps_title: 'روزانہ قدموں کا ہدف پورا کریں',
-  journey_walk_task_steps_subtitle: 'روزانہ باقاعدہ حرکت جاری رکھیں',
   journey_walk_task_stretch_title: 'چلنے کے بعد اسٹریچ کریں',
-  journey_walk_task_stretch_subtitle: 'جسم کو آرام دیں • 5 منٹ',
   journey_sleep_title: 'پرسکون نیند کے لیے رات کی روٹین',
   journey_sleep_description:
     'باقاعدگی سے خود کو پرسکون کریں اور تازگی بخش نیند کو رات کی ترجیح بنائیں۔',
   journey_sleep_task_screens_title: 'سونے سے پہلے اسکرین استعمال نہ کریں',
-  journey_sleep_task_screens_subtitle: '45 منٹ پہلے • خود کو پرسکون کریں',
   journey_sleep_task_prepare_title: 'کل کی تیاری کریں',
   journey_sleep_task_prepare_subtitle: 'کپڑے اور منصوبہ • 10 منٹ',
-  journey_sleep_task_bedtime_title: 'رات 11 بجے سے پہلے سوئیں',
-  journey_sleep_task_bedtime_subtitle: 'ہدف 8 گھنٹے • باقاعدہ وقت',
-  journey_sugar_title: 'شوگر کو الوداع کہیں',
   journey_sugar_description:
     'روزمرہ کے عملی اور نرم انتخاب سے اپنے ذائقے کو دوبارہ بہتر بنائیں۔',
-  journey_sugar_task_drinks_title: 'میٹھے مشروبات سے پرہیز کریں',
   journey_sugar_task_drinks_subtitle: 'پانی یا بغیر چینی کا مشروب چنیں',
   journey_sugar_task_snack_title: 'قدرتی غذا والا اسنیک چنیں',
   journey_sugar_task_snack_subtitle: 'پھل، میوے یا کوئی سادہ غذا',
@@ -588,10 +622,6 @@ export const urdu: TranslationDictionary = {
   journey_meditation_description:
     'روزانہ کی مختصر مشق سے سکون پیدا کریں اور توجہ بہتر بنائیں۔',
   journey_meditation_task_breathe_title: 'ایک منٹ سانس کی مشق کریں',
-  journey_meditation_task_breathe_subtitle: 'آہستہ اور ہموار سانسیں',
-  journey_meditation_task_meditate_title: '10 منٹ مراقبہ کریں',
-  journey_meditation_task_meditate_subtitle:
-    'آرام سے بیٹھیں اور سانس پر توجہ لوٹائیں',
   journey_meditation_task_reflect_title: 'ایک غور و فکر لکھیں',
   journey_meditation_task_reflect_subtitle: 'ایک خیال یا احساس درج کریں',
   journey_confidence_title: 'خود اعتمادی بڑھائیں',
@@ -605,21 +635,14 @@ export const urdu: TranslationDictionary = {
     'آرام دہ دائرے سے باہر ایک چھوٹا قدم لیں',
   journey_confidence_task_win_title: 'ایک چھوٹی کامیابی منائیں',
   journey_confidence_task_win_subtitle: 'آج کی پیش رفت کو سراہیں',
-  journey_fasting_title: 'آسانی سے وزن کم کرنے کے لیے روزہ',
-  journey_fasting_description:
-    'کھانے کے منظم اوقات کو توجہ اور بتدریج طریقے سے آزمائیں۔',
   journey_fasting_task_meals_title: 'آج کے کھانے کی منصوبہ بندی کریں',
   journey_fasting_task_meals_subtitle: 'متوازن غذا پہلے سے چنیں',
   journey_fasting_task_hydrate_title: 'باقاعدگی سے پانی پئیں',
   journey_fasting_task_hydrate_subtitle: 'دن بھر پانی پیتے رہیں',
-  journey_fasting_task_window_title: 'کھانے کا وقت درج کریں',
-  journey_fasting_task_window_subtitle: 'شروع اور ختم ہونے کا وقت لکھیں',
   journey_phone_title: 'فون کم، پیش رفت زیادہ',
   journey_phone_description: 'سوچی سمجھی حدود سے اپنی توجہ واپس حاصل کریں۔',
-  journey_phone_task_first_hour_title: 'پہلا گھنٹہ فون کے بغیر',
   journey_phone_task_first_hour_subtitle: 'دن کا آغاز اسکرولنگ کے بغیر کریں',
   journey_phone_task_focus_title: 'توجہ کے ساتھ کام کا ایک دور',
-  journey_phone_task_focus_subtitle: 'اطلاعات کے بغیر کام کریں',
   journey_phone_task_bedtime_title: 'سونے سے پہلے فون دور رکھیں',
   journey_phone_task_bedtime_subtitle: 'اسے ہاتھ کی پہنچ سے دور رکھیں',
   journey_morning_title: 'توانائی بڑھانے والی صبح کی روٹین',
@@ -634,8 +657,6 @@ export const urdu: TranslationDictionary = {
   journey_office_title: 'دفتر میں فٹ رہیں',
   journey_office_description:
     'مصروف ترین کام کے دن میں بھی صحت مند حرکت شامل کریں۔',
-  journey_office_task_stand_title: 'ہر گھنٹے کھڑے ہوں',
-  journey_office_task_stand_subtitle: 'اپنی نشست باقاعدگی سے درست کریں',
   journey_office_task_walk_title: 'چہل قدمی کا وقفہ لیں',
   journey_office_task_walk_subtitle: 'تھوڑی دیر کے لیے میز سے دور جائیں',
   journey_office_task_stretch_title: 'کندھوں کو اسٹریچ کریں',

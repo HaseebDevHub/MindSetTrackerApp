@@ -13,6 +13,7 @@ export default class ActiveJourney extends Model {
   };
 
   @field('journey_id') journeyId!: string;
+  @field('plan_version') planVersion!: number | null;
   @field('started_date_key') startedDateKey!: string;
   @field('is_active') isActive!: boolean;
   @field('removed_date_key') removedDateKey!: string | null;
