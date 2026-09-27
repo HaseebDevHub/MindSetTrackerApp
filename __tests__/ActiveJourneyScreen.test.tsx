@@ -6,6 +6,9 @@ import { setSelectedLanguage } from '../src/localization';
 import { ActiveJourneyScreen } from '../src/screens/journey/ActiveJourneyScreen';
 import { useAppStore } from '../src/store/useAppStore';
 import { toDateKey } from '../src/utils/dates';
+import { FlashList } from '@shopify/flash-list';
+import { journeys } from '../src/data/journeyPlans';
+import type { JourneyDay } from '../src/utils/journeyAnalytics';
 
 jest.mock('@shopify/flash-list', () => ({
   FlashList: require('react-native').FlatList,
@@ -43,6 +46,91 @@ describe('Active Journey screen', () => {
       removeActiveJourney: originalRemove,
     });
   });
+
+  test.each(['walk', 'sleep'] as const)(
+    'paginates %s after an initial end event, without duplicate batches',
+    async journeyId => {
+      useAppStore.setState({
+        isHydrated: true,
+        activeJourneys: [
+          {
+            id: 'pagination',
+            journeyId,
+            startedDateKey: toDateKey(new Date()),
+            planVersion: 1,
+            isActive: true,
+            taskCompletions: [],
+          },
+        ],
+      });
+      let renderer: TestRenderer.ReactTestRenderer;
+      await act(async () => {
+        renderer = TestRenderer.create(
+          <ThemeProvider initialMode="dark">
+            <ActiveJourneyScreen
+              navigation={{ goBack: jest.fn(), navigate: jest.fn() } as never}
+              route={{ params: { activeJourneyId: 'pagination' } } as never}
+            />
+          </ThemeProvider>,
+        );
+      });
+      const list = () => renderer!.root.findByType(FlashList);
+      const shownDays = (): JourneyDay[] => list().props.data;
+      const drag = (contentHeight: number, offset: number) =>
+        list().props.onScrollBeginDrag({
+          nativeEvent: {
+            contentOffset: { x: 0, y: offset },
+            contentSize: { width: 400, height: contentHeight },
+            layoutMeasurement: { width: 400, height: 800 },
+          },
+        });
+      try {
+        expect(shownDays()).toHaveLength(3);
+        // A short list can report the end on mount and never report it again.
+        act(() => list().props.onEndReached());
+        expect(shownDays()).toHaveLength(3);
+        act(() => drag(700, 0));
+        expect(shownDays()).toHaveLength(6);
+        act(() => {
+          list().props.onEndReached();
+          list().props.onEndReached();
+        });
+        expect(shownDays()).toHaveLength(6);
+
+        // A drag away from the end must wait for FlashList's end callback.
+        act(() => drag(2000, 0));
+        expect(shownDays()).toHaveLength(6);
+        act(() => {
+          list().props.onEndReached();
+          list().props.onEndReached();
+        });
+        expect(shownDays()).toHaveLength(9);
+
+        const total = journeys.find(
+          item => item.id === journeyId,
+        )!.durationDays;
+        for (let count = 9; count < total; count += 3) {
+          // Starting inside an already-reported end zone also needs to work.
+          act(() => drag(2000, 1200));
+          act(() => list().props.onEndReached());
+          expect(shownDays()).toHaveLength(Math.min(count + 3, total));
+          expect(shownDays().map(day => day.dayNumber)).toEqual(
+            Array.from({ length: Math.min(count + 3, total) }, (_, i) => i + 1),
+          );
+          expect(new Set(shownDays().map(day => day.dateKey)).size).toBe(
+            shownDays().length,
+          );
+        }
+        act(() => {
+          drag(2000, 1200);
+          list().props.onEndReached();
+        });
+        expect(shownDays()).toHaveLength(total);
+      } finally {
+        act(() => renderer!.unmount());
+      }
+    },
+  );
 
   test.each(['dark', 'light'] as const)(
     'renders dynamic tasks and controls in %s mode',

@@ -193,6 +193,12 @@ const createStyles = (colors: ThemeColors) =>
       marginLeft: 'auto',
     },
     tapHintRTL: { marginLeft: 0, marginRight: 'auto' },
+    loadMoreHint: {
+      ...typography.caption,
+      color: colors.textSecondary,
+      textAlign: 'center',
+      paddingVertical: spacing.medium,
+    },
     tipCard: {
       flexDirection: 'row',
       gap: spacing.medium,

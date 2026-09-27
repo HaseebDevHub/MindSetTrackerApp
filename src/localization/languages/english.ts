@@ -1,4 +1,5 @@
 export const english = {
+  journey_swipe_up_to_load_more: 'Swipe up to load more',
   journey_days_finished: 'DAYS FINISHED',
   journey_day_label: 'DAY {{day}}',
   journey_day_current: 'Today',

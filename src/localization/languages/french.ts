@@ -2,6 +2,7 @@ import { english, type TranslationDictionary } from './english';
 
 export const french: TranslationDictionary = {
   ...english,
+  journey_swipe_up_to_load_more: 'Balayez vers le haut pour en charger plus',
   journey_days_finished: 'JOURS TERMINÉS',
   journey_day_label: 'JOUR {{day}}',
   journey_day_current: 'Aujourd’hui',

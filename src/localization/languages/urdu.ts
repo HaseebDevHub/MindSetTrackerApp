@@ -2,6 +2,7 @@ import { english, type TranslationDictionary } from './english';
 
 export const urdu: TranslationDictionary = {
   ...english,
+  journey_swipe_up_to_load_more: 'مزید لوڈ کرنے کے لیے اوپر سوائپ کریں',
   journey_days_finished: 'مکمل دن',
   journey_day_label: 'دن {{day}}',
   journey_day_current: 'آج',

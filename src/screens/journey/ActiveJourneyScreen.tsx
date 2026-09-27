@@ -21,6 +21,8 @@ import {
   AppState,
   Text,
   View,
+  type NativeScrollEvent,
+  type NativeSyntheticEvent,
 } from 'react-native';
 import { ScreenContainer } from '../../components/common/ScreenContainer';
 import { ToastMessage } from '../../components/common/ToastMessage';
@@ -36,6 +38,8 @@ import {
 } from '../../utils/journeyAnalytics';
 import useStyles from './ActiveJourneyScreenStyle';
 
+const DAY_BATCH_SIZE = 3;
+const END_REACHED_THRESHOLD = 0.5;
 const dayKey = (day: JourneyDay) => day.dateKey;
 
 type Props = NativeStackScreenProps<JourneyStackParamList, 'ActiveJourney'>;
@@ -79,6 +83,39 @@ export function ActiveJourneyScreen({ navigation, route }: Props) {
         : [],
     [enrollment, journey, todayKey],
   );
+  const [visibleDayCount, setVisibleDayCount] = React.useState(DAY_BATCH_SIZE);
+  const canLoadMoreDays = React.useRef(false);
+  React.useEffect(() => {
+    setVisibleDayCount(DAY_BATCH_SIZE);
+    canLoadMoreDays.current = false;
+  }, [route.params.activeJourneyId]);
+  const visibleDays = React.useMemo(
+    () => days.slice(0, visibleDayCount),
+    [days, visibleDayCount],
+  );
+  const handleEndReached = React.useCallback(() => {
+    if (!canLoadMoreDays.current || visibleDayCount >= days.length) return;
+    // Allow only one batch per gesture, including its momentum callbacks.
+    canLoadMoreDays.current = false;
+    setVisibleDayCount(count => Math.min(count + DAY_BATCH_SIZE, days.length));
+  }, [days.length, visibleDayCount]);
+  const handleScrollBeginDrag = React.useCallback(
+    ({ nativeEvent }: NativeSyntheticEvent<NativeScrollEvent>) => {
+      canLoadMoreDays.current = true;
+      const { contentOffset, contentSize, layoutMeasurement } = nativeEvent;
+      const distanceFromEnd =
+        contentSize.height - layoutMeasurement.height - contentOffset.y;
+      // FlashList may have already reported this end zone before the drag.
+      if (
+        layoutMeasurement.height > 0 &&
+        distanceFromEnd <= layoutMeasurement.height * END_REACHED_THRESHOLD
+      ) {
+        handleEndReached();
+      }
+    },
+    [handleEndReached],
+  );
+
   const [expandedDays, setExpandedDays] = React.useState<Set<number>>(
     () => new Set(),
   );
@@ -237,9 +274,12 @@ export function ActiveJourneyScreen({ navigation, route }: Props) {
       </View>
 
       <FlashList
-        data={days}
+        data={visibleDays}
         keyExtractor={dayKey}
         renderItem={renderDay}
+        onScrollBeginDrag={handleScrollBeginDrag}
+        onEndReached={handleEndReached}
+        onEndReachedThreshold={END_REACHED_THRESHOLD}
         extraData={expandedDays}
         ListHeaderComponent={
           <View style={styles.listHeader}>
@@ -369,30 +409,39 @@ export function ActiveJourneyScreen({ navigation, route }: Props) {
         contentContainerStyle={styles.content}
         showsVerticalScrollIndicator={false}
         ListFooterComponent={
-          <View style={[styles.tipCard, isRTL && styles.rowRTL]}>
-            <View style={styles.tipIcon}>
-              <Lightbulb color={colors.yellow} size={20} />
-            </View>
-            <View style={styles.tipCopy}>
-              <Text style={[styles.tipTitle, isRTL && styles.textRTL]}>
-                {t('journey_consistency_tip')}
+          <View>
+            {visibleDays.length < days.length && (
+              <Text
+                style={[styles.loadMoreHint, isRTL && styles.centeredTextRTL]}
+              >
+                {t('journey_swipe_up_to_load_more')}
               </Text>
-              <Text style={[styles.tipText, isRTL && styles.textRTL]}>
-                {metrics.isCompleted
-                  ? t('journey_tip_finished', {
-                      duration: journey.durationDays,
-                    })
-                  : metrics.percentage === 100
-                  ? t('journey_tip_perfect', { streak: metrics.streak })
-                  : t(
-                      metrics.totalTasks - metrics.completedToday === 1
-                        ? 'journey_tip_remaining_one'
-                        : 'journey_tip_remaining_many',
-                      {
-                        count: metrics.totalTasks - metrics.completedToday,
-                      },
-                    )}
-              </Text>
+            )}
+            <View style={[styles.tipCard, isRTL && styles.rowRTL]}>
+              <View style={styles.tipIcon}>
+                <Lightbulb color={colors.yellow} size={20} />
+              </View>
+              <View style={styles.tipCopy}>
+                <Text style={[styles.tipTitle, isRTL && styles.textRTL]}>
+                  {t('journey_consistency_tip')}
+                </Text>
+                <Text style={[styles.tipText, isRTL && styles.textRTL]}>
+                  {metrics.isCompleted
+                    ? t('journey_tip_finished', {
+                        duration: journey.durationDays,
+                      })
+                    : metrics.percentage === 100
+                    ? t('journey_tip_perfect', { streak: metrics.streak })
+                    : t(
+                        metrics.totalTasks - metrics.completedToday === 1
+                          ? 'journey_tip_remaining_one'
+                          : 'journey_tip_remaining_many',
+                        {
+                          count: metrics.totalTasks - metrics.completedToday,
+                        },
+                      )}
+                </Text>
+              </View>
             </View>
           </View>
         }
